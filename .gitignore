@@ -1,0 +1,10 @@
+*.py[co]
+
+# vim
+*.sw[op]
+
+# pyenv
+.python-version
+
+# ctags
+tags
