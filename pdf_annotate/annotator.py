@@ -6,14 +6,36 @@ from collections import namedtuple
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
+from pdf_annotate.annotations import (
+    Circle,
+    Line,
+    Polygon,
+    Polyline,
+    Square,
+)
+
+
+NAME_TO_ANNOTATION = {
+    'square': Square,
+    'circle': Circle,
+    'line': Line,
+    'polygon': Polygon,
+    'polyline': Polyline,
+}
+
 
 class PDF(object):
     def __init__(self, filename):
         self._reader = PdfReader(filename)
+        self.pdf_version = self._reader.private.pdfdict.version
 
     def get_page(self, page_number):
-        # TODO this won't always work b/c of how PDFs can have page trees
-        return self._reader.Root.Pages.Kids[page_number]
+        if page_number > len(self._reader.pages) - 1:
+            raise ValueError('Page number {} out of bounds ({} pages)'.format(
+                page_number,
+                len(self._reader.pages),
+            ))
+        return self._reader.pages[page_number]
 
 
 class PdfAnnotator(object):
@@ -37,11 +59,16 @@ class PdfAnnotator(object):
         :param Appearance appearance:
         :param Metadata metadata:
         """
-        # TODO filter on valid types
         # TODO filter on valid PDF versions, by type
-        if annotation_type == 'square':
-            annotation = Square(location, appearance, metadata)
-
+        # TODO allow more fine grained control by allowing specification of AP
+        # dictionary that overrides other attributes.
+        annotation_cls = NAME_TO_ANNOTATION.get(annotation_type)
+        if annotation_cls is None:
+            raise ValueError('Invalid/unsupported annotation type: {}'.format(
+                annotation_type
+            ))
+        annotation = annotation_cls(location, appearance, metadata)
+        annotation.validate(self._pdf.pdf_version)
         self._add_annotation(annotation)
 
     def _add_annotation(self, annotation):
@@ -64,69 +91,19 @@ class PdfAnnotator(object):
         writer.write(fname=filename, trailer=self._pdf._reader)
 
 
-Location = namedtuple('Location', ('x', 'y', 'page'))
-Appearance = namedtuple('Appearance', ('width', 'height', 'color'))
+# TODO this is super unclear how these are used
+class Location(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
-class Square(object):
-    def __init__(self, location, appearance, *args, **kwargs):
-        self._location = location
-        self._appearance = appearance
-
-    @property
-    def page(self):
-        return self._location.page
-
-    def _make_rect(self):
-        """Returns the bounding box of the annotation in PDF default user space
-        units.
-        """
-        return [
-            self._location.x,
-            self._location.y,
-            self._location.x + self._appearance.width,
-            self._location.y + self._appearance.height,
-        ]
-
-    def _make_ap_stream(self):
-        return (
-            '{color} RG '
-            '5 w '
-            '0 0 {width} {height} re '
-            'S'
-        ).format(
-            color=self._appearance.color,
-            width=self._appearance.width,
-            height=self._appearance.height,
-        )
-
-    def _make_ap(self):
-        """Make PDF annotation appearance dictionary."""
-        return PdfDict(
-            stream=self._make_ap_stream(),
-            **{
-                'BBox': [
-                    0,
-                    0,
-                    self._appearance.width,
-                    self._appearance.height
-                ],
-                'FormType': 1,
-                'Matrix': [1, 0, 0, 1, 0, 0],
-                'Resources': PdfDict({
-                    PdfName('ProcSet'): [PdfName('PDF')],
-                }),
-                'Subtype': PdfName('Form'),
-                'Type': PdfName('XObject'),
-            }
-        )
-
-    def as_pdf_object(self):
-        return PdfDict(
-            **{
-                'AP': PdfDict({PdfName('N'): self._make_ap()}),
-                'Rect': self._make_rect(),
-                'Type': PdfName('Annot'),
-                'Subtype': PdfName('Square'),
-            }
-        )
+Appearance = namedtuple('Appearance', (
+    'width',
+    'height',
+    'stroke_color',
+    'stroke_width',
+    'border_style',
+    'dash_array',
+    'fill',
+))
