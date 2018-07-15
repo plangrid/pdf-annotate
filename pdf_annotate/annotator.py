@@ -2,7 +2,6 @@
 Tool for adding annotations to PDF documents. Like, real PDF annotations, not
 just additional shapes/whatever burned into the PDF content stream.
 """
-from collections import namedtuple
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
@@ -44,6 +43,13 @@ class PdfAnnotator(object):
         self._filename = filename
         self._pdf = PDF(filename)
 
+    def get_size(self, page_number):
+        """Returns the size of the specified page's MediaBox."""
+        page = self._pdf.get_page(page_number)
+        # TODO Might need to check the parent, since MediaBox is inheritable
+        x1, y1, x2, y2 = map(float, page.MediaBox)
+        return (x2 - x1, y2 - y1)
+
     def add_annotation(
         self,
         annotation_type,
@@ -72,7 +78,6 @@ class PdfAnnotator(object):
         self._add_annotation(annotation)
 
     def _add_annotation(self, annotation):
-        # Add PDF object to page tree
         page = self._pdf.get_page(annotation.page)
         if page.Annots:
             page.Annots.append(annotation.as_pdf_object())
@@ -94,16 +99,22 @@ class PdfAnnotator(object):
 # TODO this is super unclear how these are used
 class Location(object):
     def __init__(self, **kwargs):
+        if 'page' not in kwargs:
+            raise ValueError('Must set page on annotations')
         for k, v in kwargs.items():
             setattr(self, k, v)
 
 
-Appearance = namedtuple('Appearance', (
-    'width',
-    'height',
-    'stroke_color',
-    'stroke_width',
-    'border_style',
-    'dash_array',
-    'fill',
-))
+class Appearance(object):
+    BLACK = (0, 0, 0)
+    TRANSPARENT = tuple()
+
+    def __init__(self, **kwargs):
+        self.stroke_color = kwargs.get('stroke_color', self.BLACK)
+        self.stroke_width = kwargs.get('stroke_width', 1)
+        self.border_style = kwargs.get('border_style', 'S')
+        self.fill = kwargs.get('fill', self.TRANSPARENT)
+        self.dash_array = kwargs.get('dash_array', None)
+
+        for k, v in kwargs.items():
+            setattr(self, k, v)

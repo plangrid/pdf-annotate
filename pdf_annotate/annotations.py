@@ -62,10 +62,8 @@ class Square(Annotation):
 
     def make_rect(self):
         return [
-            self._location.x,
-            self._location.y,
-            self._location.x + self._appearance.width,
-            self._location.y + self._appearance.height,
+            self._location.x1, self._location.y1,
+            self._location.x2, self._location.y2,
         ]
 
     def as_pdf_object(self):
@@ -82,10 +80,8 @@ class Circle(Annotation):
 
     def make_rect(self):
         return [
-            self._location.x,
-            self._location.y,
-            self._location.x + self._appearance.width,
-            self._location.y + self._appearance.height,
+            self._location.x1, self._location.y1,
+            self._location.x2, self._location.y2,
         ]
 
     def as_pdf_object(self):

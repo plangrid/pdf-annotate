@@ -1,3 +1,4 @@
+from pdf_annotate.annotator import Appearance
 from pdf_annotate.annotator import PdfAnnotator
 from pdf_annotate.annotator import Location
 
