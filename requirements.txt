@@ -1,0 +1,2 @@
+# for builds in ReadTheDocs
+sphinx
