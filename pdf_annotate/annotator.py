@@ -92,7 +92,7 @@ class PdfAnnotator(object):
         if overwrite:
             filename = self._filename
 
-        writer = PdfWriter()
+        writer = PdfWriter(version=self._pdf.pdf_version)
         writer.write(fname=filename, trailer=self._pdf._reader)
 
 

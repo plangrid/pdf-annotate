@@ -12,5 +12,6 @@ setup(
     packages=find_packages('.'),
     install_requires=[
         'pdfrw>=0.4',
+        'six>=1.0.0',
     ],
 )
