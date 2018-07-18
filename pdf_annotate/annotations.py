@@ -81,6 +81,22 @@ class Square(Annotation):
             self._location.x2, self._location.y2,
         ]
 
+    def make_ap_dict(self):
+        return PdfDict(**{'N': self.make_n_dict()})
+
+    def make_n_dict(self):
+        return PdfDict(
+            stream=self._graphics_commands(),
+            **{
+                'BBox': self.make_rect(),
+                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
+                'Matrix': [1, 0, 0, 1, -self._location.x1, -self._location.y1],
+                'Type': PdfName('XObject'),
+                'Subtype': PdfName('Form'),
+                'FormType': 1,
+            }
+        )
+
     def _graphics_commands(self):
         stream = StringIO()
         L = self._location
@@ -97,7 +113,26 @@ class Square(Annotation):
         # TODO fill
         return stream.getvalue()
 
-    def make_appearance_stream(self):
+    def as_pdf_object(self):
+        obj = self.make_base_object()
+        A = self._appearance
+        obj.BS = make_border_dict(A)
+        obj.C = A.stroke_color
+        if A.fill:
+            obj.IC = A.fill
+        obj.AP = self.make_ap_dict()
+        padding = A.stroke_width / 2.0
+        obj.RD = [padding, padding, padding, padding]
+        return obj
+
+
+class Circle(Annotation):
+    subtype = 'Circle'
+
+    def make_ap_dict(self):
+        return PdfDict(**{'N': self.make_n_dict()})
+
+    def make_n_dict(self):
         return PdfDict(
             stream=self._graphics_commands(),
             **{
@@ -109,22 +144,6 @@ class Square(Annotation):
                 'FormType': 1,
             }
         )
-
-    def as_pdf_object(self):
-        obj = self.make_base_object()
-        A = self._appearance
-        obj.BS = make_border_dict(A)
-        obj.C = A.stroke_color
-        if A.fill:
-            obj.IC = A.fill
-        obj.AP = self.make_appearance_stream()
-        padding = A.stroke_width / 2.0
-        obj.RD = [padding, padding, padding, padding]
-        return obj
-
-
-class Circle(Annotation):
-    subtype = 'Circle'
 
     def _graphics_commands(self):
         L = self._location
@@ -174,19 +193,6 @@ class Circle(Annotation):
         # TODO fill
         return stream.getvalue()
 
-    def make_appearance_stream(self):
-        return PdfDict(
-            stream=self._graphics_commands(),
-            **{
-                'BBox': self.make_rect(),
-                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
-                'Matrix': [1, 0, 0, 1, -self._location.x1, -self._location.y1],
-                'Type': PdfName('XObject'),
-                'Subtype': PdfName('Form'),
-                'FormType': 1,
-            }
-        )
-
     def make_rect(self):
         return [
             self._location.x1, self._location.y1,
@@ -200,7 +206,7 @@ class Circle(Annotation):
         obj.C = A.stroke_color
         if A.fill:
             obj.IC = A.fill
-        obj.AP = self.make_appearance_stream()
+        obj.AP = self.make_ap_dict()
         padding = A.stroke_width / 2.0
         obj.RD = [padding, padding, padding, padding]
         return obj
