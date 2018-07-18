@@ -271,14 +271,20 @@ class Line(Annotation):
         return obj
 
 
-def make_points_rect(location):
-    min_x, max_x, min_y, max_y = 0, 0, 0, 0
+def make_points_rect(location, stroke_width):
+    p = location.points[0]
+    min_x, max_x, min_y, max_y = p[0], p[1], p[0], p[1]
     for x, y in location.points:
         min_x = min(min_x, x)
         max_x = max(max_x, x)
         min_y = min(min_y, y)
         max_y = max(max_y, y)
-    return [min_x, min_y, max_x, max_y]
+    return [
+        min_x - stroke_width,
+        min_y - stroke_width,
+        max_x + stroke_width,
+        max_y + stroke_width,
+    ]
 
 
 class Polygon(Annotation):
@@ -286,7 +292,29 @@ class Polygon(Annotation):
     versions = ('1.5', '1.6', '1.7')
 
     def make_rect(self):
-        return make_points_rect(self._location)
+        return make_points_rect(self._location, self._appearance.stroke_width)
+
+    def get_matrix(self):
+        # Note: Acrobat and BB put padding that's not quite the same as the
+        # stroke width here. I'm not quite sure why yet, so I'm not changing it.
+        rect = self.make_rect()
+        return [1, 0, 0, 1, -rect[0], -rect[1]]
+
+    def graphics_commands(self):
+        L = self._location
+        A = self._appearance
+        points = L.points
+
+        stream = StringIO()
+        stream.write('{} {} {} RG '.format(*A.stroke_color))
+        stream.write('{} w '.format(A.stroke_width))
+
+        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        for x, y in points[1:]:
+            stream.write('{} {} l '.format(x, y))
+        stream.write('s')
+
+        return stream.getvalue()
 
     def as_pdf_object(self):
         obj = self.make_base_object()
@@ -296,6 +324,7 @@ class Polygon(Annotation):
             obj.IC = self._appearance.fill
         # Flatten list of [[x, y], [x, y], ...]
         obj.Vertices = [v for point in self._location.points for v in point]
+        obj.AP = self.make_ap_dict()
         return obj
 
 
@@ -304,7 +333,7 @@ class Polyline(Annotation):
     versions = ('1.5', '1.6', '1.7')
 
     def make_rect(self):
-        return make_points_rect(self._location)
+        return make_points_rect(self._location, self._appearance.stroke_width)
 
     def as_pdf_object(self):
         # TODO close attribute?
@@ -315,6 +344,7 @@ class Polyline(Annotation):
             obj.IC = self._appearance.fill
         # Flatten list of [[x, y], [x, y], ...]
         obj.Vertices = [v for point in self._location.points for v in point]
+        obj.AP = self.make_ap_dict()
         return obj
 
 
