@@ -48,6 +48,25 @@ class Annotation(object):
             }
         )
 
+    def make_ap_dict(self):
+        return PdfDict(**{'N': self.make_n_dict()})
+
+    def get_matrix(self):
+        raise NotImplementedError()
+
+    def make_n_dict(self):
+        return PdfDict(
+            stream=self.graphics_commands(),
+            **{
+                'BBox': self.make_rect(),
+                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
+                'Matrix': self.get_matrix(),
+                'Type': PdfName('XObject'),
+                'Subtype': PdfName('Form'),
+                'FormType': 1,
+            }
+        )
+
     def make_rect(self):
         """Return a bounding box that encompasses the entire annotation."""
         raise NotImplementedError()
@@ -75,39 +94,34 @@ def make_border_dict(appearance):
 class Square(Annotation):
     subtype = 'Square'
 
-    def make_rect(self):
+    def get_matrix(self):
+        stroke_width = self._appearance.stroke_width
         return [
-            self._location.x1, self._location.y1,
-            self._location.x2, self._location.y2,
+            1, 0, 0, 1,
+            -(self._location.x1 - stroke_width),
+            -(self._location.y1 - stroke_width),
         ]
 
-    def make_ap_dict(self):
-        return PdfDict(**{'N': self.make_n_dict()})
+    def make_rect(self):
+        stroke_width = self._appearance.stroke_width
+        return [
+            self._location.x1 - stroke_width,
+            self._location.y1 - stroke_width,
+            self._location.x2 + stroke_width,
+            self._location.y2 + stroke_width,
+        ]
 
-    def make_n_dict(self):
-        return PdfDict(
-            stream=self._graphics_commands(),
-            **{
-                'BBox': self.make_rect(),
-                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
-                'Matrix': [1, 0, 0, 1, -self._location.x1, -self._location.y1],
-                'Type': PdfName('XObject'),
-                'Subtype': PdfName('Form'),
-                'FormType': 1,
-            }
-        )
-
-    def _graphics_commands(self):
+    def graphics_commands(self):
         stream = StringIO()
         L = self._location
         A = self._appearance
         stream.write('{} {} {} RG '.format(*A.stroke_color))
         stream.write('{} w '.format(A.stroke_width))
         stream.write('{} {} {} {} re S '.format(
-            L.x1 + A.stroke_width,
-            L.y1 + A.stroke_width,
-            L.x2 - L.x1 - (A.stroke_width * 2),
-            L.y2 - L.y1 - (A.stroke_width * 2),
+            L.x1,
+            L.y1,
+            L.x2 - L.x1,
+            L.y2 - L.y1,
         ))
         # TODO dash array
         # TODO fill
@@ -129,35 +143,19 @@ class Square(Annotation):
 class Circle(Annotation):
     subtype = 'Circle'
 
-    def make_ap_dict(self):
-        return PdfDict(**{'N': self.make_n_dict()})
-
-    def make_n_dict(self):
-        return PdfDict(
-            stream=self._graphics_commands(),
-            **{
-                'BBox': self.make_rect(),
-                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
-                'Matrix': [1, 0, 0, 1, -self._location.x1, -self._location.y1],
-                'Type': PdfName('XObject'),
-                'Subtype': PdfName('Form'),
-                'FormType': 1,
-            }
-        )
-
-    def _graphics_commands(self):
+    def graphics_commands(self):
         L = self._location
         A = self._appearance
 
         # PDF graphics operators doesn't have an ellipse method, so we have to
         # construct it from four bezier curves
-        left_x = L.x1 + A.stroke_width
-        right_x = L.x2 - A.stroke_width
+        left_x = L.x1
+        right_x = L.x2
         bottom_x = left_x + (right_x - left_x) / 2.0
         top_x = bottom_x
 
-        bottom_y = L.y1 + A.stroke_width
-        top_y = L.y2 - A.stroke_width
+        bottom_y = L.y1
+        top_y = L.y2
         left_y = bottom_y + (top_y - bottom_y) / 2.0
         right_y = left_y
 
@@ -193,10 +191,21 @@ class Circle(Annotation):
         # TODO fill
         return stream.getvalue()
 
-    def make_rect(self):
+    def get_matrix(self):
+        stroke_width = self._appearance.stroke_width
         return [
-            self._location.x1, self._location.y1,
-            self._location.x2, self._location.y2,
+            1, 0, 0, 1,
+            -(self._location.x1 - stroke_width),
+            -(self._location.y1 - stroke_width),
+        ]
+
+    def make_rect(self):
+        stroke_width = self._appearance.stroke_width
+        return [
+            self._location.x1 - stroke_width,
+            self._location.y1 - stroke_width,
+            self._location.x2 + stroke_width,
+            self._location.y2 + stroke_width,
         ]
 
     def as_pdf_object(self):
@@ -216,9 +225,38 @@ class Line(Annotation):
     subtype = 'Line'
 
     def make_rect(self):
+        stroke_width = self._appearance.stroke_width
         min_x, max_x = sorted([self._location.x1, self._location.x2])
         min_y, max_y = sorted([self._location.y1, self._location.y2])
-        return [min_x, min_y, max_x, max_y]
+        return [
+            min_x - stroke_width,
+            min_y - stroke_width,
+            max_x + stroke_width,
+            max_y + stroke_width,
+        ]
+
+    def get_matrix(self):
+        # Note: Acrobat and BB put padding that's not quite the same as the
+        # stroke width here. I'm not quite sure why yet, so I'm not changing it.
+        stroke_width = self._appearance.stroke_width
+        return [
+            1, 0, 0, 1,
+            -(self._location.x1 - stroke_width),
+            -(self._location.y1 - stroke_width),
+        ]
+
+    def graphics_commands(self):
+        L = self._location
+        A = self._appearance
+
+        stream = StringIO()
+        stream.write('{} {} {} RG '.format(*A.stroke_color))
+        stream.write('{} w '.format(A.stroke_width))
+        stream.write('{} {} m '.format(L.x1, L.y1))
+        stream.write('{} {} l '.format(L.x2, L.y2))
+        stream.write('S')
+
+        return stream.getvalue()
 
     def as_pdf_object(self):
         obj = self.make_base_object()
@@ -228,6 +266,7 @@ class Line(Annotation):
             self._location.x1, self._location.y1,
             self._location.x2, self._location.y2,
         ]
+        obj.AP = self.make_ap_dict()
         # TODO line endings, leader lines, captions
         return obj
 
@@ -288,4 +327,4 @@ class FreeText(object):
 
 
 class Stamp(object):
-    pass
+    subtype = 'Stamp'
