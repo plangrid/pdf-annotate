@@ -276,6 +276,34 @@ class Circle(Annotation):
 class Line(Annotation):
     subtype = 'Line'
 
+    @staticmethod
+    def rotate(location, rotate, page_size):
+        if rotate == 0:
+            return location
+
+        l = location.copy()
+        # TODO this rotation shit'll have to be DRYed
+        if rotate == 90:
+            width = page_size[0]
+            l.x1 = width - location.y1
+            l.y1 = location.x1
+            l.x2 = width - location.y2
+            l.y2 = location.x2
+        elif rotate == 180:
+            width, height = page_size
+            l.x1 = width - location.x1
+            l.y1 = height - location.y1
+            l.x2 = width - location.x2
+            l.y2 = height - location.y2
+        elif rotate == 270:
+            height = page_size[1]
+            l.x1 = location.y1
+            l.y1 = height - location.x1
+            l.x2 = location.y2
+            l.y2 = height - location.x2
+
+        return l
+
     def make_rect(self):
         stroke_width = self._appearance.stroke_width
         min_x, max_x = sorted([self._location.x1, self._location.x2])
