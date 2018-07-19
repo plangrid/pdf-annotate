@@ -37,13 +37,6 @@ class PDF(object):
             ))
         return self._reader.pages[page_number]
 
-    def get_size(self, page_number):
-        """Returns the size of the specified page's MediaBox."""
-        page = self.get_page(page_number)
-        # TODO Might need to check the parent, since MediaBox is inheritable
-        x1, y1, x2, y2 = map(float, page.MediaBox)
-        return (x2 - x1, y2 - y1)
-
     def get_rotation(self, page_number):
         """Returns the rotation of a specified page."""
         page = self.get_page(page_number)
@@ -61,7 +54,14 @@ class PdfAnnotator(object):
 
     def get_size(self, page_number):
         """Returns the size of the specified page's MediaBox."""
-        return self._pdf.get_size(page_number)
+        page = self._pdf.get_page(page_number)
+        x1, y1, x2, y2 = map(float, page.MediaBox)
+        rotation = self._pdf.get_rotation(page_number)
+
+        if not self._draw_on_rotated_pages or rotation in (0, 180):
+            return (x2 - x1, y2 - y1)
+
+        return (y2 - y1, x2 - x1)
 
     def add_annotation(
         self,
