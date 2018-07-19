@@ -12,6 +12,7 @@ from pdf_annotate.annotations import (
     Polyline,
     Square,
 )
+from pdf_annotate.utils import normalize_rotation
 
 
 NAME_TO_ANNOTATION = {
@@ -36,19 +37,31 @@ class PDF(object):
             ))
         return self._reader.pages[page_number]
 
-
-class PdfAnnotator(object):
-
-    def __init__(self, filename):
-        self._filename = filename
-        self._pdf = PDF(filename)
-
     def get_size(self, page_number):
         """Returns the size of the specified page's MediaBox."""
-        page = self._pdf.get_page(page_number)
+        page = self.get_page(page_number)
         # TODO Might need to check the parent, since MediaBox is inheritable
         x1, y1, x2, y2 = map(float, page.MediaBox)
         return (x2 - x1, y2 - y1)
+
+    def get_rotation(self, page_number):
+        """Returns the rotation of a specified page."""
+        page = self.get_page(page_number)
+        # TODO need to check parent since Rotate is inheritable
+        rotate = int(page.Rotate or 0)
+        return normalize_rotation(rotate)
+
+
+class PdfAnnotator(object):
+
+    def __init__(self, filename, draw_on_rotated_pages=True):
+        self._filename = filename
+        self._pdf = PDF(filename)
+        self._draw_on_rotated_pages = draw_on_rotated_pages
+
+    def get_size(self, page_number):
+        """Returns the size of the specified page's MediaBox."""
+        return self._pdf.get_size(page_number)
 
     def add_annotation(
         self,
@@ -73,6 +86,14 @@ class PdfAnnotator(object):
             raise ValueError('Invalid/unsupported annotation type: {}'.format(
                 annotation_type
             ))
+        # Rotate all elements of the location so we can act like we're drawing
+        # on the page in a viewer.
+        if self._draw_on_rotated_pages:
+            location = annotation_cls.rotate(
+                location,
+                self._pdf.get_rotation(location.page),
+                self.get_size(location.page),
+            )
         annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
         self._add_annotation(annotation)
@@ -98,11 +119,23 @@ class PdfAnnotator(object):
 
 # TODO this is super unclear how these are used
 class Location(object):
+
+    whitelist_kwargs = frozenset(['points', 'x1', 'y1', 'x2', 'y2', 'page'])
+
     def __init__(self, **kwargs):
         if 'page' not in kwargs:
             raise ValueError('Must set page on annotations')
         for k, v in kwargs.items():
+            if k not in self.whitelist_kwargs:
+                raise ValueError('Invalid Location kwarg: {}'.format(k))
             setattr(self, k, v)
+
+    def copy(self):
+        L = Location(page=self.page)
+        for k, v in self.__dict__.items():
+            if k in self.whitelist_kwargs:
+                setattr(L, k, v)
+        return L
 
 
 class Appearance(object):
