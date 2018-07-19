@@ -12,6 +12,8 @@ from pdf_annotate.annotations import (
     Polyline,
     Square,
 )
+from pdf_annotate.appearance import Appearance
+from pdf_annotate.location import Location
 from pdf_annotate.utils import normalize_rotation
 
 
@@ -115,39 +117,3 @@ class PdfAnnotator(object):
 
         writer = PdfWriter(version=self._pdf.pdf_version)
         writer.write(fname=filename, trailer=self._pdf._reader)
-
-
-# TODO this is super unclear how these are used
-class Location(object):
-
-    whitelist_kwargs = frozenset(['points', 'x1', 'y1', 'x2', 'y2', 'page'])
-
-    def __init__(self, **kwargs):
-        if 'page' not in kwargs:
-            raise ValueError('Must set page on annotations')
-        for k, v in kwargs.items():
-            if k not in self.whitelist_kwargs:
-                raise ValueError('Invalid Location kwarg: {}'.format(k))
-            setattr(self, k, v)
-
-    def copy(self):
-        L = Location(page=self.page)
-        for k, v in self.__dict__.items():
-            if k in self.whitelist_kwargs:
-                setattr(L, k, v)
-        return L
-
-
-class Appearance(object):
-    BLACK = (0, 0, 0)
-    TRANSPARENT = tuple()
-
-    def __init__(self, **kwargs):
-        self.stroke_color = kwargs.get('stroke_color', self.BLACK)
-        self.stroke_width = kwargs.get('stroke_width', 1)
-        self.border_style = kwargs.get('border_style', 'S')
-        self.fill = kwargs.get('fill', self.TRANSPARENT)
-        self.dash_array = kwargs.get('dash_array', None)
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)

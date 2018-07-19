@@ -1,6 +1,8 @@
 from pdfrw.objects import PdfDict, PdfName
 from six import StringIO
 
+from pdf_annotate.appearance import Appearance
+
 
 ALL_VERSIONS = ('1.3', '1.4', '1.5', '1.6', '1.7')
 
@@ -91,6 +93,26 @@ def make_border_dict(appearance):
     return border
 
 
+def set_appearance_state(stream, A):
+    """Update the graphics command stream to reflect appearance properties.
+
+    :param StringIO stream: current string of graphics state
+    :param Appearance A: appearance object
+    """
+    stream.write('{} {} {} RG '.format(*A.stroke_color))
+    stream.write('{} w '.format(A.stroke_width))
+    # TODO support more color spaces - CMYK and GrayScale
+    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
+        stream.write('{} {} {} rg '.format(*A.fill))
+
+
+def stroke_or_fill(stream, A):
+    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
+        stream.write('B ')
+    else:
+        stream.write('S ')
+
+
 class Square(Annotation):
     subtype = 'Square'
 
@@ -138,17 +160,19 @@ class Square(Annotation):
         ]
 
     def graphics_commands(self):
-        stream = StringIO()
         L = self._location
         A = self._appearance
-        stream.write('{} {} {} RG '.format(*A.stroke_color))
-        stream.write('{} w '.format(A.stroke_width))
-        stream.write('{} {} {} {} re S '.format(
+        stream = StringIO()
+
+        set_appearance_state(stream, A)
+        stream.write('{} {} {} {} re '.format(
             L.x1,
             L.y1,
             L.x2 - L.x1,
             L.y2 - L.y1,
         ))
+        stroke_or_fill(stream, A)
+
         # TODO dash array
         # TODO fill
         return stream.getvalue()
@@ -212,8 +236,7 @@ class Circle(Annotation):
         right_y = left_y
 
         stream = StringIO()
-        stream.write('{} {} {} RG '.format(*A.stroke_color))
-        stream.write('{} w '.format(A.stroke_width))
+        set_appearance_state(stream, A)
         # Move to the bottom of the circle, then four curves around.
         # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
         cp_offset = 0.552284749831
@@ -238,7 +261,9 @@ class Circle(Annotation):
             bottom_x - (bottom_x - left_x) * cp_offset, bottom_y,
             bottom_x, bottom_y,
         ))
-        stream.write('h S ')
+        stream.write('h ')
+        stroke_or_fill(stream, A)
+
         # TODO dash array
         # TODO fill
         return stream.getvalue()
@@ -330,11 +355,10 @@ class Line(Annotation):
         A = self._appearance
 
         stream = StringIO()
-        stream.write('{} {} {} RG '.format(*A.stroke_color))
-        stream.write('{} w '.format(A.stroke_width))
+        set_appearance_state(stream, A)
         stream.write('{} {} m '.format(L.x1, L.y1))
         stream.write('{} {} l '.format(L.x2, L.y2))
-        stream.write('S')
+        stroke_or_fill(stream, A)
 
         return stream.getvalue()
 
@@ -386,13 +410,12 @@ class Polygon(Annotation):
         points = L.points
 
         stream = StringIO()
-        stream.write('{} {} {} RG '.format(*A.stroke_color))
-        stream.write('{} w '.format(A.stroke_width))
-
+        set_appearance_state(stream, A)
         stream.write('{} {} m '.format(points[0][0], points[0][1]))
         for x, y in points[1:]:
             stream.write('{} {} l '.format(x, y))
-        stream.write('s')
+        stream.write('h ')
+        stroke_or_fill(stream, A)
 
         return stream.getvalue()
 
