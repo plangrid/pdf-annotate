@@ -102,6 +102,32 @@ class Square(Annotation):
             -(self._location.y1 - stroke_width),
         ]
 
+    @staticmethod
+    def rotate(location, rotate, page_size):
+        if rotate == 0:
+            return location
+
+        l = location.copy()
+        if rotate == 90:
+            width = page_size[0]
+            l.x1 = width - location.y2
+            l.y1 = location.x1
+            l.x2 = width - location.y1
+            l.y2 = location.x2
+        elif rotate == 180:
+            width, height = page_size
+            l.x1 = width - location.x2
+            l.y1 = height - location.y2
+            l.x2 = width - location.x1
+            l.y2 = height - location.y1
+        elif rotate == 270:
+            height = page_size[1]
+            l.x1 = location.y1
+            l.y1 = height - location.x2
+            l.x2 = location.y2
+            l.y2 = height - location.x1
+        return l
+
     def make_rect(self):
         stroke_width = self._appearance.stroke_width
         return [
@@ -142,6 +168,32 @@ class Square(Annotation):
 
 class Circle(Annotation):
     subtype = 'Circle'
+
+    @staticmethod
+    def rotate(location, rotate, page_size):
+        if rotate == 0:
+            return location
+
+        l = location.copy()
+        if rotate == 90:
+            width = page_size[0]
+            l.x1 = width - location.y2
+            l.y1 = location.x1
+            l.x2 = width - location.y1
+            l.y2 = location.x2
+        elif rotate == 180:
+            width, height = page_size
+            l.x1 = width - location.x2
+            l.y1 = height - location.y2
+            l.x2 = width - location.x1
+            l.y2 = height - location.y1
+        elif rotate == 270:
+            height = page_size[1]
+            l.x1 = location.y1
+            l.y1 = height - location.x2
+            l.x2 = location.y2
+            l.y2 = height - location.x1
+        return l
 
     def graphics_commands(self):
         L = self._location
