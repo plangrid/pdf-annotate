@@ -204,6 +204,16 @@ class Circle(Annotation):
     subtype = 'Circle'
 
     @staticmethod
+    def scale(location, scale):
+        x_scale, y_scale = scale
+        l = location.copy()
+        l.x1 = location.x1 * x_scale
+        l.y1 = location.y1 * y_scale
+        l.x2 = location.x2 * x_scale
+        l.y2 = location.y2 * y_scale
+        return l
+
+    @staticmethod
     def rotate(location, rotate, page_size):
         if rotate == 0:
             return location
@@ -310,6 +320,16 @@ class Circle(Annotation):
 
 class Line(Annotation):
     subtype = 'Line'
+
+    @staticmethod
+    def scale(location, scale):
+        x_scale, y_scale = scale
+        l = location.copy()
+        l.x1 = location.x1 * x_scale
+        l.y1 = location.y1 * y_scale
+        l.x2 = location.x2 * x_scale
+        l.y2 = location.y2 * y_scale
+        return l
 
     @staticmethod
     def rotate(location, rotate, page_size):
