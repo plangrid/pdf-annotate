@@ -1,3 +1,7 @@
+[![Documentation Status](http://docs.planfront.net/projects/pdf-annotate/badge/?version=latest)](http://docs.planfront.net/docs/pdf-annotate/?badge=latest)
+
+Docs are in docs/ and http://docs.planfront.net/docs/pdf-annotate/
+
 # pdf-annotate
 A pure-python library to add annotations to PDFs.
 
