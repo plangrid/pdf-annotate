@@ -131,7 +131,7 @@ class Square(Annotation):
 
         l = location.copy()
         if rotate == 90:
-            width = page_size[0]
+            width = page_size[1]
             l.x1 = width - location.y2
             l.y1 = location.x1
             l.x2 = width - location.y1
@@ -143,7 +143,7 @@ class Square(Annotation):
             l.x2 = width - location.x1
             l.y2 = height - location.y1
         elif rotate == 270:
-            height = page_size[1]
+            height = page_size[0]
             l.x1 = location.y1
             l.y1 = height - location.x2
             l.x2 = location.y2
@@ -200,7 +200,7 @@ class Circle(Annotation):
 
         l = location.copy()
         if rotate == 90:
-            width = page_size[0]
+            width = page_size[1]
             l.x1 = width - location.y2
             l.y1 = location.x1
             l.x2 = width - location.y1
@@ -212,7 +212,7 @@ class Circle(Annotation):
             l.x2 = width - location.x1
             l.y2 = height - location.y1
         elif rotate == 270:
-            height = page_size[1]
+            height = page_size[0]
             l.x1 = location.y1
             l.y1 = height - location.x2
             l.x2 = location.y2
@@ -309,7 +309,7 @@ class Line(Annotation):
         l = location.copy()
         # TODO this rotation shit'll have to be DRYed
         if rotate == 90:
-            width = page_size[0]
+            width = page_size[1]
             l.x1 = width - location.y1
             l.y1 = location.x1
             l.x2 = width - location.y2
@@ -321,7 +321,7 @@ class Line(Annotation):
             l.x2 = width - location.x2
             l.y2 = height - location.y2
         elif rotate == 270:
-            height = page_size[1]
+            height = page_size[0]
             l.x1 = location.y1
             l.y1 = height - location.x1
             l.x2 = location.y2
