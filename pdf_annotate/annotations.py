@@ -150,6 +150,16 @@ class Square(Annotation):
             l.y2 = height - location.x1
         return l
 
+    @staticmethod
+    def scale(location, scale):
+        x_scale, y_scale = scale
+        l = location.copy()
+        l.x1 = location.x1 * x_scale
+        l.y1 = location.y1 * y_scale
+        l.x2 = location.x2 * x_scale
+        l.y2 = location.y2 * y_scale
+        return l
+
     def make_rect(self):
         stroke_width = self._appearance.stroke_width
         return [
