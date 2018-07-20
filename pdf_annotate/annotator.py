@@ -6,13 +6,11 @@ just additional shapes/whatever burned into the PDF content stream.
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
-from pdf_annotate.annotations import (
-    Circle,
-    Line,
-    Polygon,
-    Polyline,
-    Square,
-)
+from pdf_annotate.points_annotations import Line
+from pdf_annotate.points_annotations import Polygon
+from pdf_annotate.points_annotations import Polyline
+from pdf_annotate.rect_annotations import Circle
+from pdf_annotate.rect_annotations import Square
 from pdf_annotate.appearance import Appearance
 from pdf_annotate.location import Location
 from pdf_annotate.utils import is_numeric
