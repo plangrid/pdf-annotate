@@ -114,61 +114,67 @@ def stroke_or_fill(stream, A):
         stream.write('S ')
 
 
+def rotate_rect(location, rotate, page_size):
+    if rotate == 0:
+        return location
+
+    l = location.copy()
+    if rotate == 90:
+        width = page_size[1]
+        l.x1 = width - location.y2
+        l.y1 = location.x1
+        l.x2 = width - location.y1
+        l.y2 = location.x2
+    elif rotate == 180:
+        width, height = page_size
+        l.x1 = width - location.x2
+        l.y1 = height - location.y2
+        l.x2 = width - location.x1
+        l.y2 = height - location.y1
+    elif rotate == 270:
+        height = page_size[0]
+        l.x1 = location.y1
+        l.y1 = height - location.x2
+        l.x2 = location.y2
+        l.y2 = height - location.x1
+    return l
+
+
+def get_padded_matrix(A, L):
+    stroke_width = A.stroke_width
+    return [1, 0, 0, 1, -(L.x1 - stroke_width), -(L.y1 - stroke_width)]
+
+
+def make_padded_rect(A, L):
+    stroke_width = A.stroke_width
+    return [
+        L.x1 - stroke_width,
+        L.y1 - stroke_width,
+        L.x2 + stroke_width,
+        L.y2 + stroke_width,
+    ]
+
+
+def scale_rect(location, scale):
+    x_scale, y_scale = scale
+    l = location.copy()
+    l.x1 = location.x1 * x_scale
+    l.y1 = location.y1 * y_scale
+    l.x2 = location.x2 * x_scale
+    l.y2 = location.y2 * y_scale
+    return l
+
+
 class Square(Annotation):
     subtype = 'Square'
+    rotate = rotate_rect
+    scale = scale_rect
 
     def get_matrix(self):
-        stroke_width = self._appearance.stroke_width
-        return [
-            1, 0, 0, 1,
-            -(self._location.x1 - stroke_width),
-            -(self._location.y1 - stroke_width),
-        ]
-
-    @staticmethod
-    def rotate(location, rotate, page_size):
-        if rotate == 0:
-            return location
-
-        l = location.copy()
-        if rotate == 90:
-            width = page_size[1]
-            l.x1 = width - location.y2
-            l.y1 = location.x1
-            l.x2 = width - location.y1
-            l.y2 = location.x2
-        elif rotate == 180:
-            width, height = page_size
-            l.x1 = width - location.x2
-            l.y1 = height - location.y2
-            l.x2 = width - location.x1
-            l.y2 = height - location.y1
-        elif rotate == 270:
-            height = page_size[0]
-            l.x1 = location.y1
-            l.y1 = height - location.x2
-            l.x2 = location.y2
-            l.y2 = height - location.x1
-        return l
-
-    @staticmethod
-    def scale(location, scale):
-        x_scale, y_scale = scale
-        l = location.copy()
-        l.x1 = location.x1 * x_scale
-        l.y1 = location.y1 * y_scale
-        l.x2 = location.x2 * x_scale
-        l.y2 = location.y2 * y_scale
-        return l
+        return get_padded_matrix(self._appearance, self._location)
 
     def make_rect(self):
-        stroke_width = self._appearance.stroke_width
-        return [
-            self._location.x1 - stroke_width,
-            self._location.y1 - stroke_width,
-            self._location.x2 + stroke_width,
-            self._location.y2 + stroke_width,
-        ]
+        return make_padded_rect(self._appearance, self._location)
 
     def graphics_commands(self):
         L = self._location
@@ -185,7 +191,6 @@ class Square(Annotation):
         stroke_or_fill(stream, A)
 
         # TODO dash array
-        # TODO fill
         return stream.getvalue()
 
     def as_pdf_object(self):
@@ -201,44 +206,11 @@ class Square(Annotation):
         return obj
 
 
-class Circle(Annotation):
+class Circle(Square):
+    """Circles and Squares are basically the same PDF annotation but with
+    different content streams.
+    """
     subtype = 'Circle'
-
-    @staticmethod
-    def scale(location, scale):
-        x_scale, y_scale = scale
-        l = location.copy()
-        l.x1 = location.x1 * x_scale
-        l.y1 = location.y1 * y_scale
-        l.x2 = location.x2 * x_scale
-        l.y2 = location.y2 * y_scale
-        return l
-
-    @staticmethod
-    def rotate(location, rotate, page_size):
-        if rotate == 0:
-            return location
-
-        l = location.copy()
-        if rotate == 90:
-            width = page_size[1]
-            l.x1 = width - location.y2
-            l.y1 = location.x1
-            l.x2 = width - location.y1
-            l.y2 = location.x2
-        elif rotate == 180:
-            width, height = page_size
-            l.x1 = width - location.x2
-            l.y1 = height - location.y2
-            l.x2 = width - location.x1
-            l.y2 = height - location.y1
-        elif rotate == 270:
-            height = page_size[0]
-            l.x1 = location.y1
-            l.y1 = height - location.x2
-            l.x2 = location.y2
-            l.y2 = height - location.x1
-        return l
 
     def graphics_commands(self):
         L = self._location
@@ -285,110 +257,64 @@ class Circle(Annotation):
         stream.write('h ')
         stroke_or_fill(stream, A)
 
-        # TODO dash array
-        # TODO fill
         return stream.getvalue()
 
-    def get_matrix(self):
-        stroke_width = self._appearance.stroke_width
-        return [
-            1, 0, 0, 1,
-            -(self._location.x1 - stroke_width),
-            -(self._location.y1 - stroke_width),
-        ]
 
-    def make_rect(self):
-        stroke_width = self._appearance.stroke_width
-        return [
-            self._location.x1 - stroke_width,
-            self._location.y1 - stroke_width,
-            self._location.x2 + stroke_width,
-            self._location.y2 + stroke_width,
-        ]
+def rotate_points(location, rotate, page_size):
+    if rotate == 0:
+        return location
 
-    def as_pdf_object(self):
-        obj = self.make_base_object()
-        A = self._appearance
-        obj.BS = make_border_dict(A)
-        obj.C = A.stroke_color
-        if A.fill:
-            obj.IC = A.fill
-        obj.AP = self.make_ap_dict()
-        padding = A.stroke_width / 2.0
-        obj.RD = [padding, padding, padding, padding]
-        return obj
+    l = location.copy()
+
+    if rotate == 90:
+        width = page_size[1]
+        points = [[width - y, x] for x, y in location.points]
+    elif rotate == 180:
+        width, height = page_size
+        points = [[width - x, height - y] for x, y in location.points]
+    else:
+        height = page_size[0]
+        points = [[y, height - x] for x, y in location.points]
+
+    l.points = points
+    return l
+
+
+def flatten_points(points):
+    return [v for point in points for v in point]
+
+
+def scale_points(location, scale):
+    x_scale, y_scale = scale
+    l = location.copy()
+    points = [[x * x_scale, y * y_scale] for x, y in location.points]
+    l.points = points
+    return l
 
 
 class Line(Annotation):
     subtype = 'Line'
 
-    @staticmethod
-    def scale(location, scale):
-        x_scale, y_scale = scale
-        l = location.copy()
-        l.x1 = location.x1 * x_scale
-        l.y1 = location.y1 * y_scale
-        l.x2 = location.x2 * x_scale
-        l.y2 = location.y2 * y_scale
-        return l
-
-    @staticmethod
-    def rotate(location, rotate, page_size):
-        if rotate == 0:
-            return location
-
-        l = location.copy()
-        # TODO this rotation shit'll have to be DRYed
-        if rotate == 90:
-            width = page_size[1]
-            l.x1 = width - location.y1
-            l.y1 = location.x1
-            l.x2 = width - location.y2
-            l.y2 = location.x2
-        elif rotate == 180:
-            width, height = page_size
-            l.x1 = width - location.x1
-            l.y1 = height - location.y1
-            l.x2 = width - location.x2
-            l.y2 = height - location.y2
-        elif rotate == 270:
-            height = page_size[0]
-            l.x1 = location.y1
-            l.y1 = height - location.x1
-            l.x2 = location.y2
-            l.y2 = height - location.x2
-
-        return l
+    scale = scale_points
+    rotate = rotate_points
 
     def make_rect(self):
-        stroke_width = self._appearance.stroke_width
-        min_x, max_x = sorted([self._location.x1, self._location.x2])
-        min_y, max_y = sorted([self._location.y1, self._location.y2])
-        return [
-            min_x - stroke_width,
-            min_y - stroke_width,
-            max_x + stroke_width,
-            max_y + stroke_width,
-        ]
+        return make_points_rect(self._location, self._appearance.stroke_width)
 
     def get_matrix(self):
         # Note: Acrobat and BB put padding that's not quite the same as the
         # stroke width here. I'm not quite sure why yet, so I'm not changing it.
-        stroke_width = self._appearance.stroke_width
-        return [
-            1, 0, 0, 1,
-            -(self._location.x1 - stroke_width),
-            -(self._location.y1 - stroke_width),
-        ]
+        rect = self.make_rect()
+        return [1, 0, 0, 1, -rect[0], -rect[1]]
 
     def graphics_commands(self):
-        L = self._location
         A = self._appearance
+        points = self._location.points
 
         stream = StringIO()
         set_appearance_state(stream, A)
-        stream.write('{} {} m '.format(L.x1, L.y1))
-        stream.write('{} {} l '.format(L.x2, L.y2))
+        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        stream.write('{} {} l '.format(points[1][0], points[1][1]))
         stroke_or_fill(stream, A)
 
         return stream.getvalue()
@@ -397,10 +323,7 @@ class Line(Annotation):
         obj = self.make_base_object()
         obj.BS = make_border_dict(self._appearance)
         obj.C = self._appearance.stroke_color
-        obj.L = [
-            self._location.x1, self._location.y1,
-            self._location.x2, self._location.y2,
-        ]
+        obj.L = flatten_points(self._location.points)
         obj.AP = self.make_ap_dict()
         # TODO line endings, leader lines, captions
         return obj
@@ -436,9 +359,8 @@ class Polygon(Annotation):
         return [1, 0, 0, 1, -rect[0], -rect[1]]
 
     def graphics_commands(self):
-        L = self._location
         A = self._appearance
-        points = L.points
+        points = self._location.points
 
         stream = StringIO()
         set_appearance_state(stream, A)
@@ -456,30 +378,17 @@ class Polygon(Annotation):
         obj.C = self._appearance.stroke_color
         if self._appearance.fill:
             obj.IC = self._appearance.fill
-        # Flatten list of [[x, y], [x, y], ...]
-        obj.Vertices = [v for point in self._location.points for v in point]
+        obj.Vertices = flatten_points(self._location.points)
         obj.AP = self.make_ap_dict()
         return obj
 
 
-class Polyline(Annotation):
+class Polyline(Polygon):
+    """Polyline is exactly the same as a Polygon, other than fill should
+    never be specified, so it should only be stroked.
+    """
     subtype = 'PolyLine'
     versions = ('1.5', '1.6', '1.7')
-
-    def make_rect(self):
-        return make_points_rect(self._location, self._appearance.stroke_width)
-
-    def as_pdf_object(self):
-        # TODO close attribute?
-        obj = self.make_base_object()
-        obj.BS = make_border_dict(self._appearance)
-        obj.C = self._appearance.stroke_color
-        if self._appearance.fill:
-            obj.IC = self._appearance.fill
-        # Flatten list of [[x, y], [x, y], ...]
-        obj.Vertices = [v for point in self._location.points for v in point]
-        obj.AP = self.make_ap_dict()
-        return obj
 
 
 class Ink(object):
