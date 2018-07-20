@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pdfrw.objects import PdfDict, PdfName
 from six import StringIO
 

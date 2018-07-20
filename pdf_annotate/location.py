@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # TODO this is super unclear how these are used
 class Location(object):
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class Appearance(object):
     BLACK = (0, 0, 0)
     TRANSPARENT = tuple()
