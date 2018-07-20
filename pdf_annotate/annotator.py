@@ -129,17 +129,16 @@ class PdfAnnotator(object):
                 annotation_type
             ))
 
-        import ipdb; ipdb.set_trace()
         scale, rotate = self._get_scale_rotate(location.page)
+        if scale is not None:
+            location = annotation_cls.scale(location, scale)
+
         if rotate:
             location = annotation_cls.rotate(
                 location,
                 self._pdf.get_rotation(location.page),
                 self.get_size(location.page),
             )
-
-        if scale is not None:
-            location = annotation_cls.scale(location, scale)
 
         annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
