@@ -12,3 +12,6 @@ tags
 
 # local testing
 scripts
+
+.pytest_cache
+.tox

@@ -38,3 +38,11 @@ a.set_page_dimensions((1275, 1650), 0)
 Note that these are the dimensions of an un-rotated 8.5"x11" page rastered at 150 DPI. If the same page is
 rotated 90° or 270°, you would pass in `(1650, 1275)`.
 Setting page dimensions specifically overrides document-wide scale and rotation settings.
+
+## Local Development
+Tests are run against several supported python versions using `tox`. To get this to
+work, you need versioned python executables - e.g. `python3.5` - in your path.
+
+An opinionated setup, which assumes you have certain python versions installed,
+and that you use `pyenv`, is provided by `make setup`. After this you can run
+`tox` to run tests.
