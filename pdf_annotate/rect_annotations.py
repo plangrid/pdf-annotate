@@ -1,4 +1,4 @@
-crom six import StringIO
+from six import StringIO
 
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
