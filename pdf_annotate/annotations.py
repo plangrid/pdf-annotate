@@ -62,6 +62,7 @@ class Annotation(object):
             stream=self.graphics_commands(),
             **{
                 'BBox': self.make_rect(),
+                # TODO Resources needs to include a Font entry for text annotations
                 'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
                 'Matrix': self.get_matrix(),
                 'Type': PdfName('XObject'),
@@ -92,34 +93,6 @@ def make_border_dict(appearance):
             raise ValueError('Dash array only applies to dashed borders!')
         border.D = appearance.dash_array
     return border
-
-
-def set_appearance_state(stream, A):
-    """Update the graphics command stream to reflect appearance properties.
-
-    :param StringIO stream: current string of graphics state
-    :param Appearance A: appearance object
-    """
-    stream.write('{} {} {} RG '.format(*A.stroke_color))
-    stream.write('{} w '.format(A.stroke_width))
-    # TODO support more color spaces - CMYK and GrayScale
-    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
-        stream.write('{} {} {} rg '.format(*A.fill))
-
-
-def stroke(stream):
-    stream.write('S ')
-
-
-def stroke_or_fill(stream, A):
-    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
-        stream.write('B ')
-    else:
-        stroke(stream)
-
-
-class FreeText(object):
-    subtype = 'FreeText'
 
 
 class Stamp(object):

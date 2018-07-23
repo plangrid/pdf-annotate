@@ -2,8 +2,8 @@ from six import StringIO
 
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
-from pdf_annotate.annotations import set_appearance_state
-from pdf_annotate.annotations import stroke_or_fill
+from pdf_annotate.graphics import set_appearance_state
+from pdf_annotate.graphics import stroke_or_fill
 
 
 class RectAnnotation(Annotation):

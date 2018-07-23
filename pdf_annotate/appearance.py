@@ -9,6 +9,7 @@ class Appearance(object):
         self.border_style = kwargs.get('border_style', 'S')
         self.fill = kwargs.get('fill', self.TRANSPARENT)
         self.dash_array = kwargs.get('dash_array', None)
+        self.font_size = kwargs.get('font_size', None)
 
         for k, v in kwargs.items():
             setattr(self, k, v)
