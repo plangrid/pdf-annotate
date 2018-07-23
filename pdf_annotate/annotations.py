@@ -107,15 +107,15 @@ def set_appearance_state(stream, A):
         stream.write('{} {} {} rg '.format(*A.fill))
 
 
+def stroke(stream):
+    stream.write('S ')
+
+
 def stroke_or_fill(stream, A):
     if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
         stream.write('B ')
     else:
-        stream.write('S ')
-
-
-class Ink(object):
-    subtype = 'Ink'
+        stroke(stream)
 
 
 class FreeText(object):
