@@ -23,6 +23,7 @@ class Annotation(object):
     editing.
     """
     versions = ALL_VERSIONS
+    font = None
 
     def __init__(self, location, appearance, metadata=None):
         self._location = location
@@ -57,13 +58,26 @@ class Annotation(object):
     def get_matrix(self):
         raise NotImplementedError()
 
+    def make_font(self):
+        # TODO this should make sure this includes an indirect object
+        return PdfDict(
+            Type=PdfName('Font'),
+            Subtype=PdfName('Type1'),
+            BaseFont=PdfName('Helvetica'),
+        )
+
     def make_n_dict(self):
+        resources = {'ProcSet': PdfName('PDF')}
+        if self.font is not None:
+            resources['Font'] = PdfDict(**{
+                self.font: self.make_font(),
+            })
+
         return PdfDict(
             stream=self.graphics_commands(),
             **{
                 'BBox': self.make_rect(),
-                # TODO Resources needs to include a Font entry for text annotations
-                'Resources': PdfDict(**{'ProcSet': PdfName('PDF')}),
+                'Resources': PdfDict(**resources),
                 'Matrix': self.get_matrix(),
                 'Type': PdfName('XObject'),
                 'Subtype': PdfName('Form'),
