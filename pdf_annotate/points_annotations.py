@@ -3,20 +3,18 @@ from six import StringIO
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
 from pdf_annotate.annotations import set_appearance_state
+from pdf_annotate.annotations import stroke
 from pdf_annotate.annotations import stroke_or_fill
-
-
 
 
 def flatten_points(points):
     return [v for point in points for v in point]
 
 
-
-
-class Line(Annotation):
-    subtype = 'Line'
-
+class PointsAnnotation(Annotation):
+    """An abstract annotation that defines its location on the document with
+    an array of points.
+    """
     @staticmethod
     def scale(location, scale):
         x_scale, y_scale = scale
@@ -68,6 +66,18 @@ class Line(Annotation):
         rect = self.make_rect()
         return [1, 0, 0, 1, -rect[0], -rect[1]]
 
+    def base_points_object(self):
+        obj = self.make_base_object()
+        obj.BS = make_border_dict(self._appearance)
+        obj.C = self._appearance.stroke_color
+        obj.AP = self.make_ap_dict()
+        # TODO line endings, leader lines, captions
+        return obj
+
+
+class Line(PointsAnnotation):
+    subtype = 'Line'
+
     def graphics_commands(self):
         A = self._appearance
         points = self._location.points
@@ -80,14 +90,6 @@ class Line(Annotation):
 
         return stream.getvalue()
 
-    def base_points_object(self):
-        obj = self.make_base_object()
-        obj.BS = make_border_dict(self._appearance)
-        obj.C = self._appearance.stroke_color
-        obj.AP = self.make_ap_dict()
-        # TODO line endings, leader lines, captions
-        return obj
-
     def as_pdf_object(self):
         obj = self.base_points_object()
         obj.L = flatten_points(self._location.points)
@@ -95,7 +97,7 @@ class Line(Annotation):
         return obj
 
 
-class Polygon(Line):
+class Polygon(PointsAnnotation):
     subtype = 'Polygon'
     versions = ('1.5', '1.6', '1.7')
 
@@ -121,12 +123,31 @@ class Polygon(Line):
         return obj
 
 
-class Polyline(Polygon):
-    """Polyline is exactly the same as a Polygon, other than fill should
-    never be specified, so it should only be stroked.
-    """
+class Polyline(PointsAnnotation):
     subtype = 'PolyLine'
     versions = ('1.5', '1.6', '1.7')
 
-    # TODO polyline is closed by default since it inherits graphics commands
-    # from Polygon, which is not what we want
+    def graphics_commands(self):
+        A = self._appearance
+        points = self._location.points
+
+        stream = StringIO()
+        set_appearance_state(stream, A)
+        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        for x, y in points[1:]:
+            stream.write('{} {} l '.format(x, y))
+        # TODO add a 'close' attribute?
+        stroke(stream, A)
+
+        return stream.getvalue()
+
+    def as_pdf_object(self):
+        obj = self.base_points_object()
+        if self._appearance.fill:
+            obj.IC = self._appearance.fill
+        obj.Vertices = flatten_points(self._location.points)
+        return obj
+
+
+class Ink(PointsAnnotation):
+    subtype = 'Ink'

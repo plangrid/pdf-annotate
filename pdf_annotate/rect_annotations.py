@@ -1,4 +1,4 @@
-from six import StringIO
+crom six import StringIO
 
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
@@ -6,9 +6,10 @@ from pdf_annotate.annotations import set_appearance_state
 from pdf_annotate.annotations import stroke_or_fill
 
 
-class Square(Annotation):
-    subtype = 'Square'
-
+class RectAnnotation(Annotation):
+    """Abstract annotation that defines its location on the document with a
+    width and a height.
+    """
     @staticmethod
     def rotate(location, rotate, page_size):
         if rotate == 0:
@@ -60,6 +61,22 @@ class Square(Annotation):
             L.y2 + stroke_width,
         ]
 
+    def as_pdf_object(self):
+        obj = self.make_base_object()
+        A = self._appearance
+        obj.BS = make_border_dict(A)
+        obj.C = A.stroke_color
+        if A.fill:
+            obj.IC = A.fill
+        obj.AP = self.make_ap_dict()
+        padding = A.stroke_width / 2.0
+        obj.RD = [padding, padding, padding, padding]
+        return obj
+
+
+class Square(RectAnnotation):
+    subtype = 'Square'
+
     def graphics_commands(self):
         L = self._location
         A = self._appearance
@@ -77,20 +94,8 @@ class Square(Annotation):
         # TODO dash array
         return stream.getvalue()
 
-    def as_pdf_object(self):
-        obj = self.make_base_object()
-        A = self._appearance
-        obj.BS = make_border_dict(A)
-        obj.C = A.stroke_color
-        if A.fill:
-            obj.IC = A.fill
-        obj.AP = self.make_ap_dict()
-        padding = A.stroke_width / 2.0
-        obj.RD = [padding, padding, padding, padding]
-        return obj
 
-
-class Circle(Square):
+class Circle(RectAnnotation):
     """Circles and Squares are basically the same PDF annotation but with
     different content streams.
     """
