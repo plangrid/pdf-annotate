@@ -89,7 +89,14 @@ class PdfAnnotator(object):
         self._dimensions[page_number] = dimensions
 
     def get_size(self, page_number):
-        """Returns the size of the specified page's MediaBox (pts)."""
+        """Returns the size of the specified page's MediaBox (pts), accounting
+        for page rotation.
+
+        :param int page_number:
+        :returns tuple: If page is rotated 90° or 270°, the returned value will
+            be (height, width) in PDF user space. Otherwise the returned value
+            will be (width, height).
+        """
         page = self._pdf.get_page(page_number)
         x1, y1, x2, y2 = map(float, page.inheritable.MediaBox)
         rotation = self._pdf.get_rotation(page_number)
@@ -114,6 +121,15 @@ class PdfAnnotator(object):
         :param Appearance appearance:
         :param Metadata metadata:
         """
+        annotation = self.get_annotation(
+            annotation_type,
+            location,
+            appearance,
+            metadata,
+        )
+        self._add_annotation(annotation)
+
+    def get_annotation(self, annotation_type, location, appearance, metadata):
         # TODO filter on valid PDF versions, by type
         # TODO allow more fine grained control by allowing specification of AP
         # dictionary that overrides other attributes.
@@ -136,7 +152,7 @@ class PdfAnnotator(object):
 
         annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
-        self._add_annotation(annotation)
+        return annotation
 
     def _get_scale_rotate(self, page_number):
         """Get scale for the given page. Always returns None or a 2-tuple."""
