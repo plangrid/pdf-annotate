@@ -6,6 +6,7 @@ just additional shapes/whatever burned into the PDF content stream.
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
+from pdf_annotate.points_annotations import Ink
 from pdf_annotate.points_annotations import Line
 from pdf_annotate.points_annotations import Polygon
 from pdf_annotate.points_annotations import Polyline
@@ -23,6 +24,7 @@ NAME_TO_ANNOTATION = {
     'line': Line,
     'polygon': Polygon,
     'polyline': Polyline,
+    'ink': Ink,
 }
 
 

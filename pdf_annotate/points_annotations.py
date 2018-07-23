@@ -137,7 +137,7 @@ class Polyline(PointsAnnotation):
         for x, y in points[1:]:
             stream.write('{} {} l '.format(x, y))
         # TODO add a 'close' attribute?
-        stroke(stream, A)
+        stroke(stream)
 
         return stream.getvalue()
 
@@ -151,3 +151,23 @@ class Polyline(PointsAnnotation):
 
 class Ink(PointsAnnotation):
     subtype = 'Ink'
+
+    def graphics_commands(self):
+        A = self._appearance
+        points = self._location.points
+
+        stream = StringIO()
+        set_appearance_state(stream, A)
+        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        # TODO "real" PDF editors do smart smoothing of ink points using
+        # interpolated Bezier curves.
+        for x, y in points[1:]:
+            stream.write('{} {} l '.format(x, y))
+        stroke(stream)
+
+        return stream.getvalue()
+
+    def as_pdf_object(self):
+        obj = self.base_points_object()
+        obj.InkList = [flatten_points(self._location.points)]
+        return obj
