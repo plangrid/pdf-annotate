@@ -95,17 +95,22 @@ class Annotation(object):
 
 
 def make_border_dict(appearance):
+    A = appearance
+    return _make_border_dict(A.stroke_width, A.border_style, A.dash_array)
+
+
+def _make_border_dict(width, style, dash_array=None):
     border = PdfDict(
         **{
             'Type': PdfName('Border'),
-            'W': appearance.stroke_width,
-            'S': PdfName(appearance.border_style),
+            'W': width,
+            'S': PdfName(style),
         }
     )
-    if appearance.dash_array:
-        if appearance.border_style != 'D':
+    if dash_array:
+        if style != 'D':
             raise ValueError('Dash array only applies to dashed borders!')
-        border.D = appearance.dash_array
+        border.D = dash_array
     return border
 
 
