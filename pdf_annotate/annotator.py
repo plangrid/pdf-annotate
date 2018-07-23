@@ -48,20 +48,14 @@ class PDF(object):
 
 class PdfAnnotator(object):
 
-    def __init__(
-        self,
-        filename,
-        draw_on_rotated_pages=True,
-        scale=None,
-        rastered_dimensions=None,
-    ):
+    def __init__(self, filename, draw_on_rotated_pages=True, scale=None):
         """Draw annotations directly on PDFs.
 
         :param str filename: file of PDF to read in
         :param bool draw_on_rotated_pages: if True (the default), draw on the
             PDF as if drawn in a viewing application. E.g. (0,0) in user space
-            on a PDF rotated 90° is (0,width) on the rotated PDF. Cannot be
-            False if rastered_dimensions is specified.
+            on a PDF rotated 90° is (0,width) on the rotated PDF. Overridden if
+            individual page dimensions are specified.
         :param number|tuple|None scale: number by which to scale all coordinates
             to get to default user space. Use this if, for example, your points
             in the coordinate space of the PDF viewed at a dpi. In this case,
