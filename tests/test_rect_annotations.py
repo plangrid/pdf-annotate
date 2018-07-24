@@ -60,7 +60,6 @@ class TestSquare(TestCase):
                 '/N': {
                     '/BBox': [9, 9, 21, 21],
                     '/FormType': 1,
-                    '/Length': '30',  # Depends on content stream
                     '/Matrix': [1, 0, 0, 1, -9, -9],
                     '/Resources': {'/ProcSet': '/PDF'},
                     '/Subtype': '/Form',
@@ -75,7 +74,9 @@ class TestSquare(TestCase):
             '/Subtype': '/Square',
             '/Type': '/Annot',
         }
-        assert dict(obj) == expected_dict
+        d = dict(obj)
+        d['/AP']['/N'].pop('/Length')
+        assert d == expected_dict
 
 
 class TestCircle(TestCase):
@@ -91,7 +92,6 @@ class TestCircle(TestCase):
                 '/N': {
                     '/BBox': [9, 9, 21, 21],
                     '/FormType': 1,
-                    '/Length': '219',  # Depends on content stream
                     '/Matrix': [1, 0, 0, 1, -9, -9],
                     '/Resources': {'/ProcSet': '/PDF'},
                     '/Subtype': '/Form',
@@ -106,4 +106,6 @@ class TestCircle(TestCase):
             '/Subtype': '/Circle',
             '/Type': '/Annot',
         }
-        assert dict(obj) == expected_dict
+        d = dict(obj)
+        d['/AP']['/N'].pop('/Length')
+        assert d == expected_dict

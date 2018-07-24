@@ -3,6 +3,8 @@
 Tool for adding annotations to PDF documents. Like, real PDF annotations, not
 just additional shapes/whatever burned into the PDF content stream.
 """
+import warnings
+
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
@@ -123,6 +125,7 @@ class PdfAnnotator(object):
         :param Appearance appearance:
         :param Metadata metadata:
         """
+        self._pre_add(location)
         annotation = self.get_annotation(
             annotation_type,
             location,
@@ -130,6 +133,15 @@ class PdfAnnotator(object):
             metadata,
         )
         self._add_annotation(annotation)
+
+    def _pre_add(self, location):
+        # Steps to take before trying to add an annotation to `location`
+        page = self._pdf.get_page(location.page)
+        user_unit = page.inheritable.UserUnit
+        if user_unit not in (1, None):
+            warnings.warn(
+                'Unsupported UserUnit (value: {})'.format(user_unit)
+            )
 
     def get_annotation(self, annotation_type, location, appearance, metadata):
         # TODO filter on valid PDF versions, by type
