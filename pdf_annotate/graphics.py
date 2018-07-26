@@ -1,6 +1,9 @@
 from pdf_annotate.appearance import Appearance
 
 
+ZERO_TOLERANCE = 0.00000000000001
+
+
 def set_appearance_state(stream, A):
     """Update the graphics command stream to reflect appearance properties.
 
@@ -31,3 +34,24 @@ def save(stream):
 
 def restore(stream):
     stream.write('Q ')
+
+
+def format_number(n):
+    # Really small numbers should just be rounded to 0
+    if -ZERO_TOLERANCE <= n <= ZERO_TOLERANCE:
+        return '0'
+    # Cut off unnecessary decimals
+    if n % 1 == 0:
+        return str(int(n))
+    # Otherwise return 10 decimal places
+    return '{:.10f}'.format(n)
+
+
+def set_cm(stream, matrix):
+    stream.write(' '.join([format_number(v) for v in matrix]))
+    stream.write(' cm ')
+
+
+def set_tm(stream, matrix):
+    stream.write(' '.join([str(v) for v in matrix]))
+    stream.write(' Tm ')

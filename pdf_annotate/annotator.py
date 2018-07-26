@@ -125,7 +125,7 @@ class PdfAnnotator(object):
         :param Appearance appearance:
         :param Metadata metadata:
         """
-        self._pre_add(location)
+        self._before_add(location)
         annotation = self.get_annotation(
             annotation_type,
             location,
@@ -134,7 +134,7 @@ class PdfAnnotator(object):
         )
         self._add_annotation(annotation)
 
-    def _pre_add(self, location):
+    def _before_add(self, location):
         # Steps to take before trying to add an annotation to `location`
         page = self._pdf.get_page(location.page)
         user_unit = page.inheritable.UserUnit

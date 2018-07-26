@@ -5,6 +5,7 @@ from pdf_annotate.annotations import make_border_dict
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke
 from pdf_annotate.graphics import stroke_or_fill
+from pdf_annotate.utils import translate
 
 
 def flatten_points(points):
@@ -41,6 +42,8 @@ class PointsAnnotation(Annotation):
             points = [[y, height - x] for x, y in location.points]
 
         l.points = points
+        l.rotation = rotate
+
         return l
 
     def make_rect(self):
@@ -64,7 +67,7 @@ class PointsAnnotation(Annotation):
         # Note: Acrobat and BB put padding that's not quite the same as the
         # stroke width here. I'm not quite sure why yet, so I'm not changing it.
         rect = self.make_rect()
-        return [1, 0, 0, 1, -rect[0], -rect[1]]
+        return translate(-rect[0], -rect[1])
 
     def base_points_object(self):
         obj = self.make_base_object()

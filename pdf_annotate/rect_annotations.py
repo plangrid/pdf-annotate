@@ -1,9 +1,13 @@
+import warnings
+
 from six import StringIO
 
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
+from pdf_annotate.location import Location
+from pdf_annotate.utils import translate
 
 
 class RectAnnotation(Annotation):
@@ -34,6 +38,9 @@ class RectAnnotation(Annotation):
             l.y1 = height - location.x2
             l.x2 = location.y2
             l.y2 = height - location.x1
+
+        l.rotation = rotate
+
         return l
 
     @staticmethod
@@ -49,7 +56,7 @@ class RectAnnotation(Annotation):
     def get_matrix(self):
         stroke_width = self._appearance.stroke_width
         L = self._location
-        return [1, 0, 0, 1, -(L.x1 - stroke_width), -(L.y1 - stroke_width)]
+        return translate(-(L.x1 - stroke_width), -(L.y1 - stroke_width))
 
     def make_rect(self):
         stroke_width = self._appearance.stroke_width
