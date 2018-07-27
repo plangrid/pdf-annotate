@@ -4,6 +4,7 @@ from unittest import TestCase
 from . import files
 from pdf_annotate import PdfAnnotator
 from pdf_annotate.utils import identity
+from pdf_annotate.utils import translate
 
 
 def assert_matrices_equal(m, n):
@@ -61,9 +62,11 @@ class TestPdfAnnotatorGetTransform(TestCase):
         rotation=0,
         scale=(1, 1),
         dimensions=None,
+        media_box=None,
     ):
+        media_box = media_box or [0, 0, 100, 200]
         t = PdfAnnotator._get_transform(
-            media_box=[0, 0, 100, 200],
+            media_box=media_box,
             rotation=rotation,
             dimensions=dimensions,
             _scale=scale,
@@ -84,3 +87,20 @@ class TestPdfAnnotatorGetTransform(TestCase):
 
     def test_scale_rotate(self):
         self._assert_transform([0, 2, -4, 0, 100, 0], scale=(2, 4), rotation=90)
+
+    def test_weird_media_box(self):
+        self._assert_transform(translate(0, -30), media_box=[0, -30, 20, 0])
+
+    def test_weird_media_box_rotated(self):
+        self._assert_transform(
+            [0, 1, -1, 0, 20, -30],
+            media_box=[0, -30, 20, 0],
+            rotation=90,
+        )
+
+    def test_weird_media_box_scaled(self):
+        self._assert_transform(
+            [2, 0, 0, 4, 0, -30],
+            media_box=[0, -30, 20, 0],
+            scale=(2, 4),
+        )
