@@ -8,6 +8,7 @@ from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.location import Location
 from pdf_annotate.utils import translate
+from pdf_annotate.utils import transform_point
 
 
 class RectAnnotation(Annotation):
@@ -15,42 +16,14 @@ class RectAnnotation(Annotation):
     width and a height.
     """
     @staticmethod
-    def rotate(location, rotate, page_size):
-        if rotate == 0:
-            return location
-
+    def transform(location, transform):
         l = location.copy()
-        if rotate == 90:
-            width = page_size[1]
-            l.x1 = width - location.y2
-            l.y1 = location.x1
-            l.x2 = width - location.y1
-            l.y2 = location.x2
-        elif rotate == 180:
-            width, height = page_size
-            l.x1 = width - location.x2
-            l.y1 = height - location.y2
-            l.x2 = width - location.x1
-            l.y2 = height - location.y1
-        elif rotate == 270:
-            height = page_size[0]
-            l.x1 = location.y1
-            l.y1 = height - location.x2
-            l.x2 = location.y2
-            l.y2 = height - location.x1
 
-        l.rotation = rotate
+        x1, y1 = transform_point([l.x1, l.y1], transform)
+        x2, y2 = transform_point([l.x2, l.y2], transform)
+        l.x1, l.x2 = sorted([x1, x2])
+        l.y1, l.y2 = sorted([y1, y2])
 
-        return l
-
-    @staticmethod
-    def scale(location, scale):
-        x_scale, y_scale = scale
-        l = location.copy()
-        l.x1 = location.x1 * x_scale
-        l.y1 = location.y1 * y_scale
-        l.x2 = location.x2 * x_scale
-        l.y2 = location.y2 * y_scale
         return l
 
     def get_matrix(self):

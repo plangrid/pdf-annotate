@@ -19,11 +19,9 @@ a.write('b.pdf')  # or use overwrite=True if you feel lucky
 ```
 
 ### Scaling and rotation
-`pdf-annotate` defaults to drawing annotations as though you were drawing them in a PDF viewer,
+`pdf-annotate` draws annotations as though you were drawing them in a PDF viewer,
 meaning it assumes you want to draw on the rotated page. For example an annotation drawn at 
-(10, 10) on a 90° rotated page will still appear in the bottom left, not the top-left. If you
-wish to turn off this functionality and draw on un-rotated pages, use pass `draw_on_rotated_pages=False`
-to the constructor.
+(10, 10) on a 90° rotated page will still appear in the bottom left, not the top-left.
 
 It also supports specifying your annotations' coordinates in differently scaled coordinate systems.
 If, for example, you know your coordinates are in the system of the PDF rastered at 150 DPI, you

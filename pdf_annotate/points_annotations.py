@@ -5,6 +5,7 @@ from pdf_annotate.annotations import make_border_dict
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke
 from pdf_annotate.graphics import stroke_or_fill
+from pdf_annotate.utils import transform_point
 from pdf_annotate.utils import translate
 
 
@@ -17,33 +18,10 @@ class PointsAnnotation(Annotation):
     an array of points.
     """
     @staticmethod
-    def scale(location, scale):
-        x_scale, y_scale = scale
+    def transform(location, transform):
         l = location.copy()
-        points = [[x * x_scale, y * y_scale] for x, y in location.points]
-        l.points = points
-        return l
-
-    @staticmethod
-    def rotate(location, rotate, page_size):
-        if rotate == 0:
-            return location
-
-        l = location.copy()
-
-        if rotate == 90:
-            width = page_size[1]
-            points = [[width - y, x] for x, y in location.points]
-        elif rotate == 180:
-            width, height = page_size
-            points = [[width - x, height - y] for x, y in location.points]
-        else:
-            height = page_size[0]
-            points = [[y, height - x] for x, y in location.points]
-
-        l.points = points
-        l.rotation = rotate
-
+        points = [transform_point([x, y]) for x, y in location.points]
+        l. points = points
         return l
 
     def make_rect(self):

@@ -5,6 +5,7 @@ from pdf_annotate.location import Location
 from pdf_annotate.rect_annotations import Circle
 from pdf_annotate.rect_annotations import RectAnnotation
 from pdf_annotate.rect_annotations import Square
+from pdf_annotate.utils import scale
 
 
 class TestRectAnnotation(TestCase):
@@ -22,28 +23,8 @@ class TestRectAnnotation(TestCase):
         assert location.x2 == x2
         assert location.y2 == y2
 
-    def test_no_rotate(self):
-        location = RectAnnotation.rotate(self.L, 0, (self.width, self.height))
-        self.assertDimensions(location, [10, 20, 30, 30])
-
-    def test_rotate_90(self):
-        location = RectAnnotation.rotate(self.L, 90, (self.height, self.width))
-        self.assertDimensions(location, [70, 10, 80, 30])
-
-    def test_rotate_180(self):
-        location = RectAnnotation.rotate(self.L, 180, (self.width, self.height))
-        self.assertDimensions(location, [70, 170, 90, 180])
-
-    def test_rotate_270(self):
-        location = RectAnnotation.rotate(self.L, 270, (self.height, self.width))
-        self.assertDimensions(location, [20, 170, 30, 190])
-
-    def test_scale(self):
-        location = RectAnnotation.scale(self.L, (2, 2))
-        self.assertDimensions(location, [20, 40, 60, 60])
-
-    def test_scale_x_y(self):
-        location = RectAnnotation.scale(self.L, (2, 3))
+    def test_transform(self):
+        location = RectAnnotation.transform(self.L, scale(2, 3))
         self.assertDimensions(location, [20, 60, 60, 90])
 
 

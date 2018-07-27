@@ -19,6 +19,11 @@ from pdf_annotate.appearance import Appearance
 from pdf_annotate.location import Location
 from pdf_annotate.utils import is_numeric
 from pdf_annotate.utils import normalize_rotation
+from pdf_annotate.utils import rotate
+from pdf_annotate.utils import identity
+from pdf_annotate.utils import scale
+from pdf_annotate.utils import translate
+from pdf_annotate.utils import matrix_multiply
 
 
 NAME_TO_ANNOTATION = {
@@ -33,6 +38,7 @@ NAME_TO_ANNOTATION = {
 
 
 class PDF(object):
+
     def __init__(self, filename):
         self._reader = PdfReader(filename)
         self.pdf_version = self._reader.private.pdfdict.version
@@ -54,14 +60,12 @@ class PDF(object):
 
 class PdfAnnotator(object):
 
-    def __init__(self, filename, draw_on_rotated_pages=True, scale=None):
-        """Draw annotations directly on PDFs.
+    def __init__(self, filename, scale=None):
+        """Draw annotations directly on PDFs. Annotations are always drawn on
+        as if you're drawing them in a viewer, i.e. they take into account page
+        rotation and weird, translated coordinate spaces.
 
         :param str filename: file of PDF to read in
-        :param bool draw_on_rotated_pages: if True (the default), draw on the
-            PDF as if drawn in a viewing application. E.g. (0,0) in user space
-            on a PDF rotated 90° is (0,width) on the rotated PDF. Overridden if
-            individual page dimensions are specified.
         :param number|tuple|None scale: number by which to scale all coordinates
             to get to default user space. Use this if, for example, your points
             in the coordinate space of the PDF viewed at a dpi. In this case,
@@ -70,11 +74,12 @@ class PdfAnnotator(object):
         self._filename = filename
         self._pdf = PDF(filename)
         self._scale = self._expand_scale(scale)
-        self._draw_on_rotated_pages = draw_on_rotated_pages
         self._dimensions = {}
 
     def _expand_scale(self, scale):
-        if is_numeric(scale):
+        if scale is None:
+            return 1, 1
+        elif is_numeric(scale):
             return (scale, scale)
         return scale
 
@@ -83,14 +88,18 @@ class PdfAnnotator(object):
         this page override the document-wide rotation and scale settings.
 
         :param tuple|None dimensions: As a convenient alternative to scale and
-            draw_on_rotated_pages, you can pass in the dimensions of your
-            sheet when viewed in a certain setting. For example, an 8.5"x11" PDF,
-            rotated at 90° and rastered at 150 dpi, would produce dimensions of
-            (1650, 1275). If you pass this in, you can then specify your
-            coordinates in this coordinate space.
+            you can pass in the dimensions of your sheet when viewed in a
+            certain setting. For example, an 8.5"x11" PDF, rotated at 90° and
+            rastered at 150 dpi, would produce dimensions of (1650, 1275). If
+            you pass this in, you can then specify your coordinates in this
+            coordinate space.
         :param int page_number:
         """
         self._dimensions[page_number] = dimensions
+
+    def get_mediabox(self, page_number):
+        page = self._pdf.get_page(page_number)
+        return list(map(float, page.inheritable.MediaBox))
 
     def get_size(self, page_number):
         """Returns the size of the specified page's MediaBox (pts), accounting
@@ -105,7 +114,7 @@ class PdfAnnotator(object):
         x1, y1, x2, y2 = map(float, page.inheritable.MediaBox)
         rotation = self._pdf.get_rotation(page_number)
 
-        if not self._draw_on_rotated_pages or rotation in (0, 180):
+        if rotation in (0, 180):
             return (x2 - x1, y2 - y1)
 
         return (y2 - y1, x2 - x1)
@@ -153,32 +162,68 @@ class PdfAnnotator(object):
                 annotation_type
             ))
 
-        scale, rotate = self._get_scale_rotate(location.page)
-        if scale is not None:
-            location = annotation_cls.scale(location, scale)
-
-        if rotate:
-            location = annotation_cls.rotate(
-                location,
-                self._pdf.get_rotation(location.page),
-                self.get_size(location.page),
-            )
+        transform = self.get_transform(location.page)
+        # We don't have to change anything if the transform is ideneity
+        if transform != identity():
+            location = annotation_cls.transform(location, transform)
 
         annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
         return annotation
 
-    def _get_scale_rotate(self, page_number):
-        """Get scale for the given page. Always returns None or a 2-tuple."""
+    def get_transform(self, page_number):
+        media_box = self.get_mediabox(page_number)
+        rotation = self._pdf.get_rotation(page_number)
         dimensions = self._dimensions.get(page_number)
-        if dimensions is not None:
-            width_d, height_d = dimensions
-            width_pts, height_pts = self.get_size(page_number)
-            rotation = self._pdf.get_rotation(page_number)
-            # get_size already accounts for rotation
-            return (width_pts / width_d, height_pts / height_d), True
+        return self._get_transform(media_box, rotation, dimensions, self._scale)
 
-        return self._scale, self._draw_on_rotated_pages
+    @staticmethod
+    def _get_transform(media_box, rotation, dimensions, _scale):
+        """Get the transformation required to go from the user's desired
+        coordinate space to PDF user space, taking into account rotation,
+        scaling, translation (for things like weird media boxes).
+        """
+        # Unrotated width and height, in pts
+        W = media_box[2] - media_box[0]
+        H = media_box[3] - media_box[1]
+
+        if dimensions is not None:
+            # User-specified dimensions for a particular page just give us the
+            # scaling factor to use for that page.
+            width_d, height_d = dimensions
+            width_pts, height_pts = W, H
+            if rotation in (90, 270):
+                width_pts, height_pts = H, W
+            x_scale = (width_pts / width_d)
+            y_scale = (height_pts / height_d)
+        else:
+            x_scale, y_scale = _scale
+
+        scale_matrix = scale(x_scale, y_scale)
+
+        # TODO this will take care of weird offset media boxes
+        # x_translate = 0 - media_box[0]
+        # y_translate = 0 - media_box[1]
+        # translate_matrix = translate(x_translate, y_translate)
+
+        # Because of how rotation the point isn't rotated around an axis, but
+        # the axis itself shifts, we have to represent the rotation as a
+        # rotation, then a translation.
+        rotation_matrix = rotate(rotation)
+
+        translate_matrix = identity()
+        if rotation == 90:
+            translate_matrix = translate(W, 0)
+        elif rotation == 180:
+            translate_matrix = translate(W, H)
+        elif rotation == 270:
+            translate_matrix = translate(0, H)
+
+        transform = matrix_multiply(
+            matrix_multiply(translate_matrix, rotation_matrix),
+            scale_matrix,
+        )
+        return transform
 
     def _add_annotation(self, annotation):
         page = self._pdf.get_page(annotation.page)

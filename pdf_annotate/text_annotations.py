@@ -10,7 +10,7 @@ from pdf_annotate.graphics import set_tm
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.rect_annotations import RectAnnotation
 from pdf_annotate.utils import identity
-from pdf_annotate.utils import rotate_matrix
+from pdf_annotate.utils import rotate
 from pdf_annotate.utils import translate
 
 
@@ -19,12 +19,8 @@ class FreeText(Annotation):
     font = 'PDFANNOTATORFONT1'
 
     @staticmethod
-    def rotate(location, rotate, page_size):
-        return RectAnnotation.rotate(location, rotate, page_size)
-
-    @staticmethod
-    def scale(location, scale):
-        return RectAnnotation.scale(location, rotate, page_size)
+    def transform(location, transform):
+        return RectAnnotation.transform(location, transform)
 
     def get_matrix(self):
         L = self._location
@@ -95,7 +91,4 @@ class FreeText(Annotation):
             return translate(-L.y2 + 1, L.x2 - A.font_size)
 
     def _get_graphics_cm(self):
-        return rotate_matrix(
-            identity(),
-            self._location.rotation,
-        )
+        return rotate(self._location.rotation)
