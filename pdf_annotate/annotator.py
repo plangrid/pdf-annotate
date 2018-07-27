@@ -194,8 +194,8 @@ class PdfAnnotator(object):
             width_pts, height_pts = W, H
             if rotation in (90, 270):
                 width_pts, height_pts = H, W
-            x_scale = (width_pts / width_d)
-            y_scale = (height_pts / height_d)
+            x_scale = (width_pts / float(width_d))
+            y_scale = (height_pts / float(height_d))
         else:
             x_scale, y_scale = _scale
 
