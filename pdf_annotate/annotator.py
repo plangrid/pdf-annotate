@@ -202,9 +202,9 @@ class PdfAnnotator(object):
         scale_matrix = scale(x_scale, y_scale)
 
         # TODO this will take care of weird offset media boxes
-        # x_translate = 0 - media_box[0]
-        # y_translate = 0 - media_box[1]
-        # translate_matrix = translate(x_translate, y_translate)
+        x_translate = 0 + media_box[0]
+        y_translate = 0 + media_box[1]
+        mb_translate = translate(x_translate, y_translate)
 
         # Because of how rotation the point isn't rotated around an axis, but
         # the axis itself shifts, we have to represent the rotation as a
@@ -220,7 +220,9 @@ class PdfAnnotator(object):
             translate_matrix = translate(0, H)
 
         transform = matrix_multiply(
-            matrix_multiply(translate_matrix, rotation_matrix),
+            mb_translate,
+            translate_matrix,
+            rotation_matrix,
             scale_matrix,
         )
         return transform

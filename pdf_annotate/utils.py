@@ -51,16 +51,24 @@ def identity():
     return [1, 0, 0, 1, 0, 0]
 
 
-def matrix_multiply(A, B):
-    """Multiply A by B. Both A and B are 6-item lists, which represent matrices
-    in homogenous coordinates. The result is another 6-item list.
+def matrix_multiply(*args):
+    """Multiply a series of matrices. len(args) must be at least two. If more
+    than two matrices are specified, the multiplications are chained, with the
+    left-most matrices being multiplied first.
 
-    If M is [a b c d e f], this represents the homogenous matrix of
+    E.g. matrix_multiply(A, B, C) => (A*B)*C
 
-        a b 0
-        c d 0
-        e f 1
+    Each matrix is a 6-item homogenous matrix.
     """
+    if len(args) < 2:
+        raise ValueError('Cannot multiply less than two matrices')
+    r = _matrix_multiply(args[0], args[1])
+    for m in args[2:]:
+        r = _matrix_multiply(r, m)
+    return r
+
+
+def _matrix_multiply(A, B):
     a00, a01, a10, a11, a20, a21 = A
     a02, a12, a22 = 0, 0, 1
 
