@@ -17,6 +17,8 @@ from pdf_annotate.rect_annotations import Square
 from pdf_annotate.text_annotations import FreeText
 from pdf_annotate.appearance import Appearance
 from pdf_annotate.location import Location
+from pdf_annotate.metadata import Metadata
+from pdf_annotate.metadata import UNSET
 from pdf_annotate.utils import is_numeric
 from pdf_annotate.utils import normalize_rotation
 from pdf_annotate.utils import rotate
@@ -132,9 +134,12 @@ class PdfAnnotator(object):
         :param str annotation_type:
         :param Location location:
         :param Appearance appearance:
-        :param Metadata metadata:
+        :param Metadata|None|UNSET metadata: Metadata object. If UNSET, no
+            metadata is written on the entire annotation. If None, default
+            metadata is used.
         """
         self._before_add(location)
+        metadata = self._resolve_metadata(metadata)
         annotation = self.get_annotation(
             annotation_type,
             location,
@@ -142,6 +147,16 @@ class PdfAnnotator(object):
             metadata,
         )
         self._add_annotation(annotation)
+
+    def _resolve_metadata(self, metadata):
+        if isinstance(metadata, Metadata):
+            return metadata
+        elif metadata is None:
+            return Metadata()
+        elif metadata is UNSET:
+            return None
+        else:
+            raise ValueError('Invalid metadata')
 
     def _before_add(self, location):
         # Steps to take before trying to add an annotation to `location`
@@ -163,7 +178,6 @@ class PdfAnnotator(object):
             ))
 
         transform = self.get_transform(location.page)
-        # We don't have to change anything if the transform is ideneity
         if transform != identity():
             location = annotation_cls.transform(location, transform)
 
@@ -229,10 +243,12 @@ class PdfAnnotator(object):
 
     def _add_annotation(self, annotation):
         page = self._pdf.get_page(annotation.page)
+        annotation_obj = annotation.as_pdf_object()
+        annotation_obj.P = page
         if page.Annots:
-            page.Annots.append(annotation.as_pdf_object())
+            page.Annots.append(annotation_obj)
         else:
-            page.Annots = [annotation.as_pdf_object()]
+            page.Annots = [annotation_obj]
 
     def write(self, filename=None, overwrite=False):
         if filename is None and not overwrite:

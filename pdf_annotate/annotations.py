@@ -3,6 +3,8 @@ from pdfrw.objects import PdfDict, PdfName
 from six import StringIO
 
 from pdf_annotate.appearance import Appearance
+from pdf_annotate.metadata import Metadata
+from pdf_annotate.metadata import serialize_value
 
 
 ALL_VERSIONS = ('1.3', '1.4', '1.5', '1.6', '1.7')
@@ -28,6 +30,7 @@ class Annotation(object):
     def __init__(self, location, appearance, metadata=None):
         self._location = location
         self._appearance = appearance
+        self._metadata = metadata
 
     @property
     def page(self):
@@ -42,15 +45,22 @@ class Annotation(object):
         share.
         """
         # TODO add metadata
-        return PdfDict(
+        obj = PdfDict(
             **{
                 'Type': PdfName('Annot'),
                 'Subtype': PdfName(self.subtype),
                 'Rect': self.make_rect(),
-                # TODO support passing in flags
-                'F': PRINT_FLAG,
             }
         )
+        self._add_metadata(obj, self._metadata)
+        obj.indirect = True
+        return obj
+
+    def _add_metadata(self, obj, metadata):
+        if metadata is None:
+            return
+        for name, value in metadata.iter():
+            obj[PdfName(name)] = serialize_value(value)
 
     def make_ap_dict(self):
         return PdfDict(**{'N': self.make_n_dict()})

@@ -15,6 +15,10 @@ from pdf_annotate.utils import translate
 
 
 class FreeText(Annotation):
+    """FreeText annotation. Right now, we only support writing text in the
+    Helvetica font. Dealing with fonts is tricky business, so we'll leave that
+    for later.
+    """
     subtype = 'FreeText'
     font = 'PDFANNOTATORFONT1'
 
