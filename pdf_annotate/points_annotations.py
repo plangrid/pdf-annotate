@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Line, Polygon, Polyline, and Ink annotations.
+"""
 from six import StringIO
 
 from pdf_annotate.annotations import Annotation
@@ -51,7 +55,6 @@ class PointsAnnotation(Annotation):
         obj = self.make_base_object()
         obj.BS = make_border_dict(self._appearance)
         obj.C = self._appearance.stroke_color
-        obj.AP = self.make_ap_dict()
         # TODO line endings, leader lines, captions
         return obj
 

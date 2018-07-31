@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+FreeText annotation.
+"""
 from six import StringIO
 
 from pdf_annotate.annotations import Annotation
@@ -44,7 +48,6 @@ class FreeText(Annotation):
 
     def as_pdf_object(self):
         obj = self.make_base_object()
-        obj.AP = self.make_ap_dict()
         obj.Contents = self._appearance.text
         obj.DA = self.make_default_appearance()
         obj.C = []

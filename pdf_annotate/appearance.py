@@ -11,6 +11,7 @@ class Appearance(object):
         self.dash_array = kwargs.get('dash_array', None)
         self.font_size = kwargs.get('font_size', None)
         self.text = kwargs.get('text', None)
+        self.appearance_stream = kwargs.get('appearance_stream', None)
 
         for k, v in kwargs.items():
             setattr(self, k, v)

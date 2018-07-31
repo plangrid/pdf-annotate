@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+Square and Circle annotations.
+"""
 import warnings
 
 from six import StringIO
@@ -48,7 +52,6 @@ class RectAnnotation(Annotation):
         obj.C = A.stroke_color
         if A.fill:
             obj.IC = A.fill
-        obj.AP = self.make_ap_dict()
         padding = A.stroke_width / 2.0
         obj.RD = [padding, padding, padding, padding]
         return obj

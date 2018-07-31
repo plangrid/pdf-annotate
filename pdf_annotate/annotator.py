@@ -15,7 +15,6 @@ from pdf_annotate.points_annotations import Polyline
 from pdf_annotate.rect_annotations import Circle
 from pdf_annotate.rect_annotations import Square
 from pdf_annotate.text_annotations import FreeText
-from pdf_annotate.appearance import Appearance
 from pdf_annotate.location import Location
 from pdf_annotate.metadata import Metadata
 from pdf_annotate.metadata import UNSET
@@ -215,14 +214,13 @@ class PdfAnnotator(object):
 
         scale_matrix = scale(x_scale, y_scale)
 
-        # TODO this will take care of weird offset media boxes
         x_translate = 0 + media_box[0]
         y_translate = 0 + media_box[1]
         mb_translate = translate(x_translate, y_translate)
 
-        # Because of how rotation the point isn't rotated around an axis, but
-        # the axis itself shifts, we have to represent the rotation as a
-        # rotation, then a translation.
+        # Because of how rotation works the point isn't rotated around an axis,
+        # but the axis itself shifts. So we have to represent the rotation as
+        # rotation + translation.
         rotation_matrix = rotate(rotation)
 
         translate_matrix = identity()
@@ -233,6 +231,11 @@ class PdfAnnotator(object):
         elif rotation == 270:
             translate_matrix = translate(0, H)
 
+        # Order matters here - the transformation matrices are applied in
+        # reverse order. So first we scale to get the points in PDF user space,
+        # since all other operations are in that space. Then we rotate and
+        # scale to capture page rotation, then finally we translate to account
+        # for offset media boxes.
         transform = matrix_multiply(
             mb_translate,
             translate_matrix,

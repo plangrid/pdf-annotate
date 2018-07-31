@@ -50,6 +50,7 @@ class Annotation(object):
                 'Type': PdfName('Annot'),
                 'Subtype': PdfName(self.subtype),
                 'Rect': self.make_rect(),
+                'AP': self.make_appearance_stream_dict(),
             }
         )
         self._add_metadata(obj, self._metadata)
@@ -62,8 +63,29 @@ class Annotation(object):
         for name, value in metadata.iter():
             obj[PdfName(name)] = serialize_value(value)
 
-    def make_ap_dict(self):
-        return PdfDict(**{'N': self.make_n_dict()})
+    def make_appearance_stream_dict(self):
+        resources = {'ProcSet': PdfName('PDF')}
+        if self.font is not None:
+            resources['Font'] = PdfDict(**{
+                self.font: self.make_font(),
+            })
+
+        appearance_stream = self._appearance.appearance_stream
+        if appearance_stream is None:
+            appearance_stream = self.graphics_commands()
+
+        normal_appearance = PdfDict(
+            stream=appearance_stream,
+            **{
+                'BBox': self.make_rect(),
+                'Resources': PdfDict(**resources),
+                'Matrix': self.get_matrix(),
+                'Type': PdfName('XObject'),
+                'Subtype': PdfName('Form'),
+                'FormType': 1,
+            }
+        )
+        return PdfDict(**{'N': normal_appearance})
 
     def get_matrix(self):
         raise NotImplementedError()
@@ -74,25 +96,6 @@ class Annotation(object):
             Type=PdfName('Font'),
             Subtype=PdfName('Type1'),
             BaseFont=PdfName('Helvetica'),
-        )
-
-    def make_n_dict(self):
-        resources = {'ProcSet': PdfName('PDF')}
-        if self.font is not None:
-            resources['Font'] = PdfDict(**{
-                self.font: self.make_font(),
-            })
-
-        return PdfDict(
-            stream=self.graphics_commands(),
-            **{
-                'BBox': self.make_rect(),
-                'Resources': PdfDict(**resources),
-                'Matrix': self.get_matrix(),
-                'Type': PdfName('XObject'),
-                'Subtype': PdfName('Form'),
-                'FormType': 1,
-            }
         )
 
     def make_rect(self):
