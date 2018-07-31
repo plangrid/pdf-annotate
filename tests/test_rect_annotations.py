@@ -27,6 +27,14 @@ class TestRectAnnotation(TestCase):
         location = RectAnnotation.transform(self.L, scale(2, 3))
         self.assertDimensions(location, [20, 60, 60, 90])
 
+    def test_custom_appearance_stream(self):
+        stream = '0 0 m 10 10 l 20 20 l h'
+        A = Appearance(stroke_width=1, appearance_stream=stream)
+        L = Location(x1=10, y1=10, x2=20, y2=20, page=0)
+        annotation = Square(L, A)
+        obj = annotation.as_pdf_object()
+        assert obj.AP.N.stream == stream
+
 
 class TestSquare(TestCase):
 
