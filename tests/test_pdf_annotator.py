@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from . import files
+from pdf_annotate import Appearance
 from pdf_annotate import PdfAnnotator
+from pdf_annotate import Location
 from pdf_annotate.utils import identity
 from pdf_annotate.utils import translate
+from tests import files
+from tests.utils import load_annotations_from_pdf
+from tests.utils import write_to_temp
 
 
 def assert_matrices_equal(m, n):
@@ -32,17 +36,26 @@ class TestPdfAnnotator(TestCase):
         size = a.get_size(0)
         assert size == (612.0, 792.0)
 
-    def test_get_annotation(self):
-        pass
+    def test_add_annotation_page_dimensions(self):
+        # Ensure that changing a page's dimensions results in annotations being
+        # placed in the proper locations.
+        a = PdfAnnotator(files.SIMPLE)
+        # Act like the PDF was rastered at 144 DPI (2x default user space)
+        a.set_page_dimensions((1224, 1584), 0)
+        a.add_annotation(
+            'square',
+            Location(x1=10, y1=20, x2=20, y2=30, page=0),
+            Appearance(),
+        )
+        with write_to_temp(a) as t:
+            annotations = load_annotations_from_pdf(t)
 
-    def test_get_annotation_page_dimensions(self):
-        pass
-
-    def test_get_annotation_rotated(self):
-        pass
-
-    def test_write(self):
-        pass
+        square = annotations.pop()
+        assert len(annotations) == 0
+        assert square.Subtype == '/Square'
+        # The outer bounding box of the square is padded outward by the stroke
+        # width
+        assert square.Rect == ['4', '9', '11', '16']
 
 
 class TestPdfAnnotatorGetTransform(TestCase):
@@ -51,7 +64,6 @@ class TestPdfAnnotatorGetTransform(TestCase):
         t = PdfAnnotator._get_transform(
             media_box=[0, 0, 100, 200],
             rotation=0,
-            dimensions=None,
             _scale=(1, 1),
         )
         assert t == identity()
@@ -61,14 +73,12 @@ class TestPdfAnnotatorGetTransform(TestCase):
         expected,
         rotation=0,
         scale=(1, 1),
-        dimensions=None,
         media_box=None,
     ):
         media_box = media_box or [0, 0, 100, 200]
         t = PdfAnnotator._get_transform(
             media_box=media_box,
             rotation=rotation,
-            dimensions=dimensions,
             _scale=scale,
         )
         assert_matrices_equal(t, expected)
@@ -80,10 +90,6 @@ class TestPdfAnnotatorGetTransform(TestCase):
 
     def test_scaled(self):
         self._assert_transform([2, 0, 0, 4, 0, 0], scale=(2, 4))
-
-    def test_dimensions(self):
-        self._assert_transform([2, 0, 0, 4, 0, 0], dimensions=(50, 50))
-        self._assert_transform([0.5, 0, 0, 0.5, 0, 0], dimensions=(200, 400))
 
     def test_scale_rotate(self):
         self._assert_transform([0, 2, -4, 0, 100, 0], scale=(2, 4), rotation=90)

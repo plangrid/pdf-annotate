@@ -180,26 +180,19 @@ class PdfAnnotator(object):
         if transform != identity():
             location = annotation_cls.transform(location, transform)
 
+        # TODO should scale the stroke width - a user probably expects the
+        # stroke width to be relative to the dimensions they're passing in.
+        # E.g. if a doc is 100px on a side, and you specify a stroke of 1, you
+        # probably expect it to take up 1% of the page.
         annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
         return annotation
 
-    def get_transform(self, page_number):
-        media_box = self.get_mediabox(page_number)
-        rotation = self._pdf.get_rotation(page_number)
-        dimensions = self._dimensions.get(page_number)
-        return self._get_transform(media_box, rotation, dimensions, self._scale)
-
-    @staticmethod
-    def _get_transform(media_box, rotation, dimensions, _scale):
-        """Get the transformation required to go from the user's desired
-        coordinate space to PDF user space, taking into account rotation,
-        scaling, translation (for things like weird media boxes).
-        """
-        # Unrotated width and height, in pts
+    def _get_scale(self, page_number, media_box, rotation):
         W = media_box[2] - media_box[0]
         H = media_box[3] - media_box[1]
 
+        dimensions = self._dimensions.get(page_number)
         if dimensions is not None:
             # User-specified dimensions for a particular page just give us the
             # scaling factor to use for that page.
@@ -210,9 +203,27 @@ class PdfAnnotator(object):
             x_scale = (width_pts / float(width_d))
             y_scale = (height_pts / float(height_d))
         else:
-            x_scale, y_scale = _scale
+            x_scale, y_scale = self._scale
 
-        scale_matrix = scale(x_scale, y_scale)
+        return x_scale, y_scale
+
+    def get_transform(self, page_number):
+        media_box = self.get_mediabox(page_number)
+        rotation = self._pdf.get_rotation(page_number)
+        _scale = self._get_scale(page_number, media_box, rotation)
+        return self._get_transform(media_box, rotation, _scale)
+
+    @staticmethod
+    def _get_transform(media_box, rotation, _scale):
+        """Get the transformation required to go from the user's desired
+        coordinate space to PDF user space, taking into account rotation,
+        scaling, translation (for things like weird media boxes).
+        """
+        # Unrotated width and height, in pts
+        W = media_box[2] - media_box[0]
+        H = media_box[3] - media_box[1]
+
+        scale_matrix = scale(*_scale)
 
         x_translate = 0 + media_box[0]
         y_translate = 0 + media_box[1]
