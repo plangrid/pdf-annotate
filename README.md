@@ -20,7 +20,7 @@ a.write('b.pdf')  # or use overwrite=True if you feel lucky
 
 ### Scaling and rotation
 `pdf-annotate` draws annotations as though you were drawing them in a PDF viewer,
-meaning it assumes you want to draw on the rotated page. For example an annotation drawn at 
+meaning it assumes you want to draw on the rotated page. For example an annotation drawn at
 (10, 10) on a 90° rotated page will still appear in the bottom left, not the top-left.
 
 It also supports specifying your annotations' coordinates in differently scaled coordinate systems.
@@ -44,3 +44,13 @@ work, you need versioned python executables - e.g. `python3.5` - in your path.
 An opinionated setup, which assumes you have certain python versions installed,
 and that you use `pyenv`, is provided by `make setup`. After this you can run
 `tox` to run tests.
+
+### Manual tests
+Fully automated testing is difficult for things that depend on the complexities
+of PDF viewers. When making changes, it's good practice to compare the file
+`tests/end_to_end/pdfs/end_to_end.pdf`, which is generated during testing,
+with `expected.pdf` in the same directory. To ensure rotation is handled correctly,
+there is also `end_to_end_rotated_90.pdf` and corresponding expected file.
+
+By default, the file will be the one generated during the last python version's `tox` run.
+To check a specific version, use e.g. `tox -e py27`.

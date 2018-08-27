@@ -24,7 +24,7 @@ class PointsAnnotation(Annotation):
     @staticmethod
     def transform(location, transform):
         l = location.copy()
-        points = [transform_point([x, y]) for x, y in location.points]
+        points = [transform_point([x, y], transform) for x, y in location.points]
         l. points = points
         return l
 
