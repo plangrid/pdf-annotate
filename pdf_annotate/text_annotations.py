@@ -84,6 +84,8 @@ class FreeText(Annotation):
         return stream.getvalue()
 
     def _get_text_matrix(self):
+        # TODO since the `.transform()` change this has been broken, since
+        # .rotation is no longer set on the location object.
         L = self._location
         A = self._appearance
         # Not entirely sure what y offsets I should be calculating here.
