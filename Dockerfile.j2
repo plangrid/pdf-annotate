@@ -1,0 +1,11 @@
+FROM {{ PLANGRID_DOCKER_REPO }}/pg-docker:master
+MAINTAINER plangrid
+
+RUN mkdir /root/home
+WORKDIR /root/home
+
+COPY requirements/ ./requirements
+
+# Library should be Python 2 and 3 compatible. Fetch requirements in parallel
+
+COPY ./ .
