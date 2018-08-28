@@ -176,7 +176,8 @@ class PdfAnnotator(object):
                 annotation_type
             ))
 
-        transform = self.get_transform(location.page)
+        rotation = self._pdf.get_rotation(location.page)
+        transform = self.get_transform(location.page, rotation)
         if transform != identity():
             location = annotation_cls.transform(location, transform)
 
@@ -184,7 +185,7 @@ class PdfAnnotator(object):
         # stroke width to be relative to the dimensions they're passing in.
         # E.g. if a doc is 100px on a side, and you specify a stroke of 1, you
         # probably expect it to take up 1% of the page.
-        annotation = annotation_cls(location, appearance, metadata)
+        annotation = annotation_cls(location, appearance, metadata, rotation)
         annotation.validate(self._pdf.pdf_version)
         return annotation
 
@@ -207,9 +208,8 @@ class PdfAnnotator(object):
 
         return x_scale, y_scale
 
-    def get_transform(self, page_number):
+    def get_transform(self, page_number, rotation):
         media_box = self.get_mediabox(page_number)
-        rotation = self._pdf.get_rotation(page_number)
         _scale = self._get_scale(page_number, media_box, rotation)
         return self._get_transform(media_box, rotation, _scale)
 
