@@ -27,10 +27,18 @@ class Annotation(object):
     versions = ALL_VERSIONS
     font = None
 
-    def __init__(self, location, appearance, metadata=None):
+    def __init__(self, location, appearance, metadata=None, rotation=0):
+        """
+        :param Location location:
+        :param Appearance appearance:
+        :param Metadata metadata:
+        :param int rotation: text annotation cares about page orientation when
+            building the graphics stream for the text content.
+        """
         self._location = location
         self._appearance = appearance
         self._metadata = metadata
+        self._rotation = rotation
 
     @property
     def page(self):

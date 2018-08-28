@@ -84,20 +84,17 @@ class FreeText(Annotation):
         return stream.getvalue()
 
     def _get_text_matrix(self):
-        # TODO since the `.transform()` change this has been broken, since
-        # .rotation is no longer set on the location object.
-        L = self._location
         A = self._appearance
+        L = self._location
         # Not entirely sure what y offsets I should be calculating here.
-        if L.rotation == 0:
+        if self._rotation == 0:
             return translate(L.x1 + 1, L.y2 - A.font_size)
-        elif L.rotation == 90:
+        elif self._rotation == 90:
             return translate(L.y1 + 1, -(L.x1 + A.font_size))
-        elif L.rotation == 180:
+        elif self._rotation == 180:
             return translate(-L.x2 + 1, -(L.y1 + A.font_size))
-        # 270
-        else:
+        else:  # 270
             return translate(-L.y2 + 1, L.x2 - A.font_size)
 
     def _get_graphics_cm(self):
-        return rotate(self._location.rotation)
+        return rotate(self._rotation)
