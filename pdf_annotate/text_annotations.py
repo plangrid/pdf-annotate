@@ -2,15 +2,10 @@
 """
 FreeText annotation.
 """
-from six import StringIO
-
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import _make_border_dict
-from pdf_annotate.graphics import restore
-from pdf_annotate.graphics import save
+from pdf_annotate.graphics import Font, ContentStream, StrokeColor, Save, CTM, FillColor, StrokeWidth, BeginText, EndText, TextMatrix, Text, Restore
 from pdf_annotate.graphics import set_appearance_state
-from pdf_annotate.graphics import set_cm
-from pdf_annotate.graphics import set_tm
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.rect_annotations import RectAnnotation
 from pdf_annotate.utils import identity
@@ -42,9 +37,11 @@ class FreeText(Annotation):
         """Returns a DA string for the text object, e.g. '1 0 0 rg /Helv 12 Tf'
         """
         A = self._appearance
-        color_str = '{} {} {}'.format(*A.stroke_color)
-        font_str = '/{} {}'.format(self.font, A.font_size)
-        return '{} rg {} Tf'.format(color_str, font_str)
+        stream = ContentStream([
+            StrokeColor(*A.stroke_color),
+            Font(self.font, A.font_size),
+        ])
+        return stream.resolve()
 
     def as_pdf_object(self):
         obj = self.make_base_object()
@@ -62,26 +59,23 @@ class FreeText(Annotation):
         A = self._appearance
         L = self._location
 
-        stream = StringIO()
-        save(stream)
+        stream = ContentStream([
+            Save(),
+            CTM(self._get_graphics_cm()),
+            # Not quite sure why we write black + the stroke color before BT as well
+            StrokeColor(1, 1, 1),
+            FillColor(*A.stroke_color),
+            StrokeWidth(0),
+            BeginText(),
+            StrokeColor(*A.stroke_color),
+            Font(self.font, A.font_size),
+            TextMatrix(self._get_text_matrix()),
+            Text(A.text),
+            EndText(),
+            Restore(),
+        ])
 
-        set_cm(stream, self._get_graphics_cm())
-        # Not quite sure why we write black + the stroke color before BT as well
-        stream.write('1 1 1 rg ')
-        stream.write('{} {} {} RG '.format(*A.stroke_color))
-        stream.write('0 w ')
-
-        stream.write('BT ')
-        stream.write('{} {} {} rg '.format(*A.stroke_color))
-        stream.write('/{} {} Tf '.format(self.font, A.font_size))
-        # TODO will have to deal with writing multiple lines. Probably will
-        # have to understand the XObject -> Rect mapping in this case.
-        set_tm(stream, self._get_text_matrix())
-        stream.write('({}) Tj '.format(A.text))
-        stream.write('ET ')
-
-        restore(stream)
-        return stream.getvalue()
+        return stream.resolve()
 
     def _get_text_matrix(self):
         A = self._appearance

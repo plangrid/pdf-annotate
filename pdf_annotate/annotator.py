@@ -8,6 +8,7 @@ import warnings
 from pdfrw import PdfReader, PdfWriter
 from pdfrw.objects import PdfDict, PdfName
 
+from pdf_annotate.graphics import resolve_appearance_stream
 from pdf_annotate.points_annotations import Ink
 from pdf_annotate.points_annotations import Line
 from pdf_annotate.points_annotations import Polygon
@@ -180,6 +181,8 @@ class PdfAnnotator(object):
         transform = self.get_transform(location.page, rotation)
         if transform != identity():
             location = annotation_cls.transform(location, transform)
+
+        appearance = resolve_appearance_stream(appearance, transform)
 
         # TODO should scale the stroke width - a user probably expects the
         # stroke width to be relative to the dimensions they're passing in.

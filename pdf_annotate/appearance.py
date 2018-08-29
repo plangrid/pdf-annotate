@@ -3,6 +3,11 @@ class Appearance(object):
     BLACK = (0, 0, 0)
     TRANSPARENT = tuple()
 
+    whitelist_kwargs = frozenset([
+        'stroke_color', 'stroke_width', 'border_style', 'fill',
+        'dash_array', 'font_size', 'text', 'appearance_stream',
+    ])
+
     def __init__(self, **kwargs):
         self.stroke_color = kwargs.get('stroke_color', self.BLACK)
         self.stroke_width = kwargs.get('stroke_width', 1)
@@ -15,3 +20,10 @@ class Appearance(object):
 
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def copy(self):
+        A = Appearance()
+        for k, v in self.__dict__.items():
+            if k in self.whitelist_kwargs:
+                setattr(A, k, v)
+        return A
