@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from pdfrw.objects import PdfDict, PdfName
-from six import StringIO
 
 from pdf_annotate.appearance import Appearance
 from pdf_annotate.metadata import Metadata

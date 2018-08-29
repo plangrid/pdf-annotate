@@ -4,10 +4,9 @@ Square and Circle annotations.
 """
 import warnings
 
-from six import StringIO
-
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
+from pdf_annotate.graphics import ContentStream, Rect, Stroke, Bezier, Close, Move
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.location import Location
@@ -63,10 +62,10 @@ class Square(RectAnnotation):
     def graphics_commands(self):
         L = self._location
         A = self._appearance
-        stream = StringIO()
+        stream = ContentStream()
 
         set_appearance_state(stream, A)
-        stream.write('{} {} {} {} re '.format(
+        stream.add(Rect(
             L.x1,
             L.y1,
             L.x2 - L.x1,
@@ -75,7 +74,7 @@ class Square(RectAnnotation):
         stroke_or_fill(stream, A)
 
         # TODO dash array
-        return stream.getvalue()
+        return stream.resolve()
 
 
 class Circle(RectAnnotation):
@@ -100,33 +99,33 @@ class Circle(RectAnnotation):
         left_y = bottom_y + (top_y - bottom_y) / 2.0
         right_y = left_y
 
-        stream = StringIO()
+        stream = ContentStream()
         set_appearance_state(stream, A)
         # Move to the bottom of the circle, then four curves around.
         # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
         cp_offset = 0.552284749831
-        stream.write('{} {} m '.format(bottom_x, bottom_y))
-        stream.write('{} {} {} {} {} {} c '.format(
+        stream.add(Move(bottom_x, bottom_y))
+        stream.add(Bezier(
             bottom_x + (right_x - bottom_x) * cp_offset, bottom_y,
             right_x, right_y - (right_y - bottom_y) * cp_offset,
             right_x, right_y,
         ))
-        stream.write('{} {} {} {} {} {} c '.format(
+        stream.add(Bezier(
             right_x, right_y + (top_y - right_y) * cp_offset,
             top_x + (right_x - top_x) * cp_offset, top_y,
             top_x, top_y,
         ))
-        stream.write('{} {} {} {} {} {} c '.format(
+        stream.add(Bezier(
             top_x - (top_x - left_x) * cp_offset, top_y,
             left_x, left_y + (top_y - left_y) * cp_offset,
             left_x, left_y,
         ))
-        stream.write('{} {} {} {} {} {} c '.format(
+        stream.add(Bezier(
             left_x, left_y - (left_y - bottom_y) * cp_offset,
             bottom_x - (bottom_x - left_x) * cp_offset, bottom_y,
             bottom_x, bottom_y,
         ))
-        stream.write('h ')
+        stream.add(Close())
         stroke_or_fill(stream, A)
 
-        return stream.getvalue()
+        return stream.resolve()

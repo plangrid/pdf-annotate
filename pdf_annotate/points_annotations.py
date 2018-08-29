@@ -2,12 +2,11 @@
 """
 Line, Polygon, Polyline, and Ink annotations.
 """
-from six import StringIO
-
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
+from pdf_annotate.graphics import Line as CSLine
+from pdf_annotate.graphics import ContentStream, Move, Close, Stroke
 from pdf_annotate.graphics import set_appearance_state
-from pdf_annotate.graphics import stroke
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.utils import transform_point
 from pdf_annotate.utils import translate
@@ -66,13 +65,13 @@ class Line(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = StringIO()
+        stream = ContentStream()
         set_appearance_state(stream, A)
-        stream.write('{} {} m '.format(points[0][0], points[0][1]))
-        stream.write('{} {} l '.format(points[1][0], points[1][1]))
+        stream.add(Move(points[0][0], points[0][1]))
+        stream.add(CSLine(points[1][0], points[1][1]))
         stroke_or_fill(stream, A)
 
-        return stream.getvalue()
+        return stream.resolve()
 
     def as_pdf_object(self):
         obj = self.base_points_object()
@@ -89,15 +88,15 @@ class Polygon(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = StringIO()
+        stream = ContentStream()
         set_appearance_state(stream, A)
-        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        stream.add(Move(points[0][0], points[0][1]))
         for x, y in points[1:]:
-            stream.write('{} {} l '.format(x, y))
-        stream.write('h ')
+            stream.add(CSLine(x, y))
+        stream.add(Close())
         stroke_or_fill(stream, A)
 
-        return stream.getvalue()
+        return stream.resolve()
 
     def as_pdf_object(self):
         obj = self.base_points_object()
@@ -115,15 +114,15 @@ class Polyline(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = StringIO()
+        stream = ContentStream()
         set_appearance_state(stream, A)
-        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        stream.add(Move(points[0][0], points[0][1]))
         for x, y in points[1:]:
-            stream.write('{} {} l '.format(x, y))
+            stream.add(CSLine(x, y))
         # TODO add a 'close' attribute?
-        stroke(stream)
+        stream.add(Stroke())
 
-        return stream.getvalue()
+        return stream.resolve()
 
     def as_pdf_object(self):
         obj = self.base_points_object()
@@ -140,16 +139,16 @@ class Ink(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = StringIO()
+        stream = ContentStream()
         set_appearance_state(stream, A)
-        stream.write('{} {} m '.format(points[0][0], points[0][1]))
+        stream.add(Move(points[0][0], points[0][1]))
         # TODO "real" PDF editors do smart smoothing of ink points using
         # interpolated Bezier curves.
         for x, y in points[1:]:
-            stream.write('{} {} l '.format(x, y))
-        stroke(stream)
+            stream.add(CSLine(x, y))
+        stream.add(Stroke())
 
-        return stream.getvalue()
+        return stream.resolve()
 
     def as_pdf_object(self):
         obj = self.base_points_object()
