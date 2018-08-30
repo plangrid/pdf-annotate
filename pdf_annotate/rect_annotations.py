@@ -2,16 +2,17 @@
 """
 Square and Circle annotations.
 """
-import warnings
-
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
-from pdf_annotate.graphics import ContentStream, Rect, Stroke, Bezier, Close, Move
+from pdf_annotate.graphics import Bezier
+from pdf_annotate.graphics import Close
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import Move
+from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
-from pdf_annotate.location import Location
-from pdf_annotate.utils import translate
 from pdf_annotate.utils import transform_point
+from pdf_annotate.utils import translate
 
 
 class RectAnnotation(Annotation):
@@ -20,14 +21,14 @@ class RectAnnotation(Annotation):
     """
     @staticmethod
     def transform(location, transform):
-        l = location.copy()
+        new_location = location.copy()
 
-        x1, y1 = transform_point([l.x1, l.y1], transform)
-        x2, y2 = transform_point([l.x2, l.y2], transform)
-        l.x1, l.x2 = sorted([x1, x2])
-        l.y1, l.y2 = sorted([y1, y2])
+        x1, y1 = transform_point([new_location.x1, new_location.y1], transform)
+        x2, y2 = transform_point([new_location.x2, new_location.y2], transform)
+        new_location.x1, new_location.x2 = sorted([x1, x2])
+        new_location.y1, new_location.y2 = sorted([y1, y2])
 
-        return l
+        return new_location
 
     def get_matrix(self):
         stroke_width = self._appearance.stroke_width

@@ -5,7 +5,6 @@ import pdfrw
 
 from pdf_annotate import Appearance
 from pdf_annotate import Location
-from pdf_annotate import Metadata
 from pdf_annotate import PdfAnnotator
 from tests.files import ROTATED_90
 from tests.files import SIMPLE
@@ -20,6 +19,7 @@ class EndToEndMixin(object):
     to-end test will be a tiny amount of validation in code + manual inspection
     of the output.
     """
+
     def setUp(self):
         self.gaudy = Appearance(
             stroke_color=[1, 0, 0],

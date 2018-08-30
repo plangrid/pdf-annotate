@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from pdfrw.objects import PdfDict, PdfName
+from pdfrw.objects import PdfDict
+from pdfrw.objects import PdfName
 
-from pdf_annotate.appearance import Appearance
-from pdf_annotate.metadata import Metadata
 from pdf_annotate.metadata import serialize_value
 
 

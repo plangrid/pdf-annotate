@@ -5,10 +5,12 @@ just additional shapes/whatever burned into the PDF content stream.
 """
 import warnings
 
-from pdfrw import PdfReader, PdfWriter
-from pdfrw.objects import PdfDict, PdfName
+from pdfrw import PdfReader
+from pdfrw import PdfWriter
 
 from pdf_annotate.graphics import resolve_appearance_stream
+from pdf_annotate.metadata import Metadata
+from pdf_annotate.metadata import UNSET
 from pdf_annotate.points_annotations import Ink
 from pdf_annotate.points_annotations import Line
 from pdf_annotate.points_annotations import Polygon
@@ -16,16 +18,13 @@ from pdf_annotate.points_annotations import Polyline
 from pdf_annotate.rect_annotations import Circle
 from pdf_annotate.rect_annotations import Square
 from pdf_annotate.text_annotations import FreeText
-from pdf_annotate.location import Location
-from pdf_annotate.metadata import Metadata
-from pdf_annotate.metadata import UNSET
+from pdf_annotate.utils import identity
 from pdf_annotate.utils import is_numeric
+from pdf_annotate.utils import matrix_multiply
 from pdf_annotate.utils import normalize_rotation
 from pdf_annotate.utils import rotate
-from pdf_annotate.utils import identity
 from pdf_annotate.utils import scale
 from pdf_annotate.utils import translate
-from pdf_annotate.utils import matrix_multiply
 
 
 NAME_TO_ANNOTATION = {
@@ -68,7 +67,7 @@ class PdfAnnotator(object):
         rotation and weird, translated coordinate spaces.
 
         :param str filename: file of PDF to read in
-        :param number|tuple|None scale: number by which to scale all coordinates
+        :param number|tuple|None scale: number by which to scale coordinates
             to get to default user space. Use this if, for example, your points
             in the coordinate space of the PDF viewed at a dpi. In this case,
             scale would be 72/dpi. Can also specify a 2-tuple of x and y scale.

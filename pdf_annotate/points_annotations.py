@@ -4,9 +4,12 @@ Line, Polygon, Polyline, and Ink annotations.
 """
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import make_border_dict
+from pdf_annotate.graphics import Close
+from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import Line as CSLine
-from pdf_annotate.graphics import ContentStream, Move, Close, Stroke
+from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import set_appearance_state
+from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.utils import transform_point
 from pdf_annotate.utils import translate
@@ -22,10 +25,11 @@ class PointsAnnotation(Annotation):
     """
     @staticmethod
     def transform(location, transform):
-        l = location.copy()
-        points = [transform_point([x, y], transform) for x, y in location.points]
-        l. points = points
-        return l
+        new_location = location.copy()
+        points = [transform_point([x, y], transform)
+                  for x, y in location.points]
+        new_location.points = points
+        return new_location
 
     def make_rect(self):
         L = self._location
@@ -46,7 +50,7 @@ class PointsAnnotation(Annotation):
 
     def get_matrix(self):
         # Note: Acrobat and BB put padding that's not quite the same as the
-        # stroke width here. I'm not quite sure why yet, so I'm not changing it.
+        # stroke width here. I'm not quite sure why yet, so I'm not changing it
         rect = self.make_rect()
         return translate(-rect[0], -rect[1])
 

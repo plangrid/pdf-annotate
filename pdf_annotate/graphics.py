@@ -33,6 +33,7 @@ class ContentStream(object):
     Behind the scenes, the pdf-annotator library transforms the Move and Line
     operations to be properly placed in PDF user space.
     """
+
     def __init__(self, commands=None):
         self.commands = commands or []
 
@@ -183,7 +184,8 @@ def resolve_appearance_stream(A, transform):
     if a is None or isinstance(a, str):
         return A
     elif not isinstance(a, ContentStream):
-        raise ValueError('Invalid appearance stream format: {}'.format(type(a)))
+        raise ValueError(
+            'Invalid appearance stream format: {}'.format(type(a)))
 
     new_appearance = A.copy()
     new_appearance.appearance_stream = a.transform(transform).resolve()
