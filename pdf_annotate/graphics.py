@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from pdf_annotate.appearance import Appearance
 from pdf_annotate.utils import transform_point
+from pdf_annotate.utils import transform_vector
 
 
 ZERO_TOLERANCE = 0.00000000000001
@@ -64,19 +65,14 @@ class StaticCommand(NoOpTransformBase):
         return self.COMMAND
 
 
-class Rect(namedtuple('Rect', ['x1', 'y1', 'x2', 'y2'])):
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
     def resolve(self):
-        return '{} {} {} {} re'.format(
-            self.x1,
-            self.y1,
-            self.x2 - self.x1,
-            self.y2 - self.y1,
-        )
+        return '{} {} {} {} re'.format(self.x, self.y, self.width, self.height)
 
     def transform(self, t):
-        x1, y1 = transform_point((self.x1, self.y1), t)
-        x2, y2 = transform_point((self.x2, self.y2), t)
-        return Rect(x1, y1, x2, y2)
+        x, y = transform_point((self.x, self.y), t)
+        width, height = transform_vector((self.width, self.height), t)
+        return Rect(x, y, width, height)
 
 
 class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
@@ -108,6 +104,10 @@ class Stroke(StaticCommand):
 
 class StrokeAndFill(StaticCommand):
     COMMAND = 'B'
+
+
+class Fill(StaticCommand):
+    COMMAND = 'f'
 
 
 class Save(StaticCommand):
