@@ -103,3 +103,19 @@ def transform_point(point, matrix):
     new_x = x * a + y * c + e
     new_y = x * b + y * d + f
     return [new_x, new_y]
+
+
+def transform_vector(vector, matrix):
+    """Transform a vector by a matrix. This is similar to transform_point,
+    except that translation isn't honored. Think of a vector as displacement in
+    space, and a point as, well, a point in space.
+
+    :param list vector: 2-item list
+    :param list matrix: 6-item list representing transformation matrix
+    :returns list: 2-item transformed point
+    """
+    x, y = vector
+    a, b, c, d, _, _ = matrix
+    new_x = x * a + y * c
+    new_y = x * b + y * d
+    return [new_x, new_y]
