@@ -1,0 +1,13 @@
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      sha: v1.1.1
+      hooks:
+          - id: trailing-whitespace
+          - id: autopep8-wrapper
+          - id: flake8
+            language_version: python3.6
+    - repo: https://github.com/asottile/reorder_python_imports
+      sha: v0.3.5
+      hooks:
+          - id: reorder-python-imports
+            language_version: python3.6

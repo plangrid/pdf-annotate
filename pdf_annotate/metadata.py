@@ -51,6 +51,7 @@ class Metadata(object):
     str, int, float, datetime, and lists of str/int/float. Other values may
     work, but may appear oddly formatted in the PDF, or break it entirely.
     """
+
     def __init__(
         self,
         creation_date=None,

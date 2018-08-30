@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # TODO this is super unclear how these are used
+
+
 class Location(object):
 
     whitelist_kwargs = frozenset(['points', 'x1', 'y1', 'x2', 'y2', 'page'])

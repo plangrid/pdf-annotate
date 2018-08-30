@@ -70,7 +70,6 @@ def matrix_multiply(*args):
 
 def _matrix_multiply(A, B):
     a00, a01, a10, a11, a20, a21 = A
-    a02, a12, a22 = 0, 0, 1
 
     b00, b01, b10, b11, b20, b21 = B
     b02, b12, b22 = 0, 0, 1

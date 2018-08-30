@@ -2,13 +2,21 @@
 """
 FreeText annotation.
 """
-from pdf_annotate.annotations import Annotation
 from pdf_annotate.annotations import _make_border_dict
-from pdf_annotate.graphics import Font, ContentStream, StrokeColor, Save, CTM, FillColor, StrokeWidth, BeginText, EndText, TextMatrix, Text, Restore
-from pdf_annotate.graphics import set_appearance_state
-from pdf_annotate.graphics import stroke_or_fill
+from pdf_annotate.annotations import Annotation
+from pdf_annotate.graphics import BeginText
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import CTM
+from pdf_annotate.graphics import EndText
+from pdf_annotate.graphics import FillColor
+from pdf_annotate.graphics import Font
+from pdf_annotate.graphics import Restore
+from pdf_annotate.graphics import Save
+from pdf_annotate.graphics import StrokeColor
+from pdf_annotate.graphics import StrokeWidth
+from pdf_annotate.graphics import Text
+from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.rect_annotations import RectAnnotation
-from pdf_annotate.utils import identity
 from pdf_annotate.utils import rotate
 from pdf_annotate.utils import translate
 
@@ -48,7 +56,6 @@ class FreeText(Annotation):
         obj.Contents = self._appearance.text
         obj.DA = self.make_default_appearance()
         obj.C = []
-        A = self._appearance
         # TODO allow setting border on free text boxes
         obj.BS = _make_border_dict(width=0, style='S')
         # TODO DS is required to have BB not redraw the annotation in their own
@@ -57,12 +64,11 @@ class FreeText(Annotation):
 
     def graphics_commands(self):
         A = self._appearance
-        L = self._location
 
         stream = ContentStream([
             Save(),
             CTM(self._get_graphics_cm()),
-            # Not quite sure why we write black + the stroke color before BT as well
+            # Not quite sure why we write black + the stroke color before BT
             StrokeColor(1, 1, 1),
             FillColor(*A.stroke_color),
             StrokeWidth(0),

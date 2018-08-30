@@ -2,8 +2,8 @@
 from unittest import TestCase
 
 from pdf_annotate import Appearance
-from pdf_annotate import PdfAnnotator
 from pdf_annotate import Location
+from pdf_annotate import PdfAnnotator
 from pdf_annotate.utils import identity
 from pdf_annotate.utils import translate
 from tests import files
@@ -92,7 +92,11 @@ class TestPdfAnnotatorGetTransform(TestCase):
         self._assert_transform([2, 0, 0, 4, 0, 0], scale=(2, 4))
 
     def test_scale_rotate(self):
-        self._assert_transform([0, 2, -4, 0, 100, 0], scale=(2, 4), rotation=90)
+        self._assert_transform(
+            [0, 2, -4, 0, 100, 0],
+            scale=(2, 4),
+            rotation=90,
+        )
 
     def test_weird_media_box(self):
         self._assert_transform(translate(0, -30), media_box=[0, -30, 20, 0])

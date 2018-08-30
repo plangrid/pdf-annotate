@@ -5,4 +5,4 @@ from pdf_annotate.location import Location
 from pdf_annotate.metadata import Metadata
 
 
-__all__ = ['PdfAnnotator']
+__all__ = ['PdfAnnotator', 'Appearance', 'Location', 'Metadata']
