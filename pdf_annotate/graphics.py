@@ -45,14 +45,19 @@ class ContentStream(object):
         self.commands.extend(commands)
 
     def transform(self, transform):
-        return [
+        return ContentStream([
             command.transform(transform) for command in self.commands
-        ]
+        ])
 
     def resolve(self):
         return ' '.join(
             command.resolve() for command in self.commands
         )
+
+    @staticmethod
+    def join(stream1, stream2):
+        """Combine two content streams."""
+        return ContentStream(stream1.commands + stream2.commands)
 
 
 class NoOpTransformBase(object):
@@ -221,5 +226,11 @@ def format_number(n):
     # Cut off unnecessary decimals
     if n % 1 == 0:
         return str(int(n))
-    # Otherwise return 10 decimal places
-    return '{:.10f}'.format(n)
+    # Otherwise return 10 decimal places, but remove trailing zeros. I wish I
+    # could use 'g' for this, but that switches to scientific notation at
+    # certain thresholds.
+    string = '{:.10f}'.format(n)
+    i = len(string) - 1
+    while string[i] == '0':
+        i -= 1
+    return string[:i + 1]
