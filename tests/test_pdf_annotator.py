@@ -36,6 +36,25 @@ class TestPdfAnnotator(TestCase):
         size = a.get_size(0)
         assert size == (612.0, 792.0)
 
+    def test_get_scale_default(self):
+        a = PdfAnnotator(files.SIMPLE)
+        assert a.get_scale(0) == (1, 1)
+
+    def test_get_scale_from_init(self):
+        a = PdfAnnotator(files.SIMPLE, scale=0.48)
+        assert a.get_scale(0) == (0.48, 0.48)
+
+    def test_get_scale_from_page_dimensions(self):
+        a = PdfAnnotator(files.SIMPLE)
+        # Rastered at different X and Y scales. Why would you do that?
+        a.set_page_dimensions((1275, 3300), 0)
+        assert a.get_scale(0) == (0.48, 0.24)
+
+    def test_get_rotated_scale_from_dimensions(self):
+        a = PdfAnnotator(files.ROTATED_90)
+        a.set_page_dimensions((3300, 1275), 0)
+        assert a.get_scale(0) == (0.24, 0.48)
+
     def test_add_annotation_page_dimensions(self):
         # Ensure that changing a page's dimensions results in annotations being
         # placed in the proper locations.
