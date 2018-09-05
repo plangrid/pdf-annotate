@@ -78,6 +78,53 @@ class Square(RectAnnotation):
         return stream.resolve()
 
 
+def add_bezier_circle(stream, x1, y1, x2, y2):
+    """Create a circle from four bezier curves and add it to the content stream,
+    since PDF graphics is missing an ellipse primitive.
+
+    :param ContentStream stream:
+    :param float x1:
+    :param float y1:
+    :param float x2:
+    :param float y2:
+    """
+    left_x = x1
+    right_x = x2
+    bottom_x = left_x + (right_x - left_x) / 2.0
+    top_x = bottom_x
+
+    bottom_y = y1
+    top_y = y2
+    left_y = bottom_y + (top_y - bottom_y) / 2.0
+    right_y = left_y
+
+    cp_offset = 0.552284749831
+    # Move to the bottom of the circle, then four curves around.
+    # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
+    stream.add(Move(bottom_x, bottom_y))
+    stream.add(Bezier(
+        bottom_x + (right_x - bottom_x) * cp_offset, bottom_y,
+        right_x, right_y - (right_y - bottom_y) * cp_offset,
+        right_x, right_y,
+    ))
+    stream.add(Bezier(
+        right_x, right_y + (top_y - right_y) * cp_offset,
+        top_x + (right_x - top_x) * cp_offset, top_y,
+        top_x, top_y,
+    ))
+    stream.add(Bezier(
+        top_x - (top_x - left_x) * cp_offset, top_y,
+        left_x, left_y + (top_y - left_y) * cp_offset,
+        left_x, left_y,
+    ))
+    stream.add(Bezier(
+        left_x, left_y - (left_y - bottom_y) * cp_offset,
+        bottom_x - (bottom_x - left_x) * cp_offset, bottom_y,
+        bottom_x, bottom_y,
+    ))
+    stream.add(Close())
+
+
 class Circle(RectAnnotation):
     """Circles and Squares are basically the same PDF annotation but with
     different content streams.
@@ -88,45 +135,9 @@ class Circle(RectAnnotation):
         L = self._location
         A = self._appearance
 
-        # PDF graphics operators doesn't have an ellipse method, so we have to
-        # construct it from four bezier curves
-        left_x = L.x1
-        right_x = L.x2
-        bottom_x = left_x + (right_x - left_x) / 2.0
-        top_x = bottom_x
-
-        bottom_y = L.y1
-        top_y = L.y2
-        left_y = bottom_y + (top_y - bottom_y) / 2.0
-        right_y = left_y
-
         stream = ContentStream()
         set_appearance_state(stream, A)
-        # Move to the bottom of the circle, then four curves around.
-        # https://stackoverflow.com/questions/1734745/how-to-create-circle-with-b%C3%A9zier-curves
-        cp_offset = 0.552284749831
-        stream.add(Move(bottom_x, bottom_y))
-        stream.add(Bezier(
-            bottom_x + (right_x - bottom_x) * cp_offset, bottom_y,
-            right_x, right_y - (right_y - bottom_y) * cp_offset,
-            right_x, right_y,
-        ))
-        stream.add(Bezier(
-            right_x, right_y + (top_y - right_y) * cp_offset,
-            top_x + (right_x - top_x) * cp_offset, top_y,
-            top_x, top_y,
-        ))
-        stream.add(Bezier(
-            top_x - (top_x - left_x) * cp_offset, top_y,
-            left_x, left_y + (top_y - left_y) * cp_offset,
-            left_x, left_y,
-        ))
-        stream.add(Bezier(
-            left_x, left_y - (left_y - bottom_y) * cp_offset,
-            bottom_x - (bottom_x - left_x) * cp_offset, bottom_y,
-            bottom_x, bottom_y,
-        ))
-        stream.add(Close())
+        add_bezier_circle(stream, L.x1, L.y1, L.x2, L.y2)
         stroke_or_fill(stream, A)
 
         return stream.resolve()
