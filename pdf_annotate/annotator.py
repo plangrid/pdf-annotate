@@ -9,6 +9,7 @@ from pdfrw import PdfReader
 from pdfrw import PdfWriter
 
 from pdf_annotate.graphics import resolve_appearance_stream
+from pdf_annotate.image_annotation import Image
 from pdf_annotate.metadata import Metadata
 from pdf_annotate.metadata import UNSET
 from pdf_annotate.points_annotations import Ink
@@ -35,6 +36,7 @@ NAME_TO_ANNOTATION = {
     'polyline': Polyline,
     'ink': Ink,
     'text': FreeText,
+    'image': Image,
 }
 
 
