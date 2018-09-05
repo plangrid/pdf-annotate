@@ -191,6 +191,16 @@ class PdfAnnotator(object):
         annotation.validate(self._pdf.pdf_version)
         return annotation
 
+    def get_scale(self, page_number):
+        """Public API to get the x and y scales of the given page.
+
+        :param int page_number:
+        :returns 2-tuple: (x_scale, y_scale)
+        """
+        rotation = self._pdf.get_rotation(page_number)
+        media_box = self.get_mediabox(page_number)
+        return self._get_scale(page_number, media_box, rotation)
+
     def _get_scale(self, page_number, media_box, rotation):
         W = media_box[2] - media_box[0]
         H = media_box[3] - media_box[1]
