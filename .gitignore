@@ -1,5 +1,6 @@
 *.egg-info
 *.py[co]
+.DS_Store
 
 # vim
 *.sw[op]
