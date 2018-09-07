@@ -6,6 +6,7 @@ class Appearance(object):
     whitelist_kwargs = frozenset([
         'stroke_color', 'stroke_width', 'border_style', 'fill',
         'dash_array', 'font_size', 'text', 'appearance_stream',
+        'image',
     ])
 
     def __init__(self, **kwargs):
@@ -17,6 +18,7 @@ class Appearance(object):
         self.font_size = kwargs.get('font_size', None)
         self.text = kwargs.get('text', None)
         self.appearance_stream = kwargs.get('appearance_stream', None)
+        self.image = kwargs.get('image', None)
 
         for k, v in kwargs.items():
             setattr(self, k, v)

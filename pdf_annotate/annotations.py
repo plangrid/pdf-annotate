@@ -50,7 +50,6 @@ class Annotation(object):
         """Create the base PDF object with properties that all annotations
         share.
         """
-        # TODO add metadata
         obj = PdfDict(
             **{
                 'Type': PdfName('Annot'),
@@ -69,12 +68,21 @@ class Annotation(object):
         for name, value in metadata.iter():
             obj[PdfName(name)] = serialize_value(value)
 
-    def make_appearance_stream_dict(self):
+    def make_ap_resources(self):
+        """Make the Resources entry for the appearance stream dictionary.
+
+        Subclass this to add additional resources - fonts, xobjects - to your
+        annotation.
+        """
         resources = {'ProcSet': PdfName('PDF')}
         if self.font is not None:
             resources['Font'] = PdfDict(**{
                 self.font: self.make_font(),
             })
+        return resources
+
+    def make_appearance_stream_dict(self):
+        resources = self.make_ap_resources()
 
         appearance_stream = self._appearance.appearance_stream
         if appearance_stream is None:

@@ -1,24 +1,138 @@
 # -*- coding: utf-8 -*-
-"""
-Image annotation type. Though not an official PDF annotation type, images can
-easily be added as annotations by drawing Image XObjects in the content stream.
-"""
-from pdf_annotate.annotations import Annotation
+import zlib
+
+from pdfrw import PdfDict
+from pdfrw import PdfName
+from PIL import Image as PILImage
+from PIL.ImageFile import ImageFile
+
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import CTM
+from pdf_annotate.graphics import Rect
+from pdf_annotate.graphics import Restore
+from pdf_annotate.graphics import Save
+from pdf_annotate.graphics import set_appearance_state
+from pdf_annotate.graphics import XObject
+from pdf_annotate.rect_annotations import RectAnnotation
 
 
-# TODO Image XObject needs to be placed in annotation's /Resources dict
-class Image(Annotation):
+class Image(RectAnnotation):
+    """A basic Image annotation class.
+
+    There is no native image annotation in the PDF spec, but image annotations
+    can be easily approximated by drawing an Image XObject in the appearance
+    stream.
+
+    This implementation relies on the python Pillow library to retrieve the
+    image's raw sample data, then formats that data as expected by the PDF
+    spec.
+
+    Additional work needs to be done. For example:
+        - supporting transparency
+        - better compression (e.g. using a Predictor value for FlateDecode)
+        - support for other image types. For example I think the PDF spec has
+          some limited support for just including JPEGs directly.
+        - more color spaces - Pillow lists a ton of potential image modes.
+    """
+
+    subtype = 'Square'
+    _image_xobject = None  # PdfDict of Image XObject
+
+    def make_ap_resources(self):
+        resources = super(Image, self).make_ap_resources()
+        resources['XObject'] = PdfDict(Image=self.image_xobject)
+        return resources
+
+    @property
+    def image_xobject(self):
+        if self._image_xobject is None:
+            self._image_xobject = self.make_image_xobject()
+        return self._image_xobject
+
+    def make_image_xobject(self):
+        image = self.resolve_image(self._appearance.image)
+        width, height = image.size
+
+        if image.mode == 'RGBA':
+            # TODO this drops the alpha channel. PDF has its own transparency
+            # model that we'll have to understand eventually.
+            image = image.convert('RGB')
+
+        xobj = PdfDict(
+            stream=self.make_image_content(image),
+            **{
+                'BitsPerComponent': 8,
+                'Filter': PdfName('FlateDecode'),  # TODO use a predictor
+                'ColorSpace': self._get_color_space_name(image),
+                'Width': width,
+                'Height': height,
+                'Subtype': PdfName('Image'),
+                'Type': PdfName('XObject'),
+            }
+        )
+        return xobj
 
     @staticmethod
-    def transform(location, transform):
-        pass
+    def resolve_image(image_or_filename):
+        if isinstance(image_or_filename, str):
+            return PILImage.open(image_or_filename)
+        elif isinstance(image_or_filename, ImageFile):
+            return image_or_filename
+        raise ValueError('Invalid image format: {}'.format(
+            image_or_filename.__class__.__name__))
 
-    def get_matrix(self):
-        pass
+    @staticmethod
+    def _get_color_space_name(image):
+        if image.mode == 'RGB':
+            return PdfName('DeviceRGB')
+        elif image.mode in ('L', '1'):
+            return PdfName('DeviceGray')
+        raise ValueError('Image color space not yet supported')
 
-    def get_rect(self):
-        pass
+    @staticmethod
+    def make_image_content(image):
+        compressed = zlib.compress(Image.get_raw_image_bytes(image))
+        return compressed.decode('Latin-1')
+
+    @staticmethod
+    def get_raw_image_bytes(image):
+        if image.mode in ('L', '1'):
+            # If this is grayscale or single-channel, we can avoid dealing with
+            # the nested tuples in multi-channel images
+            return bytes(image.getdata())
+
+        elif image.mode == 'RGB':
+            raw_image_data = list(image.getdata())
+            array = bytearray()
+            for rgb in raw_image_data:
+                array.extend(rgb)
+            return bytes(array)
+
+        raise ValueError('Image color space not yet supported')
 
     def as_pdf_object(self):
-        obj = self.make_base_object()
-        # TODO return obj
+        obj = super(Image, self).as_pdf_object()
+        obj.Image = self.image_xobject
+        return obj
+
+    def graphics_commands(self):
+        A = self._appearance
+        L = self._location
+
+        stream = ContentStream()
+        set_appearance_state(stream, A)
+        stream.extend([
+            Rect(L.x1, L.y1, L.x2 - L.x1, L.y2 - L.y1),
+            Save(),
+            CTM(self._get_ctm()),
+            XObject('Image'),
+            Restore(),
+        ])
+        return stream.resolve()
+
+    def _get_ctm(self):
+        # Scale the image and place it on the page
+        L = self._location
+        width = L.x2 - L.x1
+        height = L.y2 - L.y1
+        return [width, 0, 0, height, L.x1, L.y1]

@@ -4,7 +4,6 @@
 
 # vim
 *.sw[op]
-*.DS_Store
 
 # pyenv
 .python-version
