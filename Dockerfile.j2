@@ -1,6 +1,11 @@
 FROM {{ PLANGRID_DOCKER_REPO }}/pg-docker:master
 MAINTAINER plangrid
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg-dev \
+    libpng-dev \
+    zlib1g-dev
+
 RUN mkdir /root/home
 WORKDIR /root/home
 
