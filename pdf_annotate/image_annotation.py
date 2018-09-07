@@ -135,4 +135,6 @@ class Image(RectAnnotation):
         L = self._location
         width = L.x2 - L.x1
         height = L.y2 - L.y1
+        # TODO this draws the image in the right place, but it's incorrectly
+        # rotated on rotated PDFs. Should be pretty simple to fix.
         return [width, 0, 0, height, L.x1, L.y1]
