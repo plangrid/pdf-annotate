@@ -6,6 +6,7 @@ import pdfrw
 from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
+from tests.files import PNG_FILES
 from tests.files import ROTATED_90
 from tests.files import SIMPLE
 
@@ -38,7 +39,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 7
+        assert len(f.pages[0].Annots) == 11
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -80,6 +81,13 @@ class EndToEndMixin(object):
             Location(x1=310, y1=20, x2=350, y2=60, page=0),
             self.gaudy,
         )
+        xs = [10, 70, 130, 190]
+        for x, image_file in zip(xs, PNG_FILES):
+            a.add_annotation(
+                'image',
+                Location(x1=x, y1=100, x2=(x + 50), y2=150, page=0),
+                Appearance(stroke_width=0, image=image_file),
+            )
 
 
 class TestEndToEnd(EndToEndMixin, TestCase):
