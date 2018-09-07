@@ -12,6 +12,7 @@ setup(
     packages=find_packages('.'),
     install_requires=[
         'pdfrw>=0.4',
+        'pillow>=5.2.0',  # this could probably be lower, but it's not tested
         'six>=1.0.0',
     ],
 )

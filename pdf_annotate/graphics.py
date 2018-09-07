@@ -184,6 +184,11 @@ class Text(namedtuple('Text', ['text']), NoOpTransformBase):
         return '({}) Tj'.format(self.text)
 
 
+class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
+    def resolve(self):
+        return '/{} Do'.format(self.name)
+
+
 def resolve_appearance_stream(A, transform):
     a = A.appearance_stream
     if a is None or isinstance(a, str):
