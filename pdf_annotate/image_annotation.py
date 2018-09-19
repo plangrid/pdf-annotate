@@ -14,6 +14,10 @@ from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import XObject
 from pdf_annotate.rect_annotations import RectAnnotation
+from pdf_annotate.utils import matrix_multiply
+from pdf_annotate.utils import rotate
+from pdf_annotate.utils import scale
+from pdf_annotate.utils import translate
 
 
 class Image(RectAnnotation):
@@ -135,6 +139,17 @@ class Image(RectAnnotation):
         L = self._location
         width = L.x2 - L.x1
         height = L.y2 - L.y1
-        # TODO this draws the image in the right place, but it's incorrectly
-        # rotated on rotated PDFs. Should be pretty simple to fix.
-        return [width, 0, 0, height, L.x1, L.y1]
+        if self._rotation == 0:
+            placement = translate(L.x1, L.y1)
+        elif self._rotation == 90:
+            placement = translate(L.x2, L.y1)
+        elif self._rotation == 180:
+            placement = translate(L.x2, L.y2)
+        else:  # 270
+            placement = translate(L.x1, L.y2)
+
+        return matrix_multiply(
+            placement,
+            scale(width, height),
+            rotate(self._rotation),
+        )
