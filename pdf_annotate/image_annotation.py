@@ -64,15 +64,13 @@ class Image(RectAnnotation):
 
         xobj = PdfDict(
             stream=self.make_image_content(image),
-            **{
-                'BitsPerComponent': 8,
-                'Filter': PdfName('FlateDecode'),  # TODO use a predictor
-                'ColorSpace': self._get_color_space_name(image),
-                'Width': width,
-                'Height': height,
-                'Subtype': PdfName('Image'),
-                'Type': PdfName('XObject'),
-            }
+            BitsPerComponent=8,
+            Filter=PdfName('FlateDecode'),  # TODO use a predictor
+            ColorSpace=self._get_color_space_name(image),
+            Width=width,
+            Height=height,
+            Subtype=PdfName('Image'),
+            Type=PdfName('XObject'),
         )
         return xobj
 
@@ -95,8 +93,7 @@ class Image(RectAnnotation):
 
     @staticmethod
     def make_image_content(image):
-        compressed = zlib.compress(Image.get_raw_image_bytes(image))
-        return compressed.decode('Latin-1')
+        return zlib.compress(Image.get_raw_image_bytes(image))
 
     @staticmethod
     def get_raw_image_bytes(image):

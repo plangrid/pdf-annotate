@@ -51,12 +51,10 @@ class Annotation(object):
         share.
         """
         obj = PdfDict(
-            **{
-                'Type': PdfName('Annot'),
-                'Subtype': PdfName(self.subtype),
-                'Rect': self.make_rect(),
-                'AP': self.make_appearance_stream_dict(),
-            }
+            Type=PdfName('Annot'),
+            Subtype=PdfName(self.subtype),
+            Rect=self.make_rect(),
+            AP=self.make_appearance_stream_dict(),
         )
         self._add_metadata(obj, self._metadata)
         obj.indirect = True
@@ -90,14 +88,12 @@ class Annotation(object):
 
         normal_appearance = PdfDict(
             stream=appearance_stream,
-            **{
-                'BBox': self.make_rect(),
-                'Resources': PdfDict(**resources),
-                'Matrix': self.get_matrix(),
-                'Type': PdfName('XObject'),
-                'Subtype': PdfName('Form'),
-                'FormType': 1,
-            }
+            BBox=self.make_rect(),
+            Resources=PdfDict(**resources),
+            Matrix=self.get_matrix(),
+            Type=PdfName('XObject'),
+            Subtype=PdfName('Form'),
+            FormType=1,
         )
         return PdfDict(**{'N': normal_appearance})
 
@@ -128,11 +124,9 @@ def make_border_dict(appearance):
 
 def _make_border_dict(width, style, dash_array=None):
     border = PdfDict(
-        **{
-            'Type': PdfName('Border'),
-            'W': width,
-            'S': PdfName(style),
-        }
+        Type=PdfName('Border'),
+        W=width,
+        S=PdfName(style),
     )
     if dash_array:
         if style != 'D':
