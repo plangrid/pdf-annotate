@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 import zlib
 
 from pdfrw import PdfDict
@@ -93,14 +94,20 @@ class Image(RectAnnotation):
 
     @staticmethod
     def make_image_content(image):
-        return zlib.compress(Image.get_raw_image_bytes(image))
+        compressed = zlib.compress(Image.get_raw_image_bytes(image))
+        if sys.version_info.major < 3:
+            return compressed
+        # Right now, pdfrw needs strings, not bytes like you'd expect in py3,
+        # for binary stream objects. This might change in future versions.
+        return compressed.decode('Latin-1')
 
     @staticmethod
     def get_raw_image_bytes(image):
         if image.mode in ('L', '1'):
             # If this is grayscale or single-channel, we can avoid dealing with
-            # the nested tuples in multi-channel images
-            return bytes(image.getdata())
+            # the nested tuples in multi-channel images. This bytes/bytearray
+            # wrapped approach is the only way that works in both py2 and py3.
+            return bytes(bytearray(image.getdata()))
 
         elif image.mode == 'RGB':
             raw_image_data = list(image.getdata())
