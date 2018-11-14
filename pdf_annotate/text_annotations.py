@@ -2,6 +2,8 @@
 """
 FreeText annotation.
 """
+import os.path
+
 from PIL import ImageFont
 
 from pdf_annotate.annotations import _make_border_dict
@@ -24,13 +26,22 @@ from pdf_annotate.utils import rotate
 from pdf_annotate.utils import translate
 
 
+PDF_ANNOTATOR_FONT = 'PDFANNOTATORFONT1'
+
+HELVETICA_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'fonts',
+    'Helvetica.ttf',
+)
+
+
 class FreeText(Annotation):
     """FreeText annotation. Right now, we only support writing text in the
     Helvetica font. Dealing with fonts is tricky business, so we'll leave that
     for later.
     """
     subtype = 'FreeText'
-    font = 'PDFANNOTATORFONT1'
+    font = PDF_ANNOTATOR_FONT
 
     @staticmethod
     def transform(location, transform):
@@ -67,6 +78,7 @@ class FreeText(Annotation):
 
     def graphics_commands(self):
         A = self._appearance
+        L = self._location
 
         stream = ContentStream([
             Save(),
@@ -79,7 +91,13 @@ class FreeText(Annotation):
             StrokeColor(*A.stroke_color),
             Font(self.font, A.font_size),
         ])
-        stream.extend(self._get_text_commands())
+        stream.extend(get_text_commands(
+            L.x1, L.y1, L.x2, L.y2,
+            text=A.text,
+            font_size=A.font_size,
+            rotation=self._rotation,
+            wrap_text=A.wrap_text,
+        ))
         stream.extend([
             EndText(),
             Restore(),
@@ -87,29 +105,34 @@ class FreeText(Annotation):
 
         return stream.resolve()
 
-    def _get_text_commands(self):
-        if self._appearance.wrap_text:
-            return self._get_wrapped_text_commands()
-        else:
-            return [
-                TextMatrix(self._get_text_matrix()),
-                Text(self._appearance.text),
-            ]
+    def _get_graphics_cm(self):
+        return rotate(self._rotation)
 
-    def _get_wrapped_text_commands(self):
-        A = self._appearance
-        L = self._location
 
-        font = ImageFont.truetype('fonts/Helvetica.ttf', size=A.font_size)
-        width = L.x2 - L.x1
-        line_spacing = 1.2 * A.font_size
+def get_text_commands(x1, y1, x2, y2, text, font_size, rotation, wrap_text):
+    """Return the graphics stream commands necessary to render a free text
+    annotation, given the various parameters.
+
+    :param number x1: bounding box lower left x
+    :param number y1: bounding box lower left y
+    :param number x2: bounding box upper right x
+    :param number y2: bounding box upper right y
+    :param str text: text to add to annotation
+    :param number font_size: font size
+    :param int rotation: page's rotation, int that's a multiple of 90
+    :param bool wrap_text: whether to wrap the text
+    """
+    tm = _get_text_matrix(x1, y1, x2, y2, font_size, rotation)
+    if wrap_text:
+        font = ImageFont.truetype(HELVETICA_PATH, size=font_size)
+        width = x2 - x1
+        line_spacing = 1.2 * font_size
 
         lines = get_wrapped_lines(
-            A.text,
+            text,
             lambda text: font.getsize(text)[0],
             width,
         )
-        tm = self._get_text_matrix()
         commands = []
         # For each line of wrapped text, adjust the text matrix to go down to
         # the next line.
@@ -120,19 +143,20 @@ class FreeText(Annotation):
             ])
             tm = translate(tm[4], tm[5] - line_spacing)
         return commands
+    else:
+        return [
+            TextMatrix(tm),
+            Text(text),
+        ]
 
-    def _get_text_matrix(self):
-        A = self._appearance
-        L = self._location
-        # Not entirely sure what y offsets I should be calculating here.
-        if self._rotation == 0:
-            return translate(L.x1 + 1, L.y2 - A.font_size)
-        elif self._rotation == 90:
-            return translate(L.y1 + 1, -(L.x1 + A.font_size))
-        elif self._rotation == 180:
-            return translate(-L.x2 + 1, -(L.y1 + A.font_size))
-        else:  # 270
-            return translate(-L.y2 + 1, L.x2 - A.font_size)
 
-    def _get_graphics_cm(self):
-        return rotate(self._rotation)
+def _get_text_matrix(x1, y1, x2, y2, font_size, rotation):
+    # Not entirely sure what y offsets I should be calculating here.
+    if rotation == 0:
+        return translate(x1 + 1, y2 - font_size)
+    elif rotation == 90:
+        return translate(y1 + 1, -(x1 + font_size))
+    elif rotation == 180:
+        return translate(-x2 + 1, -(y1 + font_size))
+    else:  # 270
+        return translate(-y2 + 1, x2 - font_size)
