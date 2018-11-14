@@ -2,6 +2,8 @@
 """
 FreeText annotation.
 """
+from PIL import ImageFont
+
 from pdf_annotate.annotations import _make_border_dict
 from pdf_annotate.annotations import Annotation
 from pdf_annotate.graphics import BeginText
@@ -17,6 +19,7 @@ from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.rect_annotations import RectAnnotation
+from pdf_annotate.utils import get_wrapped_lines
 from pdf_annotate.utils import rotate
 from pdf_annotate.utils import translate
 
@@ -75,13 +78,48 @@ class FreeText(Annotation):
             BeginText(),
             StrokeColor(*A.stroke_color),
             Font(self.font, A.font_size),
-            TextMatrix(self._get_text_matrix()),
-            Text(A.text),
+        ])
+        stream.extend(self._get_text_commands())
+        stream.extend([
             EndText(),
             Restore(),
         ])
 
         return stream.resolve()
+
+    def _get_text_commands(self):
+        if self._appearance.wrap_text:
+            return self._get_wrapped_text_commands()
+        else:
+            return [
+                TextMatrix(self._get_text_matrix()),
+                Text(self._appearance.text),
+            ]
+
+    def _get_wrapped_text_commands(self):
+        A = self._appearance
+        L = self._location
+
+        font = ImageFont.truetype('fonts/Helvetica.ttf', size=A.font_size)
+        width = L.x2 - L.x1
+        line_spacing = 1.2 * A.font_size
+
+        lines = get_wrapped_lines(
+            A.text,
+            lambda text: font.getsize(text)[0],
+            width,
+        )
+        tm = self._get_text_matrix()
+        commands = []
+        # For each line of wrapped text, adjust the text matrix to go down to
+        # the next line.
+        for line in lines:
+            commands.extend([
+                TextMatrix(tm),
+                Text(line),
+            ])
+            tm = translate(tm[4], tm[5] - line_spacing)
+        return commands
 
     def _get_text_matrix(self):
         A = self._appearance
