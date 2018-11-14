@@ -123,9 +123,9 @@ class TestUnshiftLine(TestCase):
         }
 
 
-def TestGetWrappedLines(TestCase):
+class TestGetWrappedLines(TestCase):
 
-    def test_get_wrapped_lines(self):
+    def test_wrap_lines(self):
         lines = get_wrapped_lines(
             "Hi, I'm a big block of text!",
             lambda text: len(text),
@@ -136,3 +136,7 @@ def TestGetWrappedLines(TestCase):
             "big block ",
             "of text!",
         ]
+
+    def test_single_line(self):
+        lines = get_wrapped_lines('Hi', lambda text: len(text), 10)
+        assert lines == ['Hi']

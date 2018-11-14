@@ -61,7 +61,7 @@ def matrix_multiply(*args):
     Each matrix is a 6-item homogenous matrix.
     """
     if len(args) < 2:
-        raise ValueError('Cannot multiply less than two matrices')
+        raise ValueError('Cannot multiply fewer than two matrices')
     r = _matrix_multiply(args[0], args[1])
     for m in args[2:]:
         r = _matrix_multiply(r, m)
@@ -219,5 +219,5 @@ def get_wrapped_lines(text, measure, max_length):
     lines = [line['text']]
     while (len(line['remainder']) > 0):
         line = unshift_line(line['remainder'], measure, max_length)
-        lines.append(line)
-    return [line['text'] for line in lines]
+        lines.append(line['text'])
+    return lines
