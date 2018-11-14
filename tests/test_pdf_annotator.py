@@ -36,6 +36,10 @@ class TestPdfAnnotator(TestCase):
         size = a.get_size(0)
         assert size == (612.0, 792.0)
 
+    def test_get_rotation(self):
+        assert PdfAnnotator(files.SIMPLE).get_rotation(0) == 0
+        assert PdfAnnotator(files.ROTATED_90).get_rotation(0) == 90
+
     def test_get_scale_default(self):
         a = PdfAnnotator(files.SIMPLE)
         assert a.get_scale(0) == (1, 1)

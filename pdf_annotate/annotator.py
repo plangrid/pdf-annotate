@@ -203,6 +203,14 @@ class PdfAnnotator(object):
         media_box = self.get_mediabox(page_number)
         return self._get_scale(page_number, media_box, rotation)
 
+    def get_rotation(self, page_number):
+        """Public API to get the rotation of the give page.
+
+        :param int page_number:
+        :returns int: integer where i % 90 == 0
+        """
+        return self._pdf.get_rotation(page_number)
+
     def _get_scale(self, page_number, media_box, rotation):
         W = media_box[2] - media_box[0]
         H = media_box[3] - media_box[1]
