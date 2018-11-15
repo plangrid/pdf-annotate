@@ -91,12 +91,16 @@ class FreeText(Annotation):
             StrokeColor(*A.stroke_color),
             Font(self.font, A.font_size),
         ])
+        # Actually draw the text inside the rectangle
         stream.extend(get_text_commands(
             L.x1, L.y1, L.x2, L.y2,
             text=A.text,
             font_size=A.font_size,
             rotation=self._rotation,
             wrap_text=A.wrap_text,
+            align=A.text_align,
+            baseline=A.text_baseline,
+            line_spacing=A.line_spacing,
         ))
         stream.extend([
             EndText(),
@@ -109,9 +113,16 @@ class FreeText(Annotation):
         return rotate(self._rotation)
 
 
-def get_text_commands(x1, y1, x2, y2, text, font_size, rotation, wrap_text):
+def get_text_commands(
+    x1, y1, x2, y2,
+    text, font_size, rotation, wrap_text,
+    align, baseline, line_spacing,
+):
     """Return the graphics stream commands necessary to render a free text
     annotation, given the various parameters.
+
+    Text is optionally wrapped, then arranged according to align (horizontal
+    alignment), and baseline (vertical alignment).
 
     :param number x1: bounding box lower left x
     :param number y1: bounding box lower left y
@@ -121,42 +132,89 @@ def get_text_commands(x1, y1, x2, y2, text, font_size, rotation, wrap_text):
     :param number font_size: font size
     :param int rotation: page's rotation, int that's a multiple of 90
     :param bool wrap_text: whether to wrap the text
+    :param str align: 'left'|'center'|'right'
+    :param str baseline: 'top'|'middle'|'bottom'
+    :param number line_spacing: multiplier to determine line spacing
     """
-    tm = _get_text_matrix(x1, y1, x2, y2, font_size, rotation)
-    if wrap_text:
-        font = ImageFont.truetype(HELVETICA_PATH, size=font_size)
-        width = x2 - x1
-        line_spacing = 1.2 * font_size
+    font = ImageFont.truetype(HELVETICA_PATH, size=font_size)
 
-        lines = get_wrapped_lines(
-            text,
-            lambda text: font.getsize(text)[0],
-            width,
-        )
-        commands = []
-        # For each line of wrapped text, adjust the text matrix to go down to
-        # the next line.
-        for line in lines:
-            commands.extend([
-                TextMatrix(tm),
-                Text(line),
-            ])
-            tm = translate(tm[4], tm[5] - line_spacing)
-        return commands
-    else:
-        return [
-            TextMatrix(tm),
-            Text(text),
-        ]
+    def measure(text): return font.getsize(text)[0]
+
+    x1, y1, x2, y2 = _get_rotated_bbox(x1, y1, x2, y2, rotation)
+
+    lines = get_wrapped_lines(text, measure, x2 - x1) if wrap_text else [text]
+    # Line breaking cares about the whitespace in the string, but for the
+    # purposes of laying out the broken lines, we want to measure the lines
+    # without trailing/leading whitespace.
+    lines = [line.strip() for line in lines]
+    ys = _get_vertical_coordinates(
+        lines,
+        y1,
+        y2,
+        font_size,
+        line_spacing,
+        baseline,
+    )
+    xs = _get_horizontal_coordinates(lines, x1, x2, measure, align)
+    commands = []
+    for line, x, y in zip(lines, xs, ys):
+        commands.extend([
+            TextMatrix(translate(x, y)),
+            Text(line),
+        ])
+    return commands
 
 
-def _get_text_matrix(x1, y1, x2, y2, font_size, rotation):
-    # Not entirely sure what y offsets I should be calculating here.
+def _get_rotated_bbox(x1, y1, x2, y2, rotation):
+    """Swap bounding box corners if the page is rotated."""
     if rotation == 0:
-        return translate(x1 + 1, y2 - font_size)
+        return x1, y1, x2, y2
     elif rotation == 90:
-        return translate(y1 + 1, -(x1 + font_size))
+        return y1, -x2, y2, -x1
     elif rotation == 180:
-        return translate(-x2 + 1, -(y1 + font_size))
+        return -x2, -y1, -x1, -y2
     else:  # 270
-        return translate(-y2 + 1, x2 - font_size)
+        return -y2, x2, -y1, x1
+
+
+def _get_vertical_coordinates(
+    lines,
+    y1,
+    y2,
+    font_size,
+    line_spacing,
+    baseline,
+):
+    """Calculate vertical coordinates for all the lines at once, honoring the
+    text baseline property.
+    """
+    line_spacing = font_size * line_spacing
+    if baseline == 'top':
+        first_y = y2 - line_spacing
+    elif baseline == 'middle':
+        midpoint = (y2 + y1) / 2.0
+        # For the first line of vertically centered text, go up half the # of
+        # lines, then go back down half the font size.
+        first_y = midpoint - \
+            (line_spacing - font_size) + \
+            (((len(lines) - 1) / 2.0) * line_spacing)
+    else:  # bottom
+        first_y = y1 + \
+            (line_spacing - font_size) + \
+            (line_spacing * (len(lines) - 1))
+    ys = [first_y - (i * line_spacing) for i in range(len(lines))]
+    return ys
+
+
+def _get_horizontal_coordinates(lines, x1, x2, measure, align):
+    PADDING = 1
+    if align == 'left':
+        return [x1 + PADDING for _ in range(len(lines))]
+    elif align == 'center':
+        widths = [measure(line) for line in lines]
+        max_width = x2 - x1
+        return [x1 + ((max_width - width) / 2.0) - PADDING for width in widths]
+    else:  # right
+        widths = [measure(line) for line in lines]
+        max_width = x2 - x1
+        return [x1 + (max_width - width) - PADDING for width in widths]

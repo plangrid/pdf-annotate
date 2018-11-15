@@ -7,6 +7,8 @@ from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
 from tests.files import PNG_FILES
+from tests.files import ROTATED_180
+from tests.files import ROTATED_270
 from tests.files import ROTATED_90
 from tests.files import SIMPLE
 
@@ -26,19 +28,37 @@ class EndToEndMixin(object):
             stroke_color=[1, 0, 0],
             stroke_width=3,
             fill=[0, 1, 0],
-            text='Taco tuesday',
+            text='Latin',
             font_size=12,
             wrap_text=True,
         )
 
-        self.long_text = self.gaudy.copy()
-        self.long_text.stroke_color = [0, 0, 0]
-        self.long_text.text = "Though yet of Hamlet, our dear brother's death"
-        self.long_text.font_size = 7
+        self.top_left = self.gaudy.copy(
+            stroke_color=[0, 0, 0],
+            text=(
+                r"Though yet of Hamlet, our dear brother's death \\ "
+                r"The memory be green"
+            ),
+            font_size=6,
+            text_align='left',
+            text_baseline='top',
+        )
+        self.top_center = self.top_left.copy(text_align='center')
+        self.top_right = self.top_left.copy(text_align='right')
 
-        self.no_wrap_text = self.long_text.copy()
-        self.no_wrap_text.stroke_color = [0, 1, 1]
-        self.no_wrap_text.wrap_text = False
+        self.middle_left = self.top_left.copy(text_baseline='middle')
+        self.middle_center = self.middle_left.copy(text_align='center')
+        self.middle_right = self.middle_left.copy(text_align='right')
+
+        self.bottom_left = self.top_left.copy(text_baseline='bottom')
+        self.bottom_center = self.bottom_left.copy(text_align='center')
+        self.bottom_right = self.bottom_left.copy(text_align='right')
+
+        self.texts = [
+            self.top_left, self.top_center, self.top_right,
+            self.middle_left, self.middle_center, self.middle_right,
+            self.bottom_left, self.bottom_center, self.bottom_right,
+        ]
 
     def test_end_to_end(self):
         a = PdfAnnotator(self.INPUT_FILENAME)
@@ -49,7 +69,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 13
+        assert len(f.pages[0].Annots) == 19
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -102,12 +122,11 @@ class EndToEndMixin(object):
             )
 
     def _add_text_annotations(self, a):
-        xs = [10, 60, 110]
-        appearances = [self.gaudy, self.long_text, self.no_wrap_text]
-        for x, appearance in zip(xs, appearances):
+        xs = [10 + (i * 50) for i in range(len(self.texts))]
+        for x, appearance in zip(xs, self.texts):
             a.add_annotation(
                 'text',
-                Location(x1=x, y1=120, x2=(x + 40), y2=160, page=0),
+                Location(x1=x, y1=120, x2=(x + 40), y2=200, page=0),
                 appearance,
             )
 
@@ -117,6 +136,16 @@ class TestEndToEnd(EndToEndMixin, TestCase):
     OUTPUT_FILENAME = 'end_to_end.pdf'
 
 
-class TestEndToEndRotated(EndToEndMixin, TestCase):
+class TestEndToEndRotated90(EndToEndMixin, TestCase):
     INPUT_FILENAME = ROTATED_90
     OUTPUT_FILENAME = 'end_to_end_rotated_90.pdf'
+
+
+class TestEndToEndRotated180(EndToEndMixin, TestCase):
+    INPUT_FILENAME = ROTATED_180
+    OUTPUT_FILENAME = 'end_to_end_rotated_180.pdf'
+
+
+class TestEndToEndRotated270(EndToEndMixin, TestCase):
+    INPUT_FILENAME = ROTATED_270
+    OUTPUT_FILENAME = 'end_to_end_rotated_270.pdf'
