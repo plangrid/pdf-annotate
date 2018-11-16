@@ -147,7 +147,7 @@ def get_text_commands(
     # purposes of laying out the broken lines, we want to measure the lines
     # without trailing/leading whitespace.
     lines = [line.strip() for line in lines]
-    ys = _get_vertical_coordinates(
+    y_coords = _get_vertical_coordinates(
         lines,
         y1,
         y2,
@@ -157,7 +157,7 @@ def get_text_commands(
     )
     xs = _get_horizontal_coordinates(lines, x1, x2, measure, align)
     commands = []
-    for line, x, y in zip(lines, xs, ys):
+    for line, x, y in zip(lines, xs, y_coords):
         commands.extend([
             TextMatrix(translate(x, y)),
             Text(line),
@@ -202,8 +202,7 @@ def _get_vertical_coordinates(
         first_y = y1 + \
             (line_spacing - font_size) + \
             (line_spacing * (len(lines) - 1))
-    ys = [first_y - (i * line_spacing) for i in range(len(lines))]
-    return ys
+    return [first_y - (i * line_spacing) for i in range(len(lines))]
 
 
 def _get_horizontal_coordinates(lines, x1, x2, measure, align):
