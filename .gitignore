@@ -13,8 +13,7 @@ tags
 
 # local testing
 scripts
-tests/end_to_end/pdfs/end_to_end.pdf
-tests/end_to_end/pdfs/end_to_end_rotated_90.pdf
+tests/end_to_end/pdfs/end_to_end*
 
 .pytest_cache
 .tox

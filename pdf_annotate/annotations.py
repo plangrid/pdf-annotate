@@ -7,11 +7,18 @@ from pdf_annotate.metadata import serialize_value
 
 ALL_VERSIONS = ('1.3', '1.4', '1.5', '1.6', '1.7')
 
-PRINT_FLAG = 4
-
 
 class Annotation(object):
     """Base class for all PDF annotation objects.
+
+    Concrete annotations should define the following:
+        * subtype (e.g. "Square")
+        * make_rect() (bounding box of annotation)
+        * get_matrix() (matrix entry of AP XObject)
+        * add_additional_pdf_object_data [optional] additional entries to go
+          in the PDF object
+        * add_additional_resources [optional] additional entries to go in the
+          Resources sub-dict of the annotation
 
     There is a lot of nuance and viewer-specific (mostly Acrobat and Bluebeam)
     details to consider when creating PDF annotations. One big thing that's not
@@ -23,7 +30,6 @@ class Annotation(object):
     editing.
     """
     versions = ALL_VERSIONS
-    font = None
 
     def __init__(self, location, appearance, metadata=None, rotation=0):
         """
@@ -38,6 +44,28 @@ class Annotation(object):
         self._metadata = metadata
         self._rotation = rotation
 
+    def as_pdf_object(self):
+        """Return the PdfDict object representing the annotation.
+
+        This is the function that a PdfAnnotator calls to generate the core
+        PDF object that gets inserted into the PDF.
+        """
+        annotation_bbox = self.make_rect()
+        appearance_stream = self._make_appearance_stream_dict()
+
+        obj = PdfDict(
+            Type=PdfName('Annot'),
+            Subtype=PdfName(self.subtype),
+            Rect=annotation_bbox,
+            AP=appearance_stream,
+        )
+
+        self._add_metadata(obj, self._metadata)
+        self.add_additional_pdf_object_data(obj)
+        obj.indirect = True
+
+        return obj
+
     @property
     def page(self):
         return self._location.page
@@ -46,41 +74,24 @@ class Annotation(object):
         """Validate a new annotation against a given PDF version."""
         pass
 
-    def make_base_object(self):
-        """Create the base PDF object with properties that all annotations
-        share.
-        """
-        obj = PdfDict(
-            Type=PdfName('Annot'),
-            Subtype=PdfName(self.subtype),
-            Rect=self.make_rect(),
-            AP=self.make_appearance_stream_dict(),
-        )
-        self._add_metadata(obj, self._metadata)
-        obj.indirect = True
-        return obj
-
     def _add_metadata(self, obj, metadata):
         if metadata is None:
             return
         for name, value in metadata.iter():
             obj[PdfName(name)] = serialize_value(value)
 
-    def make_ap_resources(self):
+    def _make_ap_resources(self):
         """Make the Resources entry for the appearance stream dictionary.
 
-        Subclass this to add additional resources - fonts, xobjects - to your
-        annotation.
+        Implement add_additional_resources to add additional entries -
+        fonts, XObjects, graphics state - to the Resources dictionary.
         """
-        resources = {'ProcSet': PdfName('PDF')}
-        if self.font is not None:
-            resources['Font'] = PdfDict(**{
-                self.font: self.make_font(),
-            })
+        resources = PdfDict(ProcSet=PdfName('PDF'))
+        self.add_additional_resources(resources)
         return resources
 
-    def make_appearance_stream_dict(self):
-        resources = self.make_ap_resources()
+    def _make_appearance_stream_dict(self):
+        resources = self._make_ap_resources()
 
         appearance_stream = self._appearance.appearance_stream
         if appearance_stream is None:
@@ -89,7 +100,7 @@ class Annotation(object):
         normal_appearance = PdfDict(
             stream=appearance_stream,
             BBox=self.make_rect(),
-            Resources=PdfDict(**resources),
+            Resources=resources,
             Matrix=self.get_matrix(),
             Type=PdfName('XObject'),
             Subtype=PdfName('Form'),
@@ -97,23 +108,27 @@ class Annotation(object):
         )
         return PdfDict(**{'N': normal_appearance})
 
-    def get_matrix(self):
-        raise NotImplementedError()
+    def add_additional_pdf_object_data(self, obj):
+        """Add additional keys to the PDF object. Default is a no-op.
 
-    def make_font(self):
-        # TODO this should make sure this includes an indirect object
-        return PdfDict(
-            Type=PdfName('Font'),
-            Subtype=PdfName('Type1'),
-            BaseFont=PdfName('Helvetica'),
-        )
+        :param PdfDict obj: the PDF object to be inserted into the PDF
+        """
+        pass
+
+    def add_additional_resources(self, resources):
+        """Add additional keys to the Resources PDF dictionary. Default is a
+        no-op.
+
+        :param PdfDict resources: Resources PDF dictionary
+        """
+        pass
+
+    def get_matrix(self):
+        """Get the appearance stream's Matrix entry."""
+        raise NotImplementedError()
 
     def make_rect(self):
         """Return a bounding box that encompasses the entire annotation."""
-        raise NotImplementedError()
-
-    def as_pdf_object(self):
-        """Return the PdfDict object representing the annotation."""
         raise NotImplementedError()
 
 

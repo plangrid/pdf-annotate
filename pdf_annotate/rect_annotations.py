@@ -45,8 +45,7 @@ class RectAnnotation(Annotation):
             L.y2 + stroke_width,
         ]
 
-    def as_pdf_object(self):
-        obj = self.make_base_object()
+    def add_additional_pdf_object_data(self, obj):
         A = self._appearance
         obj.BS = make_border_dict(A)
         obj.C = A.stroke_color
@@ -54,7 +53,6 @@ class RectAnnotation(Annotation):
             obj.IC = A.fill
         padding = A.stroke_width / 2.0
         obj.RD = [padding, padding, padding, padding]
-        return obj
 
 
 class Square(RectAnnotation):

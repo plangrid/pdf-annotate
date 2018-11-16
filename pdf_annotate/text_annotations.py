@@ -4,6 +4,8 @@ FreeText annotation.
 """
 import os.path
 
+from pdfrw import PdfDict
+from pdfrw import PdfName
 from PIL import ImageFont
 
 from pdf_annotate.annotations import _make_border_dict
@@ -41,7 +43,6 @@ class FreeText(Annotation):
     for later.
     """
     subtype = 'FreeText'
-    font = PDF_ANNOTATOR_FONT
 
     @staticmethod
     def transform(location, transform):
@@ -61,12 +62,11 @@ class FreeText(Annotation):
         A = self._appearance
         stream = ContentStream([
             StrokeColor(*A.stroke_color),
-            Font(self.font, A.font_size),
+            Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         return stream.resolve()
 
-    def as_pdf_object(self):
-        obj = self.make_base_object()
+    def add_additional_pdf_object_data(self, obj):
         obj.Contents = self._appearance.text
         obj.DA = self.make_default_appearance()
         obj.C = []
@@ -74,7 +74,15 @@ class FreeText(Annotation):
         obj.BS = _make_border_dict(width=0, style='S')
         # TODO DS is required to have BB not redraw the annotation in their own
         # style when you edit it.
-        return obj
+
+    def add_additional_resources(self, resources):
+        resources[PdfName('Font')] = PdfDict(
+            PDF_ANNOTATOR_FONT=PdfDict(
+                Type=PdfName('Font'),
+                Subtype=PdfName('Type1'),
+                BaseFont=PdfName('Helvetica'),
+            )
+        )
 
     def graphics_commands(self):
         A = self._appearance
@@ -89,7 +97,7 @@ class FreeText(Annotation):
             StrokeWidth(0),
             BeginText(),
             StrokeColor(*A.stroke_color),
-            Font(self.font, A.font_size),
+            Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         # Actually draw the text inside the rectangle
         stream.extend(get_text_commands(

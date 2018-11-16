@@ -77,11 +77,9 @@ class Line(PointsAnnotation):
 
         return stream.resolve()
 
-    def as_pdf_object(self):
-        obj = self.base_points_object()
-        obj.L = flatten_points(self._location.points)
+    def add_additional_pdf_object_data(self, obj):
         # TODO line endings, leader lines, captions
-        return obj
+        obj.L = flatten_points(self._location.points)
 
 
 class Polygon(PointsAnnotation):
@@ -102,12 +100,10 @@ class Polygon(PointsAnnotation):
 
         return stream.resolve()
 
-    def as_pdf_object(self):
-        obj = self.base_points_object()
+    def add_additional_pdf_object_data(self, obj):
         if self._appearance.fill:
             obj.IC = self._appearance.fill
         obj.Vertices = flatten_points(self._location.points)
-        return obj
 
 
 class Polyline(PointsAnnotation):
@@ -128,12 +124,10 @@ class Polyline(PointsAnnotation):
 
         return stream.resolve()
 
-    def as_pdf_object(self):
-        obj = self.base_points_object()
+    def add_additional_pdf_object_data(self, obj):
         if self._appearance.fill:
             obj.IC = self._appearance.fill
         obj.Vertices = flatten_points(self._location.points)
-        return obj
 
 
 class Ink(PointsAnnotation):
@@ -154,7 +148,5 @@ class Ink(PointsAnnotation):
 
         return stream.resolve()
 
-    def as_pdf_object(self):
-        obj = self.base_points_object()
+    def add_additional_pdf_object_data(self, obj):
         obj.InkList = [flatten_points(self._location.points)]
-        return obj
