@@ -207,6 +207,10 @@ def _get_vertical_coordinates(
 
 
 def _get_horizontal_coordinates(lines, x1, x2, measure, align):
+    # NOTE: this padding is to keep text annotations as they are from cutting
+    # off text at the edges in certain conditions. The annotation rectangle
+    # and how PDFs draw text needs to be revisited, as this padding shouldn't
+    # be necessary.
     PADDING = 1
     if align == 'left':
         return [x1 + PADDING for _ in range(len(lines))]
