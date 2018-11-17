@@ -9,6 +9,8 @@ from pdf_annotate.graphics import Close
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import Rect
+from pdf_annotate.graphics import Restore
+from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
 from pdf_annotate.utils import transform_point
@@ -61,7 +63,9 @@ class Square(RectAnnotation):
     def graphics_commands(self):
         L = self._location
         A = self._appearance
-        stream = ContentStream()
+        stream = ContentStream([
+            Save(),
+        ])
 
         set_appearance_state(stream, A)
         stream.add(Rect(
@@ -71,6 +75,7 @@ class Square(RectAnnotation):
             L.y2 - L.y1,
         ))
         stroke_or_fill(stream, A)
+        stream.add(Restore())
 
         # TODO dash array
         return stream.resolve()

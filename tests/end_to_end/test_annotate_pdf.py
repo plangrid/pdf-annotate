@@ -33,6 +33,11 @@ class EndToEndMixin(object):
             wrap_text=True,
         )
 
+        self.transparent = self.gaudy.copy(
+            fill=[0, 0, 0, 0.5],
+            stroke_color=[1, 0, 0, 0.75],
+        )
+
         self.top_left = self.gaudy.copy(
             stroke_color=[0, 0, 0],
             text=(
@@ -69,7 +74,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 19
+        assert len(f.pages[0].Annots) == 20
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -110,6 +115,11 @@ class EndToEndMixin(object):
             'ink',
             Location(points=[[260, 20], [300, 60]], page=0),
             self.gaudy,
+        )
+        a.add_annotation(
+            'square',
+            Location(x1=310, y1=20, x2=350, y2=60, page=0),
+            self.transparent,
         )
 
     def _add_image_annotations(self, a):

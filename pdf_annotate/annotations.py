@@ -2,6 +2,8 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
+from pdf_annotate.graphics import GRAPHICS_STATE_NAME
+from pdf_annotate.graphics import is_transparent
 from pdf_annotate.metadata import serialize_value
 
 
@@ -13,11 +15,12 @@ class Annotation(object):
 
     Concrete annotations should define the following:
         * subtype (e.g. "Square")
-        * make_rect() (bounding box of annotation)
-        * get_matrix() (matrix entry of AP XObject)
-        * add_additional_pdf_object_data [optional] additional entries to go
+        * make_rect() - bounding box of annotation
+        * get_matrix() - matrix entry of AP XObject
+        * transform() - transformation function for the annotation's location
+        * add_additional_pdf_object_data [optional] - additional entries to go
           in the PDF object
-        * add_additional_resources [optional] additional entries to go in the
+        * add_additional_resources [optional] - additional entries to go in the
           Resources sub-dict of the annotation
 
     There is a lot of nuance and viewer-specific (mostly Acrobat and Bluebeam)
@@ -87,8 +90,36 @@ class Annotation(object):
         fonts, XObjects, graphics state - to the Resources dictionary.
         """
         resources = PdfDict(ProcSet=PdfName('PDF'))
+        self._add_graphics_state_resource(resources, self._appearance)
         self.add_additional_resources(resources)
         return resources
+
+    @staticmethod
+    def _add_graphics_state_resource(resources, A):
+        """Add in the resources dict for turning on transparency in the
+        graphics state. For example, if both stroke and fill were transparent,
+        this would add:
+            << /ExtGState << /CA 0.5 /ca 0.75 /Type /ExtGState >> >>
+        to the Resources dict.
+        """
+        graphics_state = None
+        if is_transparent(A.stroke_color):
+            graphics_state = PdfDict(**{
+                GRAPHICS_STATE_NAME: PdfDict(
+                    CA=A.stroke_color[-1],
+                    Type=PdfName('ExtGState'),
+                )
+            })
+        if is_transparent(A.fill):
+            graphics_state = graphics_state or PdfDict(**{
+                GRAPHICS_STATE_NAME: PdfDict(Type=PdfName('ExtGState'))
+            })
+            graphics_state[
+                PdfName(GRAPHICS_STATE_NAME)
+            ][PdfName('ca')] = A.fill[-1]
+
+        if graphics_state is not None:
+            resources[PdfName('ExtGState')] = graphics_state
 
     def _make_appearance_stream_dict(self):
         resources = self._make_ap_resources()
@@ -129,6 +160,15 @@ class Annotation(object):
 
     def make_rect(self):
         """Return a bounding box that encompasses the entire annotation."""
+        raise NotImplementedError()
+
+    @staticmethod
+    def transform(location, transform):
+        """Apply `transform` to the location relevant to the annotation.
+
+        :param Location location: location object to transform
+        :param 6-item list transform: transformation matrix
+        """
         raise NotImplementedError()
 
 

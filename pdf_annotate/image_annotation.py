@@ -46,6 +46,9 @@ class Image(RectAnnotation):
     def add_additional_resources(self, resources):
         resources[PdfName('XObject')] = PdfDict(Image=self.image_xobject)
 
+    def add_additional_pdf_object_data(self, obj):
+        obj.Image = self.image_xobject
+
     @property
     def image_xobject(self):
         if self._image_xobject is None:
@@ -115,9 +118,6 @@ class Image(RectAnnotation):
             return bytes(array)
 
         raise ValueError('Image color space not yet supported')
-
-    def add_additional_pdf_object_data(self, obj):
-        obj.Image = self.image_xobject
 
     def graphics_commands(self):
         A = self._appearance
