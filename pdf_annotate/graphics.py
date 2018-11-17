@@ -6,6 +6,7 @@ from pdf_annotate.utils import transform_vector
 
 
 ZERO_TOLERANCE = 0.00000000000001
+GRAPHICS_STATE_NAME = 'PdfAnnotatorGS'
 
 
 class ContentStream(object):
@@ -17,7 +18,7 @@ class ContentStream(object):
     drawn in PDF user space. For instance, a user could do:
 
     content_stream = ContentStream([
-        StrokeColor([1, 0, 0]),
+        StrokeColor(1, 0, 0),
         StrokeWidth(5),
         Move(10, 10),
         Line(20, 20),
@@ -189,6 +190,11 @@ class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
         return '/{} Do'.format(self.name)
 
 
+class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
+    def resolve(self):
+        return '/{} gs'.format(self.name)
+
+
 def resolve_appearance_stream(A, transform):
     a = A.appearance_stream
     if a is None or isinstance(a, str):
@@ -208,13 +214,26 @@ def set_appearance_state(stream, A):
     :param ContentStream stream: current content stream
     :param Appearance A: appearance object
     """
+    # Add in the `gs` command, which will execute the named graphics state from
+    # the Resources dict, and set CA and/or ca values. The annotations
+    # themselves will need to ensure that the proper ExtGState object is
+    # present in the Resources dict.
+    if is_transparent(A.stroke_color) or is_transparent(A.fill):
+        stream.add(GraphicsState(GRAPHICS_STATE_NAME))
+
     stream.extend([
-        StrokeColor(*A.stroke_color),
+        StrokeColor(*A.stroke_color[:3]),
         StrokeWidth(A.stroke_width),
     ])
+
     # TODO support more color spaces - CMYK and GrayScale
     if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
-        stream.add(FillColor(*A.fill))
+        stream.add(FillColor(*A.fill[:3]))
+
+
+def is_transparent(color):
+    # E.g. a soothing gray: [0, 0, 0, 0.5]
+    return len(color) == 4 and color[-1] < 1
 
 
 def stroke_or_fill(stream, A):

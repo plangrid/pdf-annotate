@@ -125,8 +125,6 @@ class Polyline(PointsAnnotation):
         return stream.resolve()
 
     def add_additional_pdf_object_data(self, obj):
-        if self._appearance.fill:
-            obj.IC = self._appearance.fill
         obj.Vertices = flatten_points(self._location.points)
 
 
