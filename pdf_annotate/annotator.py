@@ -132,7 +132,7 @@ class PdfAnnotator(object):
         """Add an annotation of the given type, with the given parameters, to
         the given location of the PDF.
 
-        :param str annotation_type:
+        :param str annotation_type: E.g. 'square'
         :param Location location:
         :param Appearance appearance:
         :param Metadata|None|UNSET metadata: Metadata object. If UNSET, no
@@ -185,10 +185,6 @@ class PdfAnnotator(object):
 
         appearance = resolve_appearance_stream(appearance, transform)
 
-        # TODO should scale the stroke width - a user probably expects the
-        # stroke width to be relative to the dimensions they're passing in.
-        # E.g. if a doc is 100px on a side, and you specify a stroke of 1, you
-        # probably expect it to take up 1% of the page.
         annotation = annotation_cls(location, appearance, metadata, rotation)
         annotation.validate(self._pdf.pdf_version)
         return annotation
