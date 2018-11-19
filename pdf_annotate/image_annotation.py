@@ -52,11 +52,22 @@ class Image(RectAnnotation):
     @property
     def image_xobject(self):
         if self._image_xobject is None:
-            self._image_xobject = self.make_image_xobject()
+            self._image_xobject = self.make_image_xobject(
+                self._appearance.image,
+            )
         return self._image_xobject
 
-    def make_image_xobject(self):
-        image = self.resolve_image(self._appearance.image)
+    @staticmethod
+    def make_image_xobject(image):
+        """Construct a PdfDict representing the Image XObject, for inserting
+        into the AP Resources dict.
+
+        :param str|ImageFile image: Either a str representing the path to the
+            image filename, or a PIL.ImageFile.ImageFile object representing
+            the image loaded using the PIL library.
+        :returns PdfDict: Image XObject
+        """
+        image = Image.resolve_image(image)
         width, height = image.size
 
         if image.mode == 'RGBA':
@@ -65,10 +76,10 @@ class Image(RectAnnotation):
             image = image.convert('RGB')
 
         xobj = PdfDict(
-            stream=self.make_image_content(image),
+            stream=Image.make_image_content(image),
             BitsPerComponent=8,
             Filter=PdfName('FlateDecode'),  # TODO use a predictor
-            ColorSpace=self._get_color_space_name(image),
+            ColorSpace=Image._get_color_space_name(image),
             Width=width,
             Height=height,
             Subtype=PdfName('Image'),
