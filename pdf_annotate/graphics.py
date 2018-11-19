@@ -218,7 +218,12 @@ def set_appearance_state(stream, A):
     # the Resources dict, and set CA and/or ca values. The annotations
     # themselves will need to ensure that the proper ExtGState object is
     # present in the Resources dict.
-    if is_transparent(A.stroke_color) or is_transparent(A.fill):
+    if (
+        is_transparent(A.stroke_color) or
+        is_transparent(A.fill) or
+        A.stroke_transparency is not None or
+        A.fill_transparency is not None
+    ):
         stream.add(GraphicsState(GRAPHICS_STATE_NAME))
 
     stream.extend([

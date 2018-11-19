@@ -103,20 +103,34 @@ class Annotation(object):
         to the Resources dict.
         """
         graphics_state = None
+
+        stroke_transparency = None
         if is_transparent(A.stroke_color):
+            stroke_transparency = A.stroke_color[-1]
+        if A.stroke_transparency is not None:
+            stroke_transparency = A.stroke_transparency
+
+        fill_transparency = None
+        if is_transparent(A.fill):
+            fill_transparency = A.fill[-1]
+        if A.fill_transparency is not None:
+            fill_transparency = A.fill_transparency
+
+        if stroke_transparency is not None:
             graphics_state = PdfDict(**{
                 GRAPHICS_STATE_NAME: PdfDict(
-                    CA=A.stroke_color[-1],
+                    CA=stroke_transparency,
                     Type=PdfName('ExtGState'),
                 )
             })
-        if is_transparent(A.fill):
+
+        if fill_transparency is not None:
             graphics_state = graphics_state or PdfDict(**{
                 GRAPHICS_STATE_NAME: PdfDict(Type=PdfName('ExtGState'))
             })
             graphics_state[
                 PdfName(GRAPHICS_STATE_NAME)
-            ][PdfName('ca')] = A.fill[-1]
+            ][PdfName('ca')] = fill_transparency
 
         if graphics_state is not None:
             resources[PdfName('ExtGState')] = graphics_state

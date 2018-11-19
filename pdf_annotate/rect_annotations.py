@@ -63,9 +63,7 @@ class Square(RectAnnotation):
     def graphics_commands(self):
         L = self._location
         A = self._appearance
-        stream = ContentStream([
-            Save(),
-        ])
+        stream = ContentStream([Save()])
 
         set_appearance_state(stream, A)
         stream.add(Rect(
@@ -138,9 +136,10 @@ class Circle(RectAnnotation):
         L = self._location
         A = self._appearance
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         add_bezier_circle(stream, L.x1, L.y1, L.x2, L.y2)
         stroke_or_fill(stream, A)
+        stream.add(Restore())
 
         return stream.resolve()
