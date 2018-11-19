@@ -2,8 +2,9 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
+from pdf_annotate.graphics import get_fill_transparency
+from pdf_annotate.graphics import get_stroke_transparency
 from pdf_annotate.graphics import GRAPHICS_STATE_NAME
-from pdf_annotate.graphics import is_transparent
 from pdf_annotate.metadata import serialize_value
 
 
@@ -99,41 +100,28 @@ class Annotation(object):
         """Add in the resources dict for turning on transparency in the
         graphics state. For example, if both stroke and fill were transparent,
         this would add:
-            << /ExtGState << /CA 0.5 /ca 0.75 /Type /ExtGState >> >>
+            << /ExtGState /PdfAnnotatorGS <<
+                /CA 0.5 /ca 0.75 /Type /ExtGState
+            >> >>
         to the Resources dict.
         """
-        graphics_state = None
+        graphics_state = PdfDict(Type=PdfName('ExtGState'))
+        set_graphics_state = False
 
-        stroke_transparency = None
-        if is_transparent(A.stroke_color):
-            stroke_transparency = A.stroke_color[-1]
-        if A.stroke_transparency is not None:
-            stroke_transparency = A.stroke_transparency
-
-        fill_transparency = None
-        if is_transparent(A.fill):
-            fill_transparency = A.fill[-1]
-        if A.fill_transparency is not None:
-            fill_transparency = A.fill_transparency
+        stroke_transparency = get_stroke_transparency(A)
+        fill_transparency = get_fill_transparency(A)
 
         if stroke_transparency is not None:
-            graphics_state = PdfDict(**{
-                GRAPHICS_STATE_NAME: PdfDict(
-                    CA=stroke_transparency,
-                    Type=PdfName('ExtGState'),
-                )
-            })
+            set_graphics_state = True
+            graphics_state.CA = stroke_transparency
 
         if fill_transparency is not None:
-            graphics_state = graphics_state or PdfDict(**{
-                GRAPHICS_STATE_NAME: PdfDict(Type=PdfName('ExtGState'))
-            })
-            graphics_state[
-                PdfName(GRAPHICS_STATE_NAME)
-            ][PdfName('ca')] = fill_transparency
+            set_graphics_state = True
+            graphics_state.ca = fill_transparency
 
-        if graphics_state is not None:
-            resources[PdfName('ExtGState')] = graphics_state
+        if set_graphics_state:
+            resources.ExtGState = PdfDict()
+            resources.ExtGState[PdfName(GRAPHICS_STATE_NAME)] = graphics_state
 
     def _make_appearance_stream_dict(self):
         resources = self._make_ap_resources()
