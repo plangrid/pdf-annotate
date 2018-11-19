@@ -241,6 +241,24 @@ def is_transparent(color):
     return len(color) == 4 and color[-1] < 1
 
 
+def get_stroke_transparency(A):
+    stroke_transparency = None
+    if is_transparent(A.stroke_color):
+        stroke_transparency = A.stroke_color[-1]
+    if A.stroke_transparency is not None:
+        stroke_transparency = A.stroke_transparency
+    return stroke_transparency
+
+
+def get_fill_transparency(A):
+    fill_transparency = None
+    if is_transparent(A.fill):
+        fill_transparency = A.fill[-1]
+    if A.fill_transparency is not None:
+        fill_transparency = A.fill_transparency
+    return fill_transparency
+
+
 def stroke_or_fill(stream, A):
     if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
         stream.add(StrokeAndFill())
