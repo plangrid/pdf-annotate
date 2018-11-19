@@ -7,6 +7,7 @@ from pdfrw import PdfName
 from PIL import Image as PILImage
 from PIL.ImageFile import ImageFile
 
+from pdf_annotate.annotations.rect import RectAnnotation
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
 from pdf_annotate.graphics import Rect
@@ -14,7 +15,6 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import XObject
-from pdf_annotate.rect_annotations import RectAnnotation
 from pdf_annotate.utils import matrix_multiply
 from pdf_annotate.utils import rotate
 from pdf_annotate.utils import scale

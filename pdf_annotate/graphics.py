@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from pdf_annotate.appearance import Appearance
+from pdf_annotate.config.appearance import Appearance
 from pdf_annotate.utils import transform_point
 from pdf_annotate.utils import transform_vector
 

@@ -2,8 +2,8 @@
 """
 Square and Circle annotations.
 """
-from pdf_annotate.annotations import Annotation
-from pdf_annotate.annotations import make_border_dict
+from pdf_annotate.annotations.base import Annotation
+from pdf_annotate.annotations.base import make_border_dict
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
 from pdf_annotate.graphics import ContentStream

@@ -1,10 +1,10 @@
 from unittest import TestCase
 
-from pdf_annotate.appearance import Appearance
-from pdf_annotate.location import Location
-from pdf_annotate.rect_annotations import Circle
-from pdf_annotate.rect_annotations import RectAnnotation
-from pdf_annotate.rect_annotations import Square
+from pdf_annotate.annotations.rect import Circle
+from pdf_annotate.annotations.rect import RectAnnotation
+from pdf_annotate.annotations.rect import Square
+from pdf_annotate.config.appearance import Appearance
+from pdf_annotate.config.location import Location
 from pdf_annotate.utils import scale
 
 
