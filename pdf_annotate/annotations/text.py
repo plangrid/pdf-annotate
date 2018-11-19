@@ -8,8 +8,9 @@ from pdfrw import PdfDict
 from pdfrw import PdfName
 from PIL import ImageFont
 
-from pdf_annotate.annotations import _make_border_dict
-from pdf_annotate.annotations import Annotation
+from pdf_annotate.annotations.base import _make_border_dict
+from pdf_annotate.annotations.base import Annotation
+from pdf_annotate.annotations.rect import RectAnnotation
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
@@ -22,7 +23,6 @@ from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
-from pdf_annotate.rect_annotations import RectAnnotation
 from pdf_annotate.utils import get_wrapped_lines
 from pdf_annotate.utils import rotate
 from pdf_annotate.utils import translate
@@ -32,6 +32,7 @@ PDF_ANNOTATOR_FONT = 'PDFANNOTATORFONT1'
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
+    '..',
     'fonts',
     'Helvetica.ttf',
 )

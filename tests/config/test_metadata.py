@@ -1,9 +1,9 @@
 from datetime import datetime
 from unittest import TestCase
 
-from pdf_annotate.metadata import Flags
-from pdf_annotate.metadata import Metadata
-from pdf_annotate.metadata import serialize_value
+from pdf_annotate.config.metadata import Flags
+from pdf_annotate.config.metadata import Metadata
+from pdf_annotate.config.metadata import serialize_value
 
 
 class TestMetadata(TestCase):

@@ -2,10 +2,10 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
+from pdf_annotate.config.metadata import serialize_value
 from pdf_annotate.graphics import get_fill_transparency
 from pdf_annotate.graphics import get_stroke_transparency
 from pdf_annotate.graphics import GRAPHICS_STATE_NAME
-from pdf_annotate.metadata import serialize_value
 
 
 ALL_VERSIONS = ('1.3', '1.4', '1.5', '1.6', '1.7')

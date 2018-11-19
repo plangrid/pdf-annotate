@@ -8,17 +8,17 @@ import warnings
 from pdfrw import PdfReader
 from pdfrw import PdfWriter
 
+from pdf_annotate.annotations.image import Image
+from pdf_annotate.annotations.points import Ink
+from pdf_annotate.annotations.points import Line
+from pdf_annotate.annotations.points import Polygon
+from pdf_annotate.annotations.points import Polyline
+from pdf_annotate.annotations.rect import Circle
+from pdf_annotate.annotations.rect import Square
+from pdf_annotate.annotations.text import FreeText
+from pdf_annotate.config.metadata import Metadata
+from pdf_annotate.config.metadata import UNSET
 from pdf_annotate.graphics import resolve_appearance_stream
-from pdf_annotate.image_annotation import Image
-from pdf_annotate.metadata import Metadata
-from pdf_annotate.metadata import UNSET
-from pdf_annotate.points_annotations import Ink
-from pdf_annotate.points_annotations import Line
-from pdf_annotate.points_annotations import Polygon
-from pdf_annotate.points_annotations import Polyline
-from pdf_annotate.rect_annotations import Circle
-from pdf_annotate.rect_annotations import Square
-from pdf_annotate.text_annotations import FreeText
 from pdf_annotate.utils import identity
 from pdf_annotate.utils import is_numeric
 from pdf_annotate.utils import matrix_multiply
