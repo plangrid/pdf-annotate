@@ -8,6 +8,8 @@ from pdf_annotate.graphics import Close
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import Line as CSLine
 from pdf_annotate.graphics import Move
+from pdf_annotate.graphics import Restore
+from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import stroke_or_fill
@@ -69,11 +71,12 @@ class Line(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         stream.add(Move(points[0][0], points[0][1]))
         stream.add(CSLine(points[1][0], points[1][1]))
         stroke_or_fill(stream, A)
+        stream.add(Restore())
 
         return stream.resolve()
 
@@ -90,13 +93,14 @@ class Polygon(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         stream.add(Move(points[0][0], points[0][1]))
         for x, y in points[1:]:
             stream.add(CSLine(x, y))
         stream.add(Close())
         stroke_or_fill(stream, A)
+        stream.add(Restore())
 
         return stream.resolve()
 
@@ -114,13 +118,13 @@ class Polyline(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         stream.add(Move(points[0][0], points[0][1]))
         for x, y in points[1:]:
             stream.add(CSLine(x, y))
         # TODO add a 'close' attribute?
-        stream.add(Stroke())
+        stream.extend([Stroke(), Restore()])
 
         return stream.resolve()
 
@@ -135,14 +139,14 @@ class Ink(PointsAnnotation):
         A = self._appearance
         points = self._location.points
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         stream.add(Move(points[0][0], points[0][1]))
         # TODO "real" PDF editors do smart smoothing of ink points using
         # interpolated Bezier curves.
         for x, y in points[1:]:
             stream.add(CSLine(x, y))
-        stream.add(Stroke())
+        stream.extend([Stroke(), Restore()])
 
         return stream.resolve()
 

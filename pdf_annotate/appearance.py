@@ -11,7 +11,7 @@ class Appearance(object):
         'stroke_color', 'stroke_width', 'border_style', 'fill',
         'dash_array', 'font_size', 'text', 'appearance_stream',
         'image', 'wrap_text', 'text_align', 'text_baseline',
-        'line_spacing',
+        'line_spacing', 'fill_transparency', 'stroke_transparency',
     ])
 
     def __init__(self, **kwargs):
@@ -28,6 +28,9 @@ class Appearance(object):
         self.text = kwargs.get('text')
         self.set_text_align_params(kwargs)
         self.line_spacing = kwargs.get('line_spacing', 1.2)
+
+        self.fill_transparency = kwargs.get('fill_transparency')
+        self.stroke_transparency = kwargs.get('stroke_transparency')
 
         for k, v in kwargs.items():
             setattr(self, k, v)

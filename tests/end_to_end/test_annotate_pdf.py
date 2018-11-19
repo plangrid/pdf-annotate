@@ -34,8 +34,8 @@ class EndToEndMixin(object):
         )
 
         self.transparent = self.gaudy.copy(
-            fill=[0, 0, 0, 0.5],
-            stroke_color=[1, 0, 0, 0.75],
+            fill=[0, 0, 1, 0.5],
+            stroke_color=[1, 0, 0, 0.25],
         )
 
         self.top_left = self.gaudy.copy(
@@ -65,6 +65,12 @@ class EndToEndMixin(object):
             self.bottom_left, self.bottom_center, self.bottom_right,
         ]
 
+        self.image_appearance = Appearance(stroke_width=0)
+        self.transparent_image_appearance = self.image_appearance.copy(
+            fill_transparency=0.5,
+            stroke_transparency=0.5,
+        )
+
     def test_end_to_end(self):
         a = PdfAnnotator(self.INPUT_FILENAME)
         self._add_annotations(a)
@@ -74,69 +80,71 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 20
+        assert len(f.pages[0].Annots) == 29
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
         return os.path.join(dirname, 'pdfs', self.OUTPUT_FILENAME)
 
     def _add_annotations(self, a):
-        self._add_shape_annotations(a)
-        self._add_image_annotations(a)
+        self._add_shape_annotations(a, self.gaudy)
+        self._add_shape_annotations(a, self.transparent, y1=70, y2=110)
+        self._add_image_annotations(a, self.image_appearance)
+        self._add_image_annotations(
+            a,
+            self.transparent_image_appearance,
+            y1=170,
+            y2=210,
+        )
         self._add_text_annotations(a)
 
-    def _add_shape_annotations(self, a):
+    def _add_shape_annotations(self, a, appearance, y1=20, y2=60):
         a.add_annotation(
             'square',
-            Location(x1=10, y1=20, x2=50, y2=60, page=0),
-            self.gaudy,
+            Location(x1=10, y1=y1, x2=50, y2=y2, page=0),
+            appearance,
         )
         a.add_annotation(
             'circle',
-            Location(x1=60, y1=20, x2=100, y2=60, page=0),
-            self.gaudy,
+            Location(x1=60, y1=y1, x2=100, y2=y2, page=0),
+            appearance,
         )
         a.add_annotation(
             'polygon',
-            Location(points=[[110, 20], [150, 20], [130, 60]], page=0),
-            self.gaudy,
+            Location(points=[[110, y1], [150, y1], [130, y2]], page=0),
+            appearance,
         )
         a.add_annotation(
             'polyline',
-            Location(points=[[160, 20], [200, 20], [180, 60]], page=0),
-            self.gaudy,
+            Location(points=[[160, y1], [200, y1], [180, y2]], page=0),
+            appearance,
         )
         a.add_annotation(
             'line',
-            Location(points=[[210, 20], [250, 60]], page=0),
-            self.gaudy,
+            Location(points=[[210, y1], [250, y2]], page=0),
+            appearance,
         )
         a.add_annotation(
             'ink',
-            Location(points=[[260, 20], [300, 60]], page=0),
-            self.gaudy,
-        )
-        a.add_annotation(
-            'square',
-            Location(x1=310, y1=20, x2=350, y2=60, page=0),
-            self.transparent,
+            Location(points=[[260, y1], [300, y2]], page=0),
+            appearance,
         )
 
-    def _add_image_annotations(self, a):
+    def _add_image_annotations(self, a, appearance, y1=120, y2=160):
         xs = [10, 60, 110, 160]
         for x, image_file in zip(xs, PNG_FILES):
             a.add_annotation(
                 'image',
-                Location(x1=x, y1=70, x2=(x + 40), y2=110, page=0),
-                Appearance(stroke_width=0, image=image_file),
+                Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
+                appearance.copy(image=image_file),
             )
 
-    def _add_text_annotations(self, a):
+    def _add_text_annotations(self, a, y1=220, y2=300):
         xs = [10 + (i * 50) for i in range(len(self.texts))]
         for x, appearance in zip(xs, self.texts):
             a.add_annotation(
                 'text',
-                Location(x1=x, y1=120, x2=(x + 40), y2=200, page=0),
+                Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance,
             )
 

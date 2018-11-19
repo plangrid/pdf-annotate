@@ -123,11 +123,10 @@ class Image(RectAnnotation):
         A = self._appearance
         L = self._location
 
-        stream = ContentStream()
+        stream = ContentStream([Save()])
         set_appearance_state(stream, A)
         stream.extend([
             Rect(L.x1, L.y1, L.x2 - L.x1, L.y2 - L.y1),
-            Save(),
             CTM(self._get_ctm()),
             XObject('Image'),
             Restore(),
