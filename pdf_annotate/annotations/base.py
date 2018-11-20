@@ -92,8 +92,20 @@ class Annotation(object):
         """
         resources = PdfDict(ProcSet=PdfName('PDF'))
         self._add_graphics_state_resource(resources, self._appearance)
+        self._add_xobject_resources(resources, self._appearance)
         self.add_additional_resources(resources)
         return resources
+
+    @staticmethod
+    def _add_xobject_resources(resources, A):
+        """Adds in provided, explicit XObjects into the appearance stream's
+        Resources dict. This is used when the user is explicitly specifying the
+        appearance stream and they want to include, say, an image.
+        """
+        if A.xobjects is not None:
+            resources.XObject = PdfDict()
+            for xobject_name, xobject in A.xobjects.items():
+                resources.XObject[PdfName(xobject_name)] = xobject
 
     @staticmethod
     def _add_graphics_state_resource(resources, A):
