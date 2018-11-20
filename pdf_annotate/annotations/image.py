@@ -44,7 +44,7 @@ class Image(RectAnnotation):
     _image_xobject = None  # PdfDict of Image XObject
 
     def add_additional_resources(self, resources):
-        resources[PdfName('XObject')] = PdfDict(Image=self.image_xobject)
+        resources.XObject = PdfDict(Image=self.image_xobject)
 
     def add_additional_pdf_object_data(self, obj):
         obj.Image = self.image_xobject
@@ -130,6 +130,31 @@ class Image(RectAnnotation):
 
         raise ValueError('Image color space not yet supported')
 
+    @staticmethod
+    def get_ctm(rotation, L):
+        """Get the scaled, rotated CTM for an image at L at a given rotation.
+
+        :param int rotation: rotation int in (0, 90, 180, 270)
+        :param Location L: location with (x1, y1), (x2, y2)
+        :returns 6-tuple: CTM matrix
+        """
+        width = L.x2 - L.x1
+        height = L.y2 - L.y1
+        if rotation == 0:
+            placement = translate(L.x1, L.y1)
+        elif rotation == 90:
+            placement = translate(L.x2, L.y1)
+        elif rotation == 180:
+            placement = translate(L.x2, L.y2)
+        else:  # 270
+            placement = translate(L.x1, L.y2)
+
+        return matrix_multiply(
+            placement,
+            scale(width, height),
+            rotate(rotation),
+        )
+
     def graphics_commands(self):
         A = self._appearance
         L = self._location
@@ -138,28 +163,8 @@ class Image(RectAnnotation):
         set_appearance_state(stream, A)
         stream.extend([
             Rect(L.x1, L.y1, L.x2 - L.x1, L.y2 - L.y1),
-            CTM(self._get_ctm()),
+            CTM(self.get_ctm(self._rotation, L)),
             XObject('Image'),
             Restore(),
         ])
         return stream.resolve()
-
-    def _get_ctm(self):
-        # Scale the image and place it on the page
-        L = self._location
-        width = L.x2 - L.x1
-        height = L.y2 - L.y1
-        if self._rotation == 0:
-            placement = translate(L.x1, L.y1)
-        elif self._rotation == 90:
-            placement = translate(L.x2, L.y1)
-        elif self._rotation == 180:
-            placement = translate(L.x2, L.y2)
-        else:  # 270
-            placement = translate(L.x1, L.y2)
-
-        return matrix_multiply(
-            placement,
-            scale(width, height),
-            rotate(self._rotation),
-        )

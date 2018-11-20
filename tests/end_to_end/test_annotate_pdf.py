@@ -5,7 +5,14 @@ import pdfrw
 
 from pdf_annotate import Appearance
 from pdf_annotate import Location
+from pdf_annotate import Metadata
 from pdf_annotate import PdfAnnotator
+from pdf_annotate.annotations.image import Image
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import CTM
+from pdf_annotate.graphics import Restore
+from pdf_annotate.graphics import Save
+from pdf_annotate.graphics import XObject
 from tests.files import PNG_FILES
 from tests.files import ROTATED_180
 from tests.files import ROTATED_270
@@ -80,7 +87,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 29
+        assert len(f.pages[0].Annots) == 30
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -97,6 +104,7 @@ class EndToEndMixin(object):
             y2=210,
         )
         self._add_text_annotations(a)
+        self._add_explicit_annotations(a)
 
     def _add_shape_annotations(self, a, appearance, y1=20, y2=60):
         a.add_annotation(
@@ -133,10 +141,15 @@ class EndToEndMixin(object):
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):
         xs = [10, 60, 110, 160]
         for x, image_file in zip(xs, PNG_FILES):
+            if x == 10:
+                metadata = Metadata(hihi='abc')
+            else:
+                metadata = None
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance.copy(image=image_file),
+                metadata,
             )
 
     def _add_text_annotations(self, a, y1=220, y2=300):
@@ -148,22 +161,53 @@ class EndToEndMixin(object):
                 appearance,
             )
 
+    def _add_explicit_annotations(self, a):
+        page = 0
+        location = Location(x1=10, y1=310, x2=50, y2=350, page=page)
+        transformed_location = Image.transform(
+            location,
+            a.get_transform(page, a.get_rotation(page)),
+        )
+        content_stream = ContentStream([
+            Save(),
+            CTM(Image.get_ctm(self.ROTATION, transformed_location)),
+            XObject('MyXObject'),
+            Restore(),
+        ])
+        appearance = Appearance(
+            appearance_stream=content_stream,
+            xobjects={
+                'MyXObject': Image.make_image_xobject(PNG_FILES[0]),
+            },
+        )
+
+        a.add_annotation(
+            'square',
+            location=location,
+            appearance=appearance,
+            metadata=Metadata(yoyo='abc')
+        )
+
 
 class TestEndToEnd(EndToEndMixin, TestCase):
+    ROTATION = 0
     INPUT_FILENAME = SIMPLE
     OUTPUT_FILENAME = 'end_to_end.pdf'
 
 
 class TestEndToEndRotated90(EndToEndMixin, TestCase):
+    ROTATION = 90
     INPUT_FILENAME = ROTATED_90
     OUTPUT_FILENAME = 'end_to_end_rotated_90.pdf'
 
 
 class TestEndToEndRotated180(EndToEndMixin, TestCase):
+    ROTATION = 180
     INPUT_FILENAME = ROTATED_180
     OUTPUT_FILENAME = 'end_to_end_rotated_180.pdf'
 
 
 class TestEndToEndRotated270(EndToEndMixin, TestCase):
+    ROTATION = 270
     INPUT_FILENAME = ROTATED_270
     OUTPUT_FILENAME = 'end_to_end_rotated_270.pdf'
