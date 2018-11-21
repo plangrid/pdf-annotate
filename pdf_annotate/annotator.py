@@ -170,8 +170,6 @@ class PdfAnnotator(object):
 
     def get_annotation(self, annotation_type, location, appearance, metadata):
         # TODO filter on valid PDF versions, by type
-        # TODO allow more fine grained control by allowing specification of AP
-        # dictionary that overrides other attributes.
         annotation_cls = NAME_TO_ANNOTATION.get(annotation_type)
         if annotation_cls is None:
             raise ValueError('Invalid/unsupported annotation type: {}'.format(
