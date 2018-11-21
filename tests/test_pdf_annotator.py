@@ -4,8 +4,8 @@ from unittest import TestCase
 from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
-from pdf_annotate.utils import identity
-from pdf_annotate.utils import translate
+from pdf_annotate.util.geometry import identity
+from pdf_annotate.util.geometry import translate
 from tests import files
 from tests.utils import load_annotations_from_pdf
 from tests.utils import write_to_temp

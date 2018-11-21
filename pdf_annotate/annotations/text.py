@@ -23,9 +23,9 @@ from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
-from pdf_annotate.utils import get_wrapped_lines
-from pdf_annotate.utils import rotate
-from pdf_annotate.utils import translate
+from pdf_annotate.util.geometry import rotate
+from pdf_annotate.util.geometry import translate
+from pdf_annotate.util.text import get_wrapped_lines
 
 
 PDF_ANNOTATOR_FONT = 'PDFANNOTATORFONT1'
@@ -68,7 +68,7 @@ class FreeText(Annotation):
         return stream.resolve()
 
     def add_additional_pdf_object_data(self, obj):
-        obj.Contents = self._appearance.text
+        obj.Contents = self._appearance.content
         obj.DA = self.make_default_appearance()
         obj.C = []
         # TODO allow setting border on free text boxes
@@ -103,7 +103,7 @@ class FreeText(Annotation):
         # Actually draw the text inside the rectangle
         stream.extend(get_text_commands(
             L.x1, L.y1, L.x2, L.y2,
-            text=A.text,
+            text=A.content,
             font_size=A.font_size,
             rotation=self._rotation,
             wrap_text=A.wrap_text,

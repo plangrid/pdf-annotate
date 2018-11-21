@@ -5,7 +5,12 @@ from pdf_annotate.annotations.rect import RectAnnotation
 from pdf_annotate.annotations.rect import Square
 from pdf_annotate.config.appearance import Appearance
 from pdf_annotate.config.location import Location
-from pdf_annotate.utils import scale
+from pdf_annotate.graphics import Close
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import Line
+from pdf_annotate.graphics import Move
+from pdf_annotate.util.geometry import scale
+from tests.annotations import ANNOTATORS
 
 
 class TestRectAnnotation(TestCase):
@@ -28,12 +33,18 @@ class TestRectAnnotation(TestCase):
         self.assertDimensions(location, [20, 60, 60, 90])
 
     def test_custom_appearance_stream(self):
-        stream = '0 0 m 10 10 l 20 20 l h'
+        stream = ContentStream([
+            Move(0, 0),
+            Line(10, 10),
+            Line(20, 20),
+            Close(),
+        ])
         A = Appearance(stroke_width=1, appearance_stream=stream)
         L = Location(x1=10, y1=10, x2=20, y2=20, page=0)
-        annotation = Square(L, A)
+        annotation = ANNOTATORS['simple'].get_annotation('square', L, A, None)
         obj = annotation.as_pdf_object()
-        assert obj.AP.N.stream == stream
+        # TODO almost works
+        assert obj.AP.N.stream == '0 0 m 10 10 l 20 20 l h'
 
 
 class TestSquare(TestCase):

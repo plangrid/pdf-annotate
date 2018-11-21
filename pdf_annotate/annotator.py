@@ -19,13 +19,13 @@ from pdf_annotate.annotations.text import FreeText
 from pdf_annotate.config.metadata import Metadata
 from pdf_annotate.config.metadata import UNSET
 from pdf_annotate.graphics import resolve_appearance_stream
-from pdf_annotate.utils import identity
-from pdf_annotate.utils import is_numeric
-from pdf_annotate.utils import matrix_multiply
-from pdf_annotate.utils import normalize_rotation
-from pdf_annotate.utils import rotate
-from pdf_annotate.utils import scale
-from pdf_annotate.utils import translate
+from pdf_annotate.util.geometry import identity
+from pdf_annotate.util.geometry import matrix_multiply
+from pdf_annotate.util.geometry import normalize_rotation
+from pdf_annotate.util.geometry import rotate
+from pdf_annotate.util.geometry import scale
+from pdf_annotate.util.geometry import translate
+from pdf_annotate.util.validation import NUMERIC_TYPES
 
 
 NAME_TO_ANNOTATION = {
@@ -82,7 +82,7 @@ class PdfAnnotator(object):
     def _expand_scale(self, scale):
         if scale is None:
             return 1, 1
-        elif is_numeric(scale):
+        elif isinstance(scale, NUMERIC_TYPES):
             return (scale, scale)
         return scale
 

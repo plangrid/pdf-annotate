@@ -28,7 +28,7 @@ class EndToEndMixin(object):
             stroke_color=[1, 0, 0],
             stroke_width=3,
             fill=[0, 1, 0],
-            text='Latin',
+            content='Latin',
             font_size=12,
             wrap_text=True,
         )
@@ -40,7 +40,7 @@ class EndToEndMixin(object):
 
         self.top_left = self.gaudy.copy(
             stroke_color=[0, 0, 0],
-            text=(
+            content=(
                 r"Though yet of Hamlet, our dear brother's death \\ "
                 r"The memory be green"
             ),
