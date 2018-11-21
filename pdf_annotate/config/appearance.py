@@ -7,8 +7,12 @@ from pdf_annotate.config.constants import ALLOWED_LINE_CAPS
 from pdf_annotate.config.constants import ALLOWED_LINE_JOINS
 from pdf_annotate.config.constants import BLACK
 from pdf_annotate.config.constants import DEFAULT_BORDER_STYLE
+from pdf_annotate.config.constants import DEFAULT_CONTENT
+from pdf_annotate.config.constants import DEFAULT_FONT_SIZE
 from pdf_annotate.config.constants import DEFAULT_LINE_SPACING
 from pdf_annotate.config.constants import DEFAULT_STROKE_WIDTH
+from pdf_annotate.config.constants import TEXT_ALIGN_LEFT
+from pdf_annotate.config.constants import TEXT_BASELINE_MIDDLE
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.util.validation import between
 from pdf_annotate.util.validation import Boolean
@@ -37,10 +41,10 @@ class Appearance(object):
     fill_transparency = Number(validators=between(0, 1))
 
     # Text attributes
-    content = String()
-    font_size = Number(validators=positive)
-    text_align = Enum(ALLOWED_ALIGNS)
-    text_baseline = Enum(ALLOWED_BASELINES)
+    content = String(DEFAULT_CONTENT)
+    font_size = Number(DEFAULT_FONT_SIZE, validators=positive)
+    text_align = Enum(ALLOWED_ALIGNS, default=TEXT_ALIGN_LEFT)
+    text_baseline = Enum(ALLOWED_BASELINES, default=TEXT_BASELINE_MIDDLE)
     line_spacing = Number(DEFAULT_LINE_SPACING, positive)
     wrap_text = Boolean()
 

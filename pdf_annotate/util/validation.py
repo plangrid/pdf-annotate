@@ -11,8 +11,8 @@ import six
 NUMERIC_TYPES = six.integer_types + (float,)
 
 
-def Boolean(default=None, allow_none=True, required=False):
-    validator = instance_of(bool, allow_none)
+def Boolean(default=True, required=False):
+    validator = instance_of(bool, allow_none=False)
     if required:
         return attr.ib(validator=validator)
     return attr.ib(default=default, validator=validator)
@@ -113,7 +113,7 @@ def between(a, b, allow_none=True):
         if value is None:
             if not allow_none:
                 raise ValueError('Value ({}) cannot be None')
-        elif not (value >= a and value <= b):
+        elif not (a <= value <= b):
             raise ValueError(
                 'Value ({}) must be between {} and {}'.format(value, a, b)
             )
