@@ -42,8 +42,8 @@ def Enum(values, default=None, required=False):
     return attr.ib(default=default, validator=validator)
 
 
-def String(default=None, allow_none=True, validators=tuple(), required=False):
-    validator = _tupleize(validators) + (instance_of(str, allow_none),)
+def String(default=None, allow_none=True, required=False):
+    validator = instance_of(str, allow_none)
     if required:
         return attr.ib(validator=validator)
     return attr.ib(default=default, validator=validator)
@@ -85,7 +85,7 @@ def is_points_list(allow_none=True):
             )
         else:
             for point in value:
-                if len(point) != 2 and not (
+                if len(point) != 2 or not (
                     isinstance(point[0], NUMERIC_TYPES) and
                     isinstance(point[1], NUMERIC_TYPES)
                 ):
