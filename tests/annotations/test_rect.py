@@ -43,7 +43,6 @@ class TestRectAnnotation(TestCase):
         L = Location(x1=10, y1=10, x2=20, y2=20, page=0)
         annotation = ANNOTATORS['simple'].get_annotation('square', L, A, None)
         obj = annotation.as_pdf_object()
-        # TODO almost works
         assert obj.AP.N.stream == '0 0 m 10 10 l 20 20 l h'
 
 

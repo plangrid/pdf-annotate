@@ -11,50 +11,88 @@ import six
 NUMERIC_TYPES = six.integer_types + (float,)
 
 
-def Boolean(default=None, allow_none=True):
-    return attr.ib(
-        default=default,
-        validator=instance_of(bool, allow_none),
+def Boolean(default=None, allow_none=True, required=False):
+    validator = instance_of(bool, allow_none)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
+
+
+def Integer(default=None, validators=tuple(), allow_none=True, required=False):
+    validator = (
+        _tupleize(validators) +
+        (instance_of(six.integer_types, allow_none),)
     )
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
 
 
-def Number(default=None, validators=tuple()):
-    return attr.ib(
-        default=default,
-        validator=_tupleize(validators) + (is_number(),),
-    )
+def Number(default=None, validators=tuple(), required=False):
+    validator = _tupleize(validators) + (is_number(),)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
 
 
-def Enum(values, default=None):
-    return attr.ib(
-        default=default,
-        validator=one_of(values),
-    )
+def Enum(values, default=None, required=False):
+    validator = one_of(values)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
 
 
-def String(default=None, allow_none=True, validators=tuple()):
-    return attr.ib(
-        default=default,
-        validator=_tupleize(validators) + (instance_of(str, allow_none),)
-    )
+def String(default=None, allow_none=True, validators=tuple(), required=False):
+    validator = _tupleize(validators) + (instance_of(str, allow_none),)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
 
 
-def Color(default=None, allow_none=True):
+def Color(default=None, allow_none=True, required=False):
     """Color value. Can be specified as three-item list/tuple (RGB) or four-
     item list/tuple (RGBA).
     """
-    return attr.ib(
-        default=default,
-        validator=is_color(allow_none),
-    )
+    validator = is_color(allow_none)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
 
 
-def Field(allowed_type, default=None):
+def Points(default=None, allow_none=True, required=False):
+    validator = is_points_list(allow_none)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
+
+
+def Field(allowed_type, default=None, required=False):
     """Generic field, e.g. Field(ContentStream)."""
-    return attr.ib(
-        default=default,
-        validator=instance_of(allowed_type),
-    )
+    validator = instance_of(allowed_type)
+    if required:
+        return attr.ib(validator=validator)
+    return attr.ib(default=default, validator=validator)
+
+
+def is_points_list(allow_none=True):
+    def validate(obj, attr, value):
+        if value is None:
+            if not allow_none:
+                raise ValueError('Value ({}) cannot be None')
+        elif not isinstance(value, (list, tuple)):
+            raise ValueError(
+                'Value ({}) must be a list of points'.format(value)
+            )
+        else:
+            for point in value:
+                if len(point) != 2 and not (
+                    isinstance(point[0], NUMERIC_TYPES) and
+                    isinstance(point[1], NUMERIC_TYPES)
+                ):
+                    raise ValueError(
+                        'Value ({}) must be a list of points'.format(value)
+                    )
+    return validate
 
 
 def greater_than_eq(i, allow_none=True):
