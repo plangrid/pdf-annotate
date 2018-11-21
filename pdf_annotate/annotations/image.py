@@ -15,10 +15,10 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import XObject
-from pdf_annotate.utils import matrix_multiply
-from pdf_annotate.utils import rotate
-from pdf_annotate.utils import scale
-from pdf_annotate.utils import translate
+from pdf_annotate.util.geometry import matrix_multiply
+from pdf_annotate.util.geometry import rotate
+from pdf_annotate.util.geometry import scale
+from pdf_annotate.util.geometry import translate
 
 
 class Image(RectAnnotation):

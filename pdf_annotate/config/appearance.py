@@ -1,56 +1,58 @@
 # -*- coding: utf-8 -*-
-ALLOWED_ALIGNS = ('left', 'center', 'right')
-ALLOWED_BASELINES = ('top', 'middle', 'bottom')
+import attr
+
+from pdf_annotate.config.constants import ALLOWED_ALIGNS
+from pdf_annotate.config.constants import ALLOWED_BASELINES
+from pdf_annotate.config.constants import ALLOWED_LINE_CAPS
+from pdf_annotate.config.constants import ALLOWED_LINE_JOINS
+from pdf_annotate.config.constants import BLACK
+from pdf_annotate.config.constants import DEFAULT_BORDER_STYLE
+from pdf_annotate.config.constants import DEFAULT_LINE_SPACING
+from pdf_annotate.config.constants import DEFAULT_STROKE_WIDTH
+from pdf_annotate.graphics import ContentStream
+from pdf_annotate.util.validation import between
+from pdf_annotate.util.validation import Boolean
+from pdf_annotate.util.validation import Color
+from pdf_annotate.util.validation import Enum
+from pdf_annotate.util.validation import Field
+from pdf_annotate.util.validation import Number
+from pdf_annotate.util.validation import positive
+from pdf_annotate.util.validation import String
 
 
+@attr.s
 class Appearance(object):
-    BLACK = (0, 0, 0)
-    TRANSPARENT = tuple()
+    # Stroke attributes
+    stroke_color = Color(BLACK)
+    stroke_width = Number(DEFAULT_STROKE_WIDTH, positive)
+    border_style = String(DEFAULT_BORDER_STYLE)
+    dash_array = String()
+    line_cap = Enum(ALLOWED_LINE_CAPS)
+    line_join = Enum(ALLOWED_LINE_JOINS)
+    miter_limit = Number(validators=positive)
+    stroke_transparency = Number(validators=between(0, 1))
 
-    whitelist_kwargs = frozenset([
-        'stroke_color', 'stroke_width', 'border_style', 'fill',
-        'dash_array', 'font_size', 'text', 'appearance_stream',
-        'image', 'wrap_text', 'text_align', 'text_baseline',
-        'line_spacing', 'fill_transparency', 'stroke_transparency',
-    ])
+    # Fill attributes
+    fill = Color()
+    fill_transparency = Number(validators=between(0, 1))
 
-    def __init__(self, **kwargs):
-        self.stroke_color = kwargs.get('stroke_color', self.BLACK)
-        self.stroke_width = kwargs.get('stroke_width', 1)
-        self.border_style = kwargs.get('border_style', 'S')
-        self.fill = kwargs.get('fill', self.TRANSPARENT)
-        self.dash_array = kwargs.get('dash_array')
-        self.appearance_stream = kwargs.get('appearance_stream')
-        self.image = kwargs.get('image')
+    # Text attributes
+    content = String()
+    font_size = Number(validators=positive)
+    text_align = Enum(ALLOWED_ALIGNS)
+    text_baseline = Enum(ALLOWED_BASELINES)
+    line_spacing = Number(DEFAULT_LINE_SPACING, positive)
+    wrap_text = Boolean()
 
-        self.wrap_text = kwargs.get('wrap_text')
-        self.font_size = kwargs.get('font_size')
-        self.text = kwargs.get('text')
-        self.set_text_align_params(kwargs)
-        self.line_spacing = kwargs.get('line_spacing', 1.2)
+    # Image attributes
+    image = String()
 
-        self.fill_transparency = kwargs.get('fill_transparency')
-        self.stroke_transparency = kwargs.get('stroke_transparency')
-
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    # Advanced attributes
+    appearance_stream = Field(ContentStream)
 
     def copy(self, **kwargs):
         A = Appearance(**kwargs)
         for k, v in self.__dict__.items():
-            if k in self.whitelist_kwargs and k not in kwargs:
+            if k not in kwargs:
                 setattr(A, k, v)
         return A
-
-    def set_text_align_params(self, kwargs):
-        self.text_align = kwargs.get('text_align', 'left')
-        # TODO move to a proper configuration framework to stop this madness
-        if self.text_align not in ALLOWED_ALIGNS:
-            raise ValueError(
-                'Invalid text_align property: {}'.format(self.text_align)
-            )
-        self.text_baseline = kwargs.get('text_baseline', 'middle')
-        if self.text_baseline not in ALLOWED_BASELINES:
-            raise ValueError(
-                'Invalid text_baseline property: {}'.format(self.text_baseline)
-            )

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-from pdf_annotate.utils import get_wrapped_lines
-from pdf_annotate.utils import unshift_line
-from pdf_annotate.utils import unshift_token
+from pdf_annotate.util.text import get_wrapped_lines
+from pdf_annotate.util.text import unshift_line
+from pdf_annotate.util.text import unshift_token
 
 
 class TestUnshiftToken(TestCase):

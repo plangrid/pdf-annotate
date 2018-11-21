@@ -13,8 +13,8 @@ from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import stroke_or_fill
-from pdf_annotate.utils import transform_point
-from pdf_annotate.utils import translate
+from pdf_annotate.util.geometry import transform_point
+from pdf_annotate.util.geometry import translate
 
 
 def flatten_points(points):

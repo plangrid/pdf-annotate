@@ -11,6 +11,7 @@ setup(
     url='https://github.com/plangrid/pdf-annotate',
     packages=find_packages('.'),
     install_requires=[
+        'attrs>=18.1.0',  # this could probably be lower, but it's not tested
         'pdfrw>=0.4',
         'pillow>=5.2.0',  # this could probably be lower, but it's not tested
         'six>=1.0.0',

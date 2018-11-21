@@ -1,8 +1,7 @@
 from collections import namedtuple
 
-from pdf_annotate.config.appearance import Appearance
-from pdf_annotate.utils import transform_point
-from pdf_annotate.utils import transform_vector
+from pdf_annotate.util.geometry import transform_point
+from pdf_annotate.util.geometry import transform_vector
 
 
 ZERO_TOLERANCE = 0.00000000000001
@@ -130,7 +129,7 @@ class Close(StaticCommand):
 
 class Move(namedtuple('Move', ['x', 'y'])):
     def resolve(self):
-        return '{} {} m'.format(self.x, self.y)
+        return '{} {} m'.format(format_number(self.x), format_number(self.y))
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -139,7 +138,7 @@ class Move(namedtuple('Move', ['x', 'y'])):
 
 class Line(namedtuple('Line', ['x', 'y'])):
     def resolve(self):
-        return '{} {} l'.format(self.x, self.y)
+        return '{} {} l'.format(format_number(self.x), format_number(self.y))
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -148,11 +147,11 @@ class Line(namedtuple('Line', ['x', 'y'])):
 
 class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
     def resolve(self):
-        return '{} {} {} {} {} {} c'.format(
-            self.x1, self.y1,
-            self.x2, self.y2,
-            self.x3, self.y3,
-        )
+        formatted = [
+            format_number(n) for n in
+            (self.x1, self.y1, self.x2, self.y2, self.x3, self.y3)
+        ]
+        return '{} {} {} {} {} {} c'.format(*formatted)
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -232,12 +231,14 @@ def set_appearance_state(stream, A):
     ])
 
     # TODO support more color spaces - CMYK and GrayScale
-    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
+    if A.fill is not None:
         stream.add(FillColor(*A.fill[:3]))
 
 
 def is_transparent(color):
     # E.g. a soothing gray: [0, 0, 0, 0.5]
+    if color is None:
+        return False
     return len(color) == 4 and color[-1] < 1
 
 
@@ -260,7 +261,7 @@ def get_fill_transparency(A):
 
 
 def stroke_or_fill(stream, A):
-    if A.fill is not Appearance.TRANSPARENT and A.fill is not None:
+    if A.fill is not None:
         stream.add(StrokeAndFill())
     else:
         stream.add(Stroke())
