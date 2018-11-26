@@ -27,34 +27,34 @@ from pdf_annotate.util.validation import String
 @attr.s
 class Appearance(object):
     # Stroke attributes
-    stroke_color = Color(BLACK)
-    stroke_width = Number(DEFAULT_STROKE_WIDTH, positive)
-    border_style = String(DEFAULT_BORDER_STYLE)
-    dash_array = String()
-    line_cap = Enum(ALLOWED_LINE_CAPS)
-    line_join = Enum(ALLOWED_LINE_JOINS)
-    miter_limit = Number(validators=positive)
-    stroke_transparency = Number(validators=between(0, 1))
+    stroke_color = Color(default=BLACK)
+    stroke_width = Number(default=DEFAULT_STROKE_WIDTH, validator=positive)
+    border_style = String(default=DEFAULT_BORDER_STYLE)
+    dash_array = String(default=None)
+    line_cap = Enum(ALLOWED_LINE_CAPS, default=None)
+    line_join = Enum(ALLOWED_LINE_JOINS, default=None)
+    miter_limit = Number(default=None, validator=positive)
+    stroke_transparency = Number(default=None, validator=between(0, 1))
 
     # Fill attributes
-    fill = Color()
-    fill_transparency = Number(validators=between(0, 1))
+    fill = Color(default=None)
+    fill_transparency = Number(default=None, validator=between(0, 1))
 
     # Text attributes
-    content = String(DEFAULT_CONTENT)
-    font_size = Number(DEFAULT_FONT_SIZE, validators=positive)
+    content = String(default=DEFAULT_CONTENT)
+    font_size = Number(default=DEFAULT_FONT_SIZE, validator=positive)
     text_align = Enum(ALLOWED_ALIGNS, default=TEXT_ALIGN_LEFT)
     text_baseline = Enum(ALLOWED_BASELINES, default=TEXT_BASELINE_MIDDLE)
-    line_spacing = Number(DEFAULT_LINE_SPACING, positive)
-    wrap_text = Boolean()
+    line_spacing = Number(default=DEFAULT_LINE_SPACING, validator=positive)
+    wrap_text = Boolean(default=True)
 
     # Image attributes
-    image = String()
+    image = String(default=None)
 
     # Advanced attributes
-    appearance_stream = Field(ContentStream)
-    xobjects = Field(dict)
-    graphics_states = Field(dict)
+    appearance_stream = Field(ContentStream, default=None)
+    xobjects = Field(dict, default=None)
+    graphics_states = Field(dict, default=None)
 
     def copy(self, **kwargs):
         A = Appearance(**kwargs)

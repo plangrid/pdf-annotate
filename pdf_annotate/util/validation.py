@@ -11,67 +11,48 @@ import six
 NUMERIC_TYPES = six.integer_types + (float,)
 
 
-def Boolean(default=True, required=False):
-    validator = instance_of(bool, allow_none=False)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def Boolean(**kwargs):
+    _add_validator_to_kwargs(kwargs, instance_of(bool))
+    return attr.ib(**kwargs)
 
 
-def Integer(default=None, validators=tuple(), allow_none=True, required=False):
-    validator = (
-        _tupleize(validators) +
-        (instance_of(six.integer_types, allow_none),)
-    )
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def Integer(**kwargs):
+    _add_validator_to_kwargs(kwargs, instance_of(six.integer_types))
+    return attr.ib(**kwargs)
 
 
-def Number(default=None, validators=tuple(), required=False):
-    validator = _tupleize(validators) + (is_number(),)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def Number(**kwargs):
+    _add_validator_to_kwargs(kwargs, is_number())
+    return attr.ib(**kwargs)
 
 
-def Enum(values, default=None, required=False):
-    validator = one_of(values)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def Enum(values, **kwargs):
+    _add_validator_to_kwargs(kwargs, one_of(values))
+    return attr.ib(**kwargs)
 
 
-def String(default=None, allow_none=True, required=False):
-    validator = instance_of(str, allow_none)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def String(**kwargs):
+    _add_validator_to_kwargs(kwargs, instance_of(str))
+    return attr.ib(**kwargs)
 
 
-def Color(default=None, allow_none=True, required=False):
+def Color(**kwargs):
     """Color value. Can be specified as three-item list/tuple (RGB) or four-
     item list/tuple (RGBA).
     """
-    validator = is_color(allow_none)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+    _add_validator_to_kwargs(kwargs, is_color())
+    return attr.ib(**kwargs)
 
 
-def Points(default=None, allow_none=True, required=False):
-    validator = is_points_list(allow_none)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+def Points(**kwargs):
+    _add_validator_to_kwargs(kwargs, is_points_list())
+    return attr.ib(**kwargs)
 
 
-def Field(allowed_type, default=None, required=False):
+def Field(allowed_type, **kwargs):
     """Generic field, e.g. Field(ContentStream)."""
-    validator = instance_of(allowed_type)
-    if required:
-        return attr.ib(validator=validator)
-    return attr.ib(default=default, validator=validator)
+    _add_validator_to_kwargs(kwargs, instance_of(allowed_type))
+    return attr.ib(**kwargs)
 
 
 def is_points_list(allow_none=True):
@@ -154,11 +135,8 @@ def one_of(values, allow_none=True):
     return validate
 
 
-def is_color(allow_none=True):
+def is_color():
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
         if isinstance(value, (list, tuple)):
             if len(value) not in (3, 4):
                 raise ValueError(
@@ -173,7 +151,17 @@ def is_color(allow_none=True):
                     raise ValueError(
                         'Value ({}) is not a RGB(A) color'.format(value)
                     )
+        elif value is not None:
+            raise ValueError('Value ({}) is not a RGB(A) color'.format(value))
     return validate
+
+
+def _listify(v):
+    if isinstance(v, tuple):
+        return list(v)
+    elif not isinstance(v, list):
+        return [v]
+    return v
 
 
 def _tupleize(v):
@@ -182,3 +170,9 @@ def _tupleize(v):
     elif not isinstance(v, tuple):
         return (v,)
     return v
+
+
+def _add_validator_to_kwargs(kwargs, validator):
+    existing = _listify(kwargs.pop('validator', []))
+    existing.append(validator)
+    kwargs['validator'] = existing

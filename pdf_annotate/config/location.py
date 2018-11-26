@@ -9,12 +9,12 @@ from pdf_annotate.util.validation import positive
 
 @attr.s
 class Location(object):
-    page = Integer(required=True, validators=positive)
-    points = Points()
-    x1 = Number()
-    y1 = Number()
-    x2 = Number()
-    y2 = Number()
+    page = Integer(validator=positive)
+    points = Points(default=None)
+    x1 = Number(default=None)
+    y1 = Number(default=None)
+    x2 = Number(default=None)
+    y2 = Number(default=None)
 
     def copy(self):
         L = Location(page=self.page)
