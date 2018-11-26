@@ -19,3 +19,8 @@ def write_to_temp(annotator):
         yield t
     finally:
         os.remove(t)
+
+
+def assert_matrices_equal(a, b):
+    for i, j in zip(a, b):
+        assert abs(i - j) <= 1e-10
