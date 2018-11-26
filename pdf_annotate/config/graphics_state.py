@@ -12,9 +12,22 @@ from pdf_annotate.util.validation import Number
 from pdf_annotate.util.validation import positive
 
 
-def validate_dash_array(obj, value, attr):
-    # TODO validate dash array
-    pass
+def validate_dash_array(obj, attr, value):
+    msg = (
+        'Value ({}) must be a dash array of the form '
+        '[dash_array, dash_phase], where dash_array is a list of integers,'
+        ' and dash_phase is an integer'
+    )
+    if isinstance(value, list):
+        if (
+            len(value) != 2 or
+            not isinstance(value[0], list) or
+            any(not isinstance(x, int) for x in value[0]) or
+            not isinstance(value[1], int)
+        ):
+            raise ValueError(msg.format(value))
+    elif value is not None:
+        raise ValueError(msg.format(value))
 
 
 NAME_TO_PDF_ATTR = {

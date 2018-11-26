@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
+import nose
 from pdfrw import PdfDict
 from pdfrw import PdfName
 
@@ -21,7 +22,7 @@ class TestGraphicsState(TestCase):
             line_cap=constants.LINE_CAP_ROUND,
             line_join=constants.LINE_JOIN_MITER,
             miter_limit=1.404,
-            # dash_array=[1, 1],
+            dash_array=[[1], 0],
             stroke_transparency=0.7,
             fill_transparency=0.5,
         )
@@ -32,7 +33,18 @@ class TestGraphicsState(TestCase):
             LC=1,
             LJ=0,
             ML=1.404,
-            # D=[1, 1],
+            D=[[1], 0],
             CA=0.7,
             ca=0.5,
         )
+
+    def test_dash_array(self):
+        with nose.tools.assert_raises(ValueError):
+            GraphicsState(dash_array=[1, 1])
+        with nose.tools.assert_raises(ValueError):
+            GraphicsState(dash_array=[[1.5], 1])
+        with nose.tools.assert_raises(ValueError):
+            GraphicsState(dash_array='--- 1')
+
+        state = GraphicsState(dash_array=[[2, 1], 1])
+        assert state.dash_array == [[2, 1], 1]
