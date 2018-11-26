@@ -5,6 +5,7 @@ from pdfrw import PdfName
 
 from pdf_annotate.config.constants import ALLOWED_LINE_CAPS
 from pdf_annotate.config.constants import ALLOWED_LINE_JOINS
+from pdf_annotate.util.validation import between
 from pdf_annotate.util.validation import Enum
 from pdf_annotate.util.validation import Field
 from pdf_annotate.util.validation import Number
@@ -45,8 +46,8 @@ class GraphicsState(object):
     line_join = Enum(ALLOWED_LINE_JOINS, default=None)
     miter_limit = Number(default=None)
     dash_array = Field(list, validator=validate_dash_array, default=None)
-    stroke_transparency = Number(default=None)
-    fill_transparency = Number(default=None)
+    stroke_transparency = Number(default=None, validator=between(0, 1))
+    fill_transparency = Number(default=None, validator=between(0, 1))
 
     def as_pdf_dict(self):
         pdf_dict = PdfDict(Type=PdfName('ExtGState'))
