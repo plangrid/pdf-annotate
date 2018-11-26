@@ -116,8 +116,12 @@ class Annotation(object):
                 /CA 0.5 /ca 0.75 /Type /ExtGState
             >> >>
         to the Resources dict.
+
+        Graphics states can also be specified externally, for use in explicit
+        content streams. This is done by using the `graphics_states` property
+        on the appearance object.
         """
-        graphics_state = PdfDict(Type=PdfName('ExtGState'))
+        internal_state = PdfDict(Type=PdfName('ExtGState'))
         set_graphics_state = False
 
         stroke_transparency = get_stroke_transparency(A)
@@ -125,15 +129,25 @@ class Annotation(object):
 
         if stroke_transparency is not None:
             set_graphics_state = True
-            graphics_state.CA = stroke_transparency
+            internal_state.CA = stroke_transparency
 
         if fill_transparency is not None:
             set_graphics_state = True
-            graphics_state.ca = fill_transparency
+            internal_state.ca = fill_transparency
 
+        # A list of (name, state PdfDict)
+        states = []
         if set_graphics_state:
+            states.append((GRAPHICS_STATE_NAME, internal_state))
+
+        if A.graphics_states is not None:
+            for name, state in A.graphics_states.items():
+                states.append((name, state.as_pdf_dict()))
+
+        if states:
             resources.ExtGState = PdfDict()
-            resources.ExtGState[PdfName(GRAPHICS_STATE_NAME)] = graphics_state
+            for name, state in states:
+                resources.ExtGState[PdfName(name)] = state
 
     def _make_appearance_stream_dict(self):
         resources = self._make_ap_resources()
@@ -151,7 +165,7 @@ class Annotation(object):
             Subtype=PdfName('Form'),
             FormType=1,
         )
-        return PdfDict(**{'N': normal_appearance})
+        return PdfDict(N=normal_appearance)
 
     def add_additional_pdf_object_data(self, obj):
         """Add additional keys to the PDF object. Default is a no-op.
