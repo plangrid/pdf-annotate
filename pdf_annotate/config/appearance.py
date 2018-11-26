@@ -53,6 +53,7 @@ class Appearance(object):
 
     # Advanced attributes
     appearance_stream = Field(ContentStream)
+    xobjects = Field(dict)
 
     def copy(self, **kwargs):
         A = Appearance(**kwargs)

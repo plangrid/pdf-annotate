@@ -10,8 +10,11 @@ from pdf_annotate import PdfAnnotator
 from pdf_annotate.annotations.image import Image
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
+from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
+from pdf_annotate.graphics import Stroke
+from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import XObject
 from tests.files import PNG_FILES
 from tests.files import ROTATED_180
@@ -104,7 +107,7 @@ class EndToEndMixin(object):
             y2=210,
         )
         self._add_text_annotations(a)
-        self._add_explicit_annotations(a)
+        self._add_explicit_annotation(a)
 
     def _add_shape_annotations(self, a, appearance, y1=20, y2=60):
         a.add_annotation(
@@ -161,18 +164,41 @@ class EndToEndMixin(object):
                 appearance,
             )
 
-    def _add_explicit_annotations(self, a):
+    def _add_explicit_annotation(self, a):
+        """Add an image annotation using ContentStream commands instead of the
+        Image type's commands. This is testing that the external XObjects API
+        works, and that images can be embedded inside other, more complex
+        annotations.
+        """
         page = 0
-        location = Location(x1=10, y1=310, x2=50, y2=350, page=page)
-        transformed_location = Image.transform(
-            location,
-            a.get_transform(page, a.get_rotation(page)),
+        x1, y1, x2, y2 = 10, 310, 50, 350
+        rotation = a.get_rotation(page)
+        # The location of the entire annotation
+        location = Location(x1=x1, y1=y1, x2=x2, y2=y2, page=page)
+
+        # The location of the image inside the annotation
+        image_location = Location(
+            x1=x1 + 10,
+            y1=y1 + 10,
+            x2=x2 - 10,
+            y2=y2 - 10,
+            page=page,
+        )
+        # Correctly setting the CTM for the image inside the explicit content
+        # stream requires using the transformed location coordinates, which
+        # account for page scale and rotation.
+        transformed_image_location = Image.transform(
+            image_location,
+            a.get_transform(page, rotation),
         )
         content_stream = ContentStream([
+            StrokeColor(1, 0, 0),
+            Rect(x1, y1, x2 - x1, y2 - y1),
             Save(),
-            CTM(Image.get_ctm(self.ROTATION, transformed_location)),
+            CTM(Image.get_ctm(rotation, transformed_image_location)),
             XObject('MyXObject'),
             Restore(),
+            Stroke(),
         ])
         appearance = Appearance(
             appearance_stream=content_stream,
@@ -190,24 +216,20 @@ class EndToEndMixin(object):
 
 
 class TestEndToEnd(EndToEndMixin, TestCase):
-    ROTATION = 0
     INPUT_FILENAME = SIMPLE
     OUTPUT_FILENAME = 'end_to_end.pdf'
 
 
 class TestEndToEndRotated90(EndToEndMixin, TestCase):
-    ROTATION = 90
     INPUT_FILENAME = ROTATED_90
     OUTPUT_FILENAME = 'end_to_end_rotated_90.pdf'
 
 
 class TestEndToEndRotated180(EndToEndMixin, TestCase):
-    ROTATION = 180
     INPUT_FILENAME = ROTATED_180
     OUTPUT_FILENAME = 'end_to_end_rotated_180.pdf'
 
 
 class TestEndToEndRotated270(EndToEndMixin, TestCase):
-    ROTATION = 270
     INPUT_FILENAME = ROTATED_270
     OUTPUT_FILENAME = 'end_to_end_rotated_270.pdf'
