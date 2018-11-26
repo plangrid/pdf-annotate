@@ -55,16 +55,9 @@ def Field(allowed_type, **kwargs):
     return attr.ib(**kwargs)
 
 
-def is_points_list(allow_none=True):
+def is_points_list():
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif not isinstance(value, (list, tuple)):
-            raise ValueError(
-                'Value ({}) must be a list of points'.format(value)
-            )
-        else:
+        if isinstance(value, (list, tuple)):
             for point in value:
                 if len(point) != 2 or not (
                     isinstance(point[0], NUMERIC_TYPES) and
@@ -73,15 +66,16 @@ def is_points_list(allow_none=True):
                     raise ValueError(
                         'Value ({}) must be a list of points'.format(value)
                     )
+        elif value is not None:
+            raise ValueError(
+                'Value ({}) must be a list of points'.format(value)
+            )
     return validate
 
 
-def greater_than_eq(i, allow_none=True):
+def greater_than_eq(i):
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif not value >= i:
+        if value is not None and not value >= i:
             raise ValueError('Value ({}) must be >= than {}'.format(value, i))
     return validate
 
@@ -89,48 +83,34 @@ def greater_than_eq(i, allow_none=True):
 positive = greater_than_eq(0)
 
 
-def between(a, b, allow_none=True):
+def between(a, b):
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif not (a <= value <= b):
+        if value is not None and not (a <= value <= b):
             raise ValueError(
                 'Value ({}) must be between {} and {}'.format(value, a, b)
             )
     return validate
 
 
-def instance_of(types, allow_none=True):
+def instance_of(types):
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif not isinstance(value, _tupleize(types)):
+        if value is not None and not isinstance(value, _tupleize(types)):
             raise ValueError(
                 'Value ({}) must be of type ({})'.format(value, types)
             )
     return validate
 
 
-def is_number(allow_none=True):
+def is_number():
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif not isinstance(value, NUMERIC_TYPES):
+        if value is not None and not isinstance(value, NUMERIC_TYPES):
             raise ValueError('Value ({}) must be numeric'.format(value))
     return validate
 
 
-def one_of(values, allow_none=True):
+def one_of(values):
     def validate(obj, attr, value):
-        if value is None:
-            if not allow_none:
-                raise ValueError('Value ({}) cannot be None')
-        elif value not in values:
-            import ipdb
-            ipdb.set_trace()
+        if value is not None and value not in values:
             raise ValueError(
                 'Value ({}) must be in ({})'.format(value, values)
             )
