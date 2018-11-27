@@ -38,6 +38,7 @@ class EndToEndMixin(object):
     to-end test will be a tiny amount of validation in code + manual inspection
     of the output.
     """
+    EXPECTED_ANNOTATIONS = 35
 
     def setUp(self):
         self.gaudy = Appearance(
@@ -96,7 +97,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 31
+        assert len(f.pages[0].Annots) == self.EXPECTED_ANNOTATIONS
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -146,6 +147,20 @@ class EndToEndMixin(object):
             'ink',
             Location(points=[[260, y1], [300, y2]], page=0),
             appearance,
+        )
+
+        round = appearance.copy(line_cap=constants.LINE_CAP_ROUND)
+        a.add_annotation(
+            'line',
+            location=Location(points=[[310, y1], [350, y2]], page=0),
+            appearance=round,
+        )
+
+        dashed = appearance.copy(dash_array=[[3], 0])
+        a.add_annotation(
+            'line',
+            location=Location(points=[[360, y1], [400, y2]], page=0),
+            appearance=dashed,
         )
 
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):

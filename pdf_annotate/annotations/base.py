@@ -2,10 +2,7 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
-from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.config.metadata import serialize_value
-from pdf_annotate.graphics import get_fill_transparency
-from pdf_annotate.graphics import get_stroke_transparency
 from pdf_annotate.graphics import GRAPHICS_STATE_NAME
 
 
@@ -138,11 +135,7 @@ class Annotation(object):
 
     @staticmethod
     def _get_internal_graphics_state(resources, A):
-        internal_state = GraphicsState(
-            stroke_transparency=get_stroke_transparency(A),
-            fill_transparency=get_fill_transparency(A),
-        )
-
+        internal_state = A.get_graphics_state()
         if internal_state.has_content():
             return internal_state.as_pdf_dict()
 

@@ -13,6 +13,7 @@ from pdf_annotate.config.constants import DEFAULT_LINE_SPACING
 from pdf_annotate.config.constants import DEFAULT_STROKE_WIDTH
 from pdf_annotate.config.constants import TEXT_ALIGN_LEFT
 from pdf_annotate.config.constants import TEXT_BASELINE_MIDDLE
+from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.util.validation import between
 from pdf_annotate.util.validation import Boolean
@@ -23,6 +24,13 @@ from pdf_annotate.util.validation import Number
 from pdf_annotate.util.validation import positive
 from pdf_annotate.util.validation import String
 from pdf_annotate.util.validation import validate_dash_array
+
+
+def is_transparent(color):
+    # E.g. a soothing gray: [0, 0, 0, 0.5]
+    if color is None:
+        return False
+    return len(color) == 4 and color[-1] < 1
 
 
 @attr.s
@@ -63,3 +71,34 @@ class Appearance(object):
             if k not in kwargs:
                 setattr(A, k, v)
         return A
+
+    def _get_stroke_transparency(self):
+        stroke_transparency = None
+        if is_transparent(self.stroke_color):
+            stroke_transparency = self.stroke_color[-1]
+        if self.stroke_transparency is not None:
+            stroke_transparency = self.stroke_transparency
+        return stroke_transparency
+
+    def _get_fill_transparency(self):
+        fill_transparency = None
+        if is_transparent(self.fill):
+            fill_transparency = self.fill[-1]
+        if self.fill_transparency is not None:
+            fill_transparency = self.fill_transparency
+        return fill_transparency
+
+    def get_graphics_state(self):
+        """Return a GraphicsState config from the appearance's graphics-state-
+        applicable params.
+
+        :returns GraphicsState:
+        """
+        return GraphicsState(
+            dash_array=self.dash_array,
+            line_cap=self.line_cap,
+            line_join=self.line_join,
+            miter_limit=self.miter_limit,
+            stroke_transparency=self._get_stroke_transparency(),
+            fill_transparency=self._get_fill_transparency(),
+        )
