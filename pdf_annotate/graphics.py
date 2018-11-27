@@ -217,12 +217,8 @@ def set_appearance_state(stream, A):
     # the Resources dict, and set CA and/or ca values. The annotations
     # themselves will need to ensure that the proper ExtGState object is
     # present in the Resources dict.
-    if (
-        is_transparent(A.stroke_color) or
-        is_transparent(A.fill) or
-        A.stroke_transparency is not None or
-        A.fill_transparency is not None
-    ):
+    graphics_state = A.get_graphics_state()
+    if graphics_state.has_content():
         stream.add(GraphicsState(GRAPHICS_STATE_NAME))
 
     stream.extend([
@@ -233,31 +229,6 @@ def set_appearance_state(stream, A):
     # TODO support more color spaces - CMYK and GrayScale
     if A.fill is not None:
         stream.add(FillColor(*A.fill[:3]))
-
-
-def is_transparent(color):
-    # E.g. a soothing gray: [0, 0, 0, 0.5]
-    if color is None:
-        return False
-    return len(color) == 4 and color[-1] < 1
-
-
-def get_stroke_transparency(A):
-    stroke_transparency = None
-    if is_transparent(A.stroke_color):
-        stroke_transparency = A.stroke_color[-1]
-    if A.stroke_transparency is not None:
-        stroke_transparency = A.stroke_transparency
-    return stroke_transparency
-
-
-def get_fill_transparency(A):
-    fill_transparency = None
-    if is_transparent(A.fill):
-        fill_transparency = A.fill[-1]
-    if A.fill_transparency is not None:
-        fill_transparency = A.fill_transparency
-    return fill_transparency
 
 
 def stroke_or_fill(stream, A):
