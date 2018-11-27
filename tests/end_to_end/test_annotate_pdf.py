@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os.path
 from unittest import TestCase
 
@@ -5,16 +6,21 @@ import pdfrw
 
 from pdf_annotate import Appearance
 from pdf_annotate import Location
-from pdf_annotate import Metadata
 from pdf_annotate import PdfAnnotator
 from pdf_annotate.annotations.image import Image
+from pdf_annotate.config import constants
+from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
+from pdf_annotate.graphics import GraphicsState as CSGraphicsState
+from pdf_annotate.graphics import Line
+from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import StrokeColor
+from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
 from tests.files import PNG_FILES
 from tests.files import ROTATED_180
@@ -90,7 +96,7 @@ class EndToEndMixin(object):
 
     def _check_num_annotations(self, output_file):
         f = pdfrw.PdfReader(output_file)
-        assert len(f.pages[0].Annots) == 30
+        assert len(f.pages[0].Annots) == 31
 
     def _get_output_file(self):
         dirname, _ = os.path.split(os.path.abspath(__file__))
@@ -107,7 +113,8 @@ class EndToEndMixin(object):
             y2=210,
         )
         self._add_text_annotations(a)
-        self._add_explicit_annotation(a)
+        self._add_explicit_image_annotation(a)
+        self._add_explicit_graphics_state_annotation(a)
 
     def _add_shape_annotations(self, a, appearance, y1=20, y2=60):
         a.add_annotation(
@@ -144,15 +151,10 @@ class EndToEndMixin(object):
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):
         xs = [10, 60, 110, 160]
         for x, image_file in zip(xs, PNG_FILES):
-            if x == 10:
-                metadata = Metadata(hihi='abc')
-            else:
-                metadata = None
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance.copy(image=image_file),
-                metadata,
             )
 
     def _add_text_annotations(self, a, y1=220, y2=300):
@@ -164,7 +166,7 @@ class EndToEndMixin(object):
                 appearance,
             )
 
-    def _add_explicit_annotation(self, a):
+    def _add_explicit_image_annotation(self, a):
         """Add an image annotation using ContentStream commands instead of the
         Image type's commands. This is testing that the external XObjects API
         works, and that images can be embedded inside other, more complex
@@ -211,7 +213,67 @@ class EndToEndMixin(object):
             'square',
             location=location,
             appearance=appearance,
-            metadata=Metadata(yoyo='abc')
+        )
+
+    def _add_explicit_graphics_state_annotation(self, a):
+        graphics_states = {
+            'BevelSquare': GraphicsState(
+                line_join=constants.LINE_JOIN_BEVEL,
+                line_cap=constants.LINE_CAP_SQUARE,
+                stroke_transparency=0.75,
+            ),
+            'MiterButt': GraphicsState(
+                line_join=constants.LINE_JOIN_MITER,
+                line_cap=constants.LINE_CAP_BUTT,
+                stroke_transparency=0.5,
+            ),
+            'RoundRound': GraphicsState(
+                line_join=constants.LINE_JOIN_ROUND,
+                line_cap=constants.LINE_CAP_ROUND,
+                stroke_transparency=0.25,
+            ),
+        }
+
+        # Defines the bounding box of the chevrons
+        x1, y1, x2, y2 = 60, 310, 100, 350
+        lines_location = Location(x1=x1, y1=y1, x2=x2, y2=y2, page=0)
+
+        # Defines the start/end of the chevrons
+        x1, midpoint, x2 = 65, 80, 95
+        y1 = 315
+
+        content_stream = ContentStream([
+            Save(),
+            StrokeWidth(5),
+
+            CSGraphicsState('BevelSquare'),
+            Move(x1, y1),
+            Line(midpoint, y1 + 10),
+            Line(x2, y1),
+            Stroke(),
+
+            CSGraphicsState('MiterButt'),
+            Move(x1, y1 + 10),
+            Line(midpoint, y1 + 20),
+            Line(x2, y1 + 10),
+            Stroke(),
+
+            CSGraphicsState('RoundRound'),
+            Move(x1, y1 + 20),
+            Line(midpoint, y1 + 30),
+            Line(x2, y1 + 20),
+            Stroke(),
+
+            Restore(),
+        ])
+        appearance = Appearance(
+            appearance_stream=content_stream,
+            graphics_states=graphics_states,
+        )
+        a.add_annotation(
+            'square',
+            location=lines_location,
+            appearance=appearance,
         )
 
 

@@ -22,6 +22,7 @@ from pdf_annotate.util.validation import Field
 from pdf_annotate.util.validation import Number
 from pdf_annotate.util.validation import positive
 from pdf_annotate.util.validation import String
+from pdf_annotate.util.validation import validate_dash_array
 
 
 @attr.s
@@ -30,7 +31,7 @@ class Appearance(object):
     stroke_color = Color(default=BLACK)
     stroke_width = Number(default=DEFAULT_STROKE_WIDTH, validator=positive)
     border_style = String(default=DEFAULT_BORDER_STYLE)
-    dash_array = String(default=None)
+    dash_array = Field(list, default=None, validator=validate_dash_array)
     line_cap = Enum(ALLOWED_LINE_CAPS, default=None)
     line_join = Enum(ALLOWED_LINE_JOINS, default=None)
     miter_limit = Number(default=None, validator=positive)
