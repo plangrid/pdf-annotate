@@ -121,6 +121,22 @@ class Annotation(object):
         content streams. This is done by using the `graphics_states` property
         on the appearance object.
         """
+        states = []
+        internal_state = Annotation._get_internal_graphics_state(resources, A)
+        if internal_state is not None:
+            states.append((GRAPHICS_STATE_NAME, internal_state))
+
+        if A.graphics_states is not None:
+            for name, state in A.graphics_states.items():
+                states.append((name, state.as_pdf_dict()))
+
+        if states:
+            resources.ExtGState = PdfDict()
+            for name, state in states:
+                resources.ExtGState[PdfName(name)] = state
+
+    @staticmethod
+    def _get_internal_graphics_state(resources, A):
         internal_state = PdfDict(Type=PdfName('ExtGState'))
         set_graphics_state = False
 
@@ -135,19 +151,10 @@ class Annotation(object):
             set_graphics_state = True
             internal_state.ca = fill_transparency
 
-        # A list of (name, state PdfDict)
-        states = []
         if set_graphics_state:
-            states.append((GRAPHICS_STATE_NAME, internal_state))
+            return internal_state
 
-        if A.graphics_states is not None:
-            for name, state in A.graphics_states.items():
-                states.append((name, state.as_pdf_dict()))
-
-        if states:
-            resources.ExtGState = PdfDict()
-            for name, state in states:
-                resources.ExtGState[PdfName(name)] = state
+        return None
 
     def _make_appearance_stream_dict(self):
         resources = self._make_ap_resources()
