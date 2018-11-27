@@ -48,3 +48,7 @@ class TestGraphicsState(TestCase):
 
         state = GraphicsState(dash_array=[[2, 1], 1])
         assert state.dash_array == [[2, 1], 1]
+
+    def test_has_content(self):
+        assert not GraphicsState().has_content()
+        assert GraphicsState(line_width=2).has_content()

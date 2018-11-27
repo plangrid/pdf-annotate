@@ -47,8 +47,12 @@ class GraphicsState(object):
 
     def as_pdf_dict(self):
         pdf_dict = PdfDict(Type=PdfName('ExtGState'))
-        for attr_name, pdf_name in NAME_TO_PDF_ATTR.items():
-            attr_value = getattr(self, attr_name, None)
+        for attr_name, attr_value in self.__dict__.items():
             if attr_value is not None:
+                pdf_name = NAME_TO_PDF_ATTR[attr_name]
                 pdf_dict[PdfName(pdf_name)] = attr_value
         return pdf_dict
+
+    def has_content(self):
+        """Returns True if any of the attributes is non-null."""
+        return any(value is not None for value in self.__dict__.values())

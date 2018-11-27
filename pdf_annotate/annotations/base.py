@@ -2,6 +2,7 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
+from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.config.metadata import serialize_value
 from pdf_annotate.graphics import get_fill_transparency
 from pdf_annotate.graphics import get_stroke_transparency
@@ -91,7 +92,7 @@ class Annotation(object):
         fonts, XObjects, graphics state - to the Resources dictionary.
         """
         resources = PdfDict(ProcSet=PdfName('PDF'))
-        self._add_graphics_state_resource(resources, self._appearance)
+        self._add_graphics_state_resources(resources, self._appearance)
         self._add_xobject_resources(resources, self._appearance)
         self.add_additional_resources(resources)
         return resources
@@ -108,7 +109,7 @@ class Annotation(object):
                 resources.XObject[PdfName(xobject_name)] = xobject
 
     @staticmethod
-    def _add_graphics_state_resource(resources, A):
+    def _add_graphics_state_resources(resources, A):
         """Add in the resources dict for turning on transparency in the
         graphics state. For example, if both stroke and fill were transparent,
         this would add:
@@ -137,22 +138,13 @@ class Annotation(object):
 
     @staticmethod
     def _get_internal_graphics_state(resources, A):
-        internal_state = PdfDict(Type=PdfName('ExtGState'))
-        set_graphics_state = False
+        internal_state = GraphicsState(
+            stroke_transparency=get_stroke_transparency(A),
+            fill_transparency=get_fill_transparency(A),
+        )
 
-        stroke_transparency = get_stroke_transparency(A)
-        fill_transparency = get_fill_transparency(A)
-
-        if stroke_transparency is not None:
-            set_graphics_state = True
-            internal_state.CA = stroke_transparency
-
-        if fill_transparency is not None:
-            set_graphics_state = True
-            internal_state.ca = fill_transparency
-
-        if set_graphics_state:
-            return internal_state
+        if internal_state.has_content():
+            return internal_state.as_pdf_dict()
 
         return None
 
