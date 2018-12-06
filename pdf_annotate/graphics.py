@@ -146,6 +146,10 @@ class Line(namedtuple('Line', ['x', 'y'])):
 
 
 class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
+    """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
+    and (x2, y2) as control points.
+    """
+
     def resolve(self):
         formatted = [
             format_number(n) for n in
