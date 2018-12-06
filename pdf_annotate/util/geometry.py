@@ -52,6 +52,12 @@ def matrix_multiply(*args):
 
     E.g. matrix_multiply(A, B, C) => (A*B)*C
 
+    What this means for combining affine transformations is that they are
+    applied in reverse order. For instance, to perform rotation R, scale S, and
+    translation T, in that order, you would use:
+
+    matrix_multiply(T, S, R)
+
     Each matrix is a 6-item homogenous matrix.
     """
     if len(args) < 2:
