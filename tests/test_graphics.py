@@ -94,6 +94,9 @@ class TestContentStream(TestCase):
         transformed = cs.transform([2, 0, 0, 2, 5, 10]).resolve()
         assert transformed == 'q 7 12 m Q'
 
+
+class TestFormatting(TestCase):
+
     def test_format_number(self):
         assert format_number(0.000000000000000001) == '0'
         assert format_number(-0.000000000000000002) == '0'
@@ -104,3 +107,29 @@ class TestContentStream(TestCase):
         assert format_number(1.54) == '1.54'
         assert format_number(0.5) == '0.5'
         assert format_number(3.14159265358979323) == '3.1415926536'
+
+    def test_commands_get_number_formatting(self):
+        # Regression test to make sure that all commands that output number
+        # have sane formatting.
+        stream = ContentStream([
+            StrokeWidth(0.0),
+            StrokeColor(0.0, 0.0, 0.0),
+            FillColor(0.0, 0.0, 0.0),
+            Rect(0.0, 0.0, 0.0, 0.0),
+            Move(0.0, 0.0),
+            Line(0.0, 0.0),
+            Bezier(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+            CTM([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            TextMatrix([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        ]).resolve()
+        assert stream == (
+            '0 w '
+            '0 0 0 RG '
+            '0 0 0 rg '
+            '0 0 0 0 re '
+            '0 0 m '
+            '0 0 l '
+            '0 0 0 0 0 0 c '
+            '0 0 0 0 0 0 cm '
+            '0 0 0 0 0 0 Tm'
+        )
