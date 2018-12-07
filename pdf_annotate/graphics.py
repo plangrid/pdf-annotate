@@ -72,7 +72,12 @@ class StaticCommand(NoOpTransformBase):
 
 class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
     def resolve(self):
-        return '{} {} {} {} re'.format(self.x, self.y, self.width, self.height)
+        return '{} {} {} {} re'.format(
+            format_number(self.x),
+            format_number(self.y),
+            format_number(self.width),
+            format_number(self.height),
+        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -82,17 +87,25 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
 
 class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
     def resolve(self):
-        return '{} {} {} RG'.format(self.r, self.g, self.b)
+        return '{} {} {} RG'.format(
+            format_number(self.r),
+            format_number(self.g),
+            format_number(self.b),
+        )
 
 
 class StrokeWidth(namedtuple('StrokeWidth', ['width']), NoOpTransformBase):
     def resolve(self):
-        return '{} w'.format(self.width)
+        return '{} w'.format(format_number(self.width))
 
 
 class FillColor(namedtuple('Fill', ['r', 'g', 'b']), NoOpTransformBase):
     def resolve(self):
-        return '{} {} {} rg'.format(self.r, self.g, self.b)
+        return '{} {} {} rg'.format(
+            format_number(self.r),
+            format_number(self.g),
+            format_number(self.b),
+        )
 
 
 class BeginText(StaticCommand):
