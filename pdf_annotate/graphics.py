@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
 
@@ -202,12 +203,18 @@ class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
             *[format_number(n) for n in self.matrix]
         )
 
+    def transform(self, t):
+        return CTM(matrix_multiply(t, self.matrix))
+
 
 class TextMatrix(namedtuple('TextMatrix', ['matrix']), NoOpTransformBase):
     def resolve(self):
         return '{} {} {} {} {} {} Tm'.format(
             *[format_number(n) for n in self.matrix]
         )
+
+    def transform(self, t):
+        return TextMatrix(matrix_multiply(t, self.matrix))
 
 
 def format_number(n):

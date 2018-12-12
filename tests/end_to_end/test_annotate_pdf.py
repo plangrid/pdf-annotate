@@ -104,6 +104,7 @@ class EndToEndMixin(object):
         return os.path.join(dirname, 'pdfs', self.OUTPUT_FILENAME)
 
     def _add_annotations(self, a):
+        # Original page size (612, 792)
         self._add_shape_annotations(a, self.gaudy)
         self._add_shape_annotations(a, self.transparent, y1=70, y2=110)
         self._add_image_annotations(a, self.image_appearance)
@@ -187,32 +188,15 @@ class EndToEndMixin(object):
         works, and that images can be embedded inside other, more complex
         annotations.
         """
-        page = 0
         x1, y1, x2, y2 = 10, 310, 50, 350
-        rotation = a.get_rotation(page)
-        # The location of the entire annotation
-        location = Location(x1=x1, y1=y1, x2=x2, y2=y2, page=page)
+        location = Location(x1=x1, y1=y1, x2=x2, y2=y2, page=0)
 
-        # The location of the image inside the annotation
-        image_location = Location(
-            x1=x1 + 10,
-            y1=y1 + 10,
-            x2=x2 - 10,
-            y2=y2 - 10,
-            page=page,
-        )
-        # Correctly setting the CTM for the image inside the explicit content
-        # stream requires using the transformed location coordinates, which
-        # account for page scale and rotation.
-        transformed_image_location = Image.transform(
-            image_location,
-            a.get_transform(page, rotation),
-        )
         content_stream = ContentStream([
             StrokeColor(1, 0, 0),
             Rect(x1, y1, x2 - x1, y2 - y1),
             Save(),
-            CTM(Image.get_ctm(rotation, transformed_image_location)),
+            # The image is inside an outer rectangle
+            CTM(Image.get_ctm(x1 + 10, y1 + 10, x2 - 10, y2 - 10)),
             XObject('MyXObject'),
             Restore(),
             Stroke(),

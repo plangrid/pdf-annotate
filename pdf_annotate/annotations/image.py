@@ -16,7 +16,6 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import XObject
 from pdf_annotate.util.geometry import matrix_multiply
-from pdf_annotate.util.geometry import rotate
 from pdf_annotate.util.geometry import scale
 from pdf_annotate.util.geometry import translate
 
@@ -131,28 +130,13 @@ class Image(RectAnnotation):
         raise ValueError('Image color space not yet supported')
 
     @staticmethod
-    def get_ctm(rotation, L):
-        """Get the scaled, rotated CTM for an image at L at a given rotation.
-
-        :param int rotation: rotation int in (0, 90, 180, 270)
-        :param Location L: location with (x1, y1), (x2, y2)
-        :returns 6-tuple: CTM matrix
+    def get_ctm(x1, y1, x2, y2):
+        """Get the scaled and translated CTM for an image to be placed in the
+        bounding box defined by [x1, y1, x2, y2].
         """
-        width = L.x2 - L.x1
-        height = L.y2 - L.y1
-        if rotation == 0:
-            placement = translate(L.x1, L.y1)
-        elif rotation == 90:
-            placement = translate(L.x2, L.y1)
-        elif rotation == 180:
-            placement = translate(L.x2, L.y2)
-        else:  # 270
-            placement = translate(L.x1, L.y2)
-
         return matrix_multiply(
-            placement,
-            scale(width, height),
-            rotate(rotation),
+            translate(x1, y1),
+            scale(x2 - x1, y2 - y1),
         )
 
     def make_appearance_stream(self):
@@ -163,8 +147,8 @@ class Image(RectAnnotation):
         set_appearance_state(stream, A)
         stream.extend([
             Rect(L.x1, L.y1, L.x2 - L.x1, L.y2 - L.y1),
-            CTM(self.get_ctm(self._rotation, L)),
+            CTM(self.get_ctm(L.x1, L.y1, L.x2, L.y2)),
             XObject('Image'),
             Restore(),
         ])
-        return stream.resolve()
+        return stream
