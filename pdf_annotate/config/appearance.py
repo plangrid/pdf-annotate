@@ -71,6 +71,7 @@ class Appearance(object):
     appearance_stream = Field(ContentStream, default=None)
     xobjects = Field(dict, default=None)
     graphics_states = Field(dict, default=None)
+    fonts = Field(dict, default=None)
 
     def copy(self, **kwargs):
         A = Appearance(**kwargs)
