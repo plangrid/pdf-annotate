@@ -49,7 +49,7 @@ class Annotation(object):
 
         :param list transform: Transformation matrix to transform the coords
             of the annotation from client-specified space to PDF user space.
-        :param int page: The annotation's page in the PDF doc
+        :param PdfDict page: The pdfrw page object from the PDF document
         :returns PdfDict: the annotation object to be inserted into the PDF
         """
         bounding_box = transform_rect(self.make_rect(), transform)
@@ -185,15 +185,6 @@ class Annotation(object):
 
     def make_rect(self):
         """Return a bounding box that encompasses the entire annotation."""
-        raise NotImplementedError()
-
-    @staticmethod
-    def transform(location, transform):
-        """Apply `transform` to the location relevant to the annotation.
-
-        :param Location location: location object to transform
-        :param 6-item list transform: transformation matrix
-        """
         raise NotImplementedError()
 
 
