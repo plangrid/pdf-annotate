@@ -10,6 +10,8 @@ from PIL import ImageFont
 
 from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
+from pdf_annotate.config.constants import DEFAULT_BASE_FONT
+from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import EndText
@@ -24,8 +26,6 @@ from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.util.geometry import translate
 from pdf_annotate.util.text import get_wrapped_lines
 
-
-PDF_ANNOTATOR_FONT = 'PDFANNOTATORFONT1'
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -65,13 +65,28 @@ class FreeText(Annotation):
         # TODO DS is required to have BB not redraw the annotation in their own
         # style when you edit it.
 
-    def add_additional_resources(self, resources):
-        font_dict = PdfDict()
-        font_dict[PdfName(PDF_ANNOTATOR_FONT)] = PdfDict(
+    @staticmethod
+    def make_font_object(base_font=None):
+        """Make a PDF Type1 font object for embedding in the annotation's
+        Resources dict.
+
+        :param str base_font: Name of base font. If None, defaults to
+            Helvetica. Note that base fonts other than Helvetica will not
+            necessarily have correct text wrapping behavior, since measurement
+            of the font glyphs is currently hardcoded to Helvetica metrics.
+        :returns PdfDict: Resources PdfDict object, ready to be included in the
+            Resources 'Font' subdictionary.
+        """
+        base_font = DEFAULT_BASE_FONT if base_font is None else base_font
+        return PdfDict(
             Type=PdfName('Font'),
             Subtype=PdfName('Type1'),
-            BaseFont=PdfName('Helvetica'),
+            BaseFont=PdfName(base_font),
         )
+
+    def add_additional_resources(self, resources):
+        font_dict = PdfDict()
+        font_dict[PdfName(PDF_ANNOTATOR_FONT)] = self.make_font_object()
         resources[PdfName('Font')] = font_dict
 
     def make_appearance_stream(self):

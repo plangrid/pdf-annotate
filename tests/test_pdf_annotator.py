@@ -77,8 +77,8 @@ class TestPdfAnnotator(TestCase):
         assert len(annotations) == 0
         assert square.Subtype == '/Square'
         # The outer bounding box of the square is padded outward by the stroke
-        # width
-        assert square.Rect == ['4', '9', '11', '16']
+        # width, and then scaled down by two.
+        self.assertEqual(square.Rect, ['4.5', '9.5', '10.5', '15.5'])
 
 
 class TestPdfAnnotatorGetTransform(TestCase):
