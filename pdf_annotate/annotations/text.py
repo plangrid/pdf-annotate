@@ -20,7 +20,6 @@ from pdf_annotate.graphics import Font
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import StrokeColor
-from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.util.geometry import translate
@@ -95,12 +94,8 @@ class FreeText(Annotation):
 
         stream = ContentStream([
             Save(),
-            # Not quite sure why we write black + the stroke color before BT
-            StrokeColor(1, 1, 1),
-            FillColor(*A.stroke_color),
-            StrokeWidth(0),
             BeginText(),
-            StrokeColor(*A.stroke_color),
+            FillColor(*A.stroke_color),
             Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         # Actually draw the text inside the rectangle
