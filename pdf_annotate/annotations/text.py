@@ -10,7 +10,6 @@ from PIL import ImageFont
 
 from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
-from pdf_annotate.annotations.rect import RectAnnotation
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
@@ -45,14 +44,6 @@ class FreeText(Annotation):
     """
     subtype = 'FreeText'
 
-    @staticmethod
-    def transform(location, transform):
-        return RectAnnotation.transform(location, transform)
-
-    def get_matrix(self):
-        L = self._location
-        return translate(-L.x1, -L.y1)
-
     def make_rect(self):
         L = self._location
         return [L.x1, L.y1, L.x2, L.y2]
@@ -85,7 +76,7 @@ class FreeText(Annotation):
             )
         )
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         L = self._location
 
@@ -116,7 +107,7 @@ class FreeText(Annotation):
             Restore(),
         ])
 
-        return stream.resolve()
+        return stream
 
     def _get_graphics_cm(self):
         return rotate(self._rotation)

@@ -211,19 +211,6 @@ class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
         return '/{} gs'.format(self.name)
 
 
-def resolve_appearance_stream(A, transform):
-    a = A.appearance_stream
-    if a is None or isinstance(a, str):
-        return A
-    elif not isinstance(a, ContentStream):
-        raise ValueError(
-            'Invalid appearance stream format: {}'.format(type(a)))
-
-    new_appearance = A.copy()
-    new_appearance.appearance_stream = a.transform(transform).resolve()
-    return new_appearance
-
-
 def set_appearance_state(stream, A):
     """Update the graphics command stream to reflect appearance properties.
 

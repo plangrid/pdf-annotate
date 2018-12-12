@@ -13,29 +13,12 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import stroke_or_fill
-from pdf_annotate.util.geometry import transform_point
-from pdf_annotate.util.geometry import translate
 
 
 class RectAnnotation(Annotation):
     """Abstract annotation that defines its location on the document with a
     width and a height.
     """
-    @staticmethod
-    def transform(location, transform):
-        new_location = location.copy()
-
-        x1, y1 = transform_point([new_location.x1, new_location.y1], transform)
-        x2, y2 = transform_point([new_location.x2, new_location.y2], transform)
-        new_location.x1, new_location.x2 = sorted([x1, x2])
-        new_location.y1, new_location.y2 = sorted([y1, y2])
-
-        return new_location
-
-    def get_matrix(self):
-        stroke_width = self._appearance.stroke_width
-        L = self._location
-        return translate(-(L.x1 - stroke_width), -(L.y1 - stroke_width))
 
     def make_rect(self):
         stroke_width = self._appearance.stroke_width
@@ -60,7 +43,7 @@ class RectAnnotation(Annotation):
 class Square(RectAnnotation):
     subtype = 'Square'
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         L = self._location
         A = self._appearance
         stream = ContentStream([Save()])
@@ -76,7 +59,7 @@ class Square(RectAnnotation):
         stream.add(Restore())
 
         # TODO dash array
-        return stream.resolve()
+        return stream
 
 
 def add_bezier_circle(stream, x1, y1, x2, y2):
@@ -132,7 +115,7 @@ class Circle(RectAnnotation):
     """
     subtype = 'Circle'
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         L = self._location
         A = self._appearance
 
@@ -142,4 +125,4 @@ class Circle(RectAnnotation):
         stroke_or_fill(stream, A)
         stream.add(Restore())
 
-        return stream.resolve()
+        return stream
