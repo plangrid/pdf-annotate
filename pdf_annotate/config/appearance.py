@@ -11,10 +11,17 @@ from pdf_annotate.config.constants import DEFAULT_CONTENT
 from pdf_annotate.config.constants import DEFAULT_FONT_SIZE
 from pdf_annotate.config.constants import DEFAULT_LINE_SPACING
 from pdf_annotate.config.constants import DEFAULT_STROKE_WIDTH
+from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.constants import TEXT_ALIGN_LEFT
 from pdf_annotate.config.constants import TEXT_BASELINE_MIDDLE
 from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import FillColor
+from pdf_annotate.graphics import GraphicsState as CSGraphicsState
+from pdf_annotate.graphics import Stroke
+from pdf_annotate.graphics import StrokeAndFill
+from pdf_annotate.graphics import StrokeColor
+from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.util.validation import between
 from pdf_annotate.util.validation import Boolean
 from pdf_annotate.util.validation import Color
@@ -102,3 +109,34 @@ class Appearance(object):
             stroke_transparency=self._get_stroke_transparency(),
             fill_transparency=self._get_fill_transparency(),
         )
+
+
+def set_appearance_state(stream, A):
+    """Update the graphics command stream to reflect appearance properties.
+
+    :param ContentStream stream: current content stream
+    :param Appearance A: appearance object
+    """
+    # Add in the `gs` command, which will execute the named graphics state from
+    # the Resources dict, and set CA and/or ca values. The annotations
+    # themselves will need to ensure that the proper ExtGState object is
+    # present in the Resources dict.
+    graphics_state = A.get_graphics_state()
+    if graphics_state.has_content():
+        stream.add(CSGraphicsState(GRAPHICS_STATE_NAME))
+
+    stream.extend([
+        StrokeColor(*A.stroke_color[:3]),
+        StrokeWidth(A.stroke_width),
+    ])
+
+    # TODO support more color spaces - CMYK and GrayScale
+    if A.fill is not None:
+        stream.add(FillColor(*A.fill[:3]))
+
+
+def stroke_or_fill(stream, A):
+    if A.fill is not None:
+        stream.add(StrokeAndFill())
+    else:
+        stream.add(Stroke())

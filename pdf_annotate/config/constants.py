@@ -44,3 +44,5 @@ ALLOWED_LINE_JOINS = (
 
 BLACK = (0, 0, 0)
 TRANSPARENT = tuple()
+
+GRAPHICS_STATE_NAME = 'PdfAnnotatorGS'

@@ -5,7 +5,6 @@ from pdf_annotate.util.geometry import transform_vector
 
 
 ZERO_TOLERANCE = 0.00000000000001
-GRAPHICS_STATE_NAME = 'PdfAnnotatorGS'
 
 
 class ContentStream(object):
@@ -70,21 +69,6 @@ class StaticCommand(NoOpTransformBase):
         return self.COMMAND
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
-    def resolve(self):
-        return '{} {} {} {} re'.format(
-            format_number(self.x),
-            format_number(self.y),
-            format_number(self.width),
-            format_number(self.height),
-        )
-
-    def transform(self, t):
-        x, y = transform_point((self.x, self.y), t)
-        width, height = transform_vector((self.width, self.height), t)
-        return Rect(x, y, width, height)
-
-
 class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
     def resolve(self):
         return '{} {} {} RG'.format(
@@ -140,6 +124,41 @@ class Close(StaticCommand):
     COMMAND = 'h'
 
 
+class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
+    def resolve(self):
+        return '/{} {} Tf'.format(self.font, self.font_size)
+
+
+class Text(namedtuple('Text', ['text']), NoOpTransformBase):
+    def resolve(self):
+        return '({}) Tj'.format(self.text)
+
+
+class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
+    def resolve(self):
+        return '/{} Do'.format(self.name)
+
+
+class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
+    def resolve(self):
+        return '/{} gs'.format(self.name)
+
+
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
+    def resolve(self):
+        return '{} {} {} {} re'.format(
+            format_number(self.x),
+            format_number(self.y),
+            format_number(self.width),
+            format_number(self.height),
+        )
+
+    def transform(self, t):
+        x, y = transform_point((self.x, self.y), t)
+        width, height = transform_vector((self.width, self.height), t)
+        return Rect(x, y, width, height)
+
+
 class Move(namedtuple('Move', ['x', 'y'])):
     def resolve(self):
         return '{} {} m'.format(format_number(self.x), format_number(self.y))
@@ -177,11 +196,6 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
-    def resolve(self):
-        return '/{} {} Tf'.format(self.font, self.font_size)
-
-
 class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
     def resolve(self):
         return '{} {} {} {} {} {} cm'.format(
@@ -194,52 +208,6 @@ class TextMatrix(namedtuple('TextMatrix', ['matrix']), NoOpTransformBase):
         return '{} {} {} {} {} {} Tm'.format(
             *[format_number(n) for n in self.matrix]
         )
-
-
-class Text(namedtuple('Text', ['text']), NoOpTransformBase):
-    def resolve(self):
-        return '({}) Tj'.format(self.text)
-
-
-class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
-    def resolve(self):
-        return '/{} Do'.format(self.name)
-
-
-class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
-    def resolve(self):
-        return '/{} gs'.format(self.name)
-
-
-def set_appearance_state(stream, A):
-    """Update the graphics command stream to reflect appearance properties.
-
-    :param ContentStream stream: current content stream
-    :param Appearance A: appearance object
-    """
-    # Add in the `gs` command, which will execute the named graphics state from
-    # the Resources dict, and set CA and/or ca values. The annotations
-    # themselves will need to ensure that the proper ExtGState object is
-    # present in the Resources dict.
-    graphics_state = A.get_graphics_state()
-    if graphics_state.has_content():
-        stream.add(GraphicsState(GRAPHICS_STATE_NAME))
-
-    stream.extend([
-        StrokeColor(*A.stroke_color[:3]),
-        StrokeWidth(A.stroke_width),
-    ])
-
-    # TODO support more color spaces - CMYK and GrayScale
-    if A.fill is not None:
-        stream.add(FillColor(*A.fill[:3]))
-
-
-def stroke_or_fill(stream, A):
-    if A.fill is not None:
-        stream.add(StrokeAndFill())
-    else:
-        stream.add(Stroke())
 
 
 def format_number(n):

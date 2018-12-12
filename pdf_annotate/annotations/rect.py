@@ -4,6 +4,8 @@ Square and Circle annotations.
 """
 from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.annotations.base import make_border_dict
+from pdf_annotate.config.appearance import set_appearance_state
+from pdf_annotate.config.appearance import stroke_or_fill
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
 from pdf_annotate.graphics import ContentStream
@@ -11,8 +13,6 @@ from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
-from pdf_annotate.graphics import set_appearance_state
-from pdf_annotate.graphics import stroke_or_fill
 
 
 class RectAnnotation(Annotation):
