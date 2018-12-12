@@ -155,7 +155,7 @@ class Image(RectAnnotation):
             rotate(rotation),
         )
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         L = self._location
 

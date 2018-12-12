@@ -13,8 +13,6 @@ from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import set_appearance_state
 from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import stroke_or_fill
-from pdf_annotate.util.geometry import transform_point
-from pdf_annotate.util.geometry import translate
 
 
 def flatten_points(points):
@@ -25,13 +23,6 @@ class PointsAnnotation(Annotation):
     """An abstract annotation that defines its location on the document with
     an array of points.
     """
-    @staticmethod
-    def transform(location, transform):
-        new_location = location.copy()
-        points = [transform_point([x, y], transform)
-                  for x, y in location.points]
-        new_location.points = points
-        return new_location
 
     def make_rect(self):
         L = self._location
@@ -50,12 +41,6 @@ class PointsAnnotation(Annotation):
             max_y + stroke_width,
         ]
 
-    def get_matrix(self):
-        # Note: Acrobat and BB put padding that's not quite the same as the
-        # stroke width here. I'm not quite sure why yet, so I'm not changing it
-        rect = self.make_rect()
-        return translate(-rect[0], -rect[1])
-
     def base_points_object(self):
         obj = self.make_base_object()
         obj.BS = make_border_dict(self._appearance)
@@ -67,7 +52,7 @@ class PointsAnnotation(Annotation):
 class Line(PointsAnnotation):
     subtype = 'Line'
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         points = self._location.points
 
@@ -78,7 +63,7 @@ class Line(PointsAnnotation):
         stroke_or_fill(stream, A)
         stream.add(Restore())
 
-        return stream.resolve()
+        return stream
 
     def add_additional_pdf_object_data(self, obj):
         # TODO line endings, leader lines, captions
@@ -89,7 +74,7 @@ class Polygon(PointsAnnotation):
     subtype = 'Polygon'
     versions = ('1.5', '1.6', '1.7')
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         points = self._location.points
 
@@ -102,7 +87,7 @@ class Polygon(PointsAnnotation):
         stroke_or_fill(stream, A)
         stream.add(Restore())
 
-        return stream.resolve()
+        return stream
 
     def add_additional_pdf_object_data(self, obj):
         if self._appearance.fill:
@@ -114,7 +99,7 @@ class Polyline(PointsAnnotation):
     subtype = 'PolyLine'
     versions = ('1.5', '1.6', '1.7')
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         points = self._location.points
 
@@ -126,7 +111,7 @@ class Polyline(PointsAnnotation):
         # TODO add a 'close' attribute?
         stream.extend([Stroke(), Restore()])
 
-        return stream.resolve()
+        return stream
 
     def add_additional_pdf_object_data(self, obj):
         obj.Vertices = flatten_points(self._location.points)
@@ -135,7 +120,7 @@ class Polyline(PointsAnnotation):
 class Ink(PointsAnnotation):
     subtype = 'Ink'
 
-    def graphics_commands(self):
+    def make_appearance_stream(self):
         A = self._appearance
         points = self._location.points
 
@@ -148,7 +133,7 @@ class Ink(PointsAnnotation):
             stream.add(CSLine(x, y))
         stream.extend([Stroke(), Restore()])
 
-        return stream.resolve()
+        return stream
 
     def add_additional_pdf_object_data(self, obj):
         obj.InkList = [flatten_points(self._location.points)]

@@ -4,6 +4,8 @@ from pdfrw.objects import PdfName
 
 from pdf_annotate.config.metadata import serialize_value
 from pdf_annotate.graphics import GRAPHICS_STATE_NAME
+from pdf_annotate.util.geometry import transform_rect
+from pdf_annotate.util.geometry import translate
 
 
 ALL_VERSIONS = ('1.3', '1.4', '1.5', '1.6', '1.7')
@@ -33,7 +35,7 @@ class Annotation(object):
     """
     versions = ALL_VERSIONS
 
-    def __init__(self, location, appearance, metadata=None, rotation=0):
+    def __init__(self, location, appearance, metadata=None):
         """
         :param Location location:
         :param Appearance appearance:
@@ -44,22 +46,27 @@ class Annotation(object):
         self._location = location
         self._appearance = appearance
         self._metadata = metadata
-        self._rotation = rotation
 
-    def as_pdf_object(self):
-        """Return the PdfDict object representing the annotation.
+    def as_pdf_object(self, transform, page):
+        """Return the PdfDict object representing the annotation, that will be
+        inserted as is into the PDF document.
 
-        This is the function that a PdfAnnotator calls to generate the core
-        PDF object that gets inserted into the PDF.
+        :param list transform: Transformation matrix to transform the coords
+            of the annotation from client-specified space to PDF user space.
+        :param int page: The annotation's page in the PDF doc
         """
-        annotation_bbox = self.make_rect()
-        appearance_stream = self._make_appearance_stream_dict()
+        bounding_box = transform_rect(self.make_rect(), transform)
+        appearance_stream = self._make_appearance_stream_dict(
+            bounding_box,
+            transform,
+        )
 
         obj = PdfDict(
             Type=PdfName('Annot'),
             Subtype=PdfName(self.subtype),
-            Rect=annotation_bbox,
+            Rect=bounding_box,
             AP=appearance_stream,
+            P=page,
         )
 
         self._add_metadata(obj, self._metadata)
@@ -141,18 +148,23 @@ class Annotation(object):
 
         return None
 
-    def _make_appearance_stream_dict(self):
+    def _make_appearance_stream_dict(self, bounding_box, transform):
         resources = self._make_ap_resources()
 
-        appearance_stream = self._appearance.appearance_stream
-        if appearance_stream is None:
-            appearance_stream = self.graphics_commands()
+        # Either use user-specified content stream or generate content stream
+        # based on annotation type.
+        stream = self._appearance.appearance_stream
+        if stream is None:
+            stream = self.make_appearance_stream()
+
+        # Transform the appearance stream into PDF space and turn it into a str
+        appearance_stream = stream.transform(transform).resolve()
 
         normal_appearance = PdfDict(
             stream=appearance_stream,
-            BBox=self.make_rect(),
+            BBox=bounding_box,
             Resources=resources,
-            Matrix=self.get_matrix(),
+            Matrix=translate(-bounding_box[0], -bounding_box[1]),
             Type=PdfName('XObject'),
             Subtype=PdfName('Form'),
             FormType=1,
@@ -173,10 +185,6 @@ class Annotation(object):
         :param PdfDict resources: Resources PDF dictionary
         """
         pass
-
-    def get_matrix(self):
-        """Get the appearance stream's Matrix entry."""
-        raise NotImplementedError()
 
     def make_rect(self):
         """Return a bounding box that encompasses the entire annotation."""

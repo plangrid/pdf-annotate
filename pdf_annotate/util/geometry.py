@@ -119,3 +119,20 @@ def transform_vector(vector, matrix):
     new_x = x * a + y * c
     new_y = x * b + y * d
     return [new_x, new_y]
+
+
+def transform_rect(rect, matrix):
+    """Transform a rectangle specified by two points (lower left and upper
+    right) by a transformation matrix.
+
+    :param list rect: [x1, y1, x2, y2]
+    :param list matrix: transformation matrix
+    :returns list: [x1, y1, x2, y2] with transformed points
+    """
+    x1, y1 = transform_point(rect[:2], matrix)
+    x2, y2 = transform_point(rect[2:], matrix)
+
+    x1, x2 = sorted([x1, x2])
+    y1, y2 = sorted([y1, y2])
+
+    return [x1, y1, x2, y2]

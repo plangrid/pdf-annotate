@@ -18,7 +18,7 @@ from pdf_annotate.annotations.rect import Square
 from pdf_annotate.annotations.text import FreeText
 from pdf_annotate.config.metadata import Metadata
 from pdf_annotate.config.metadata import UNSET
-from pdf_annotate.graphics import resolve_appearance_stream
+from pdf_annotate.graphics import ContentStream
 from pdf_annotate.util.geometry import identity
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import normalize_rotation
@@ -133,7 +133,9 @@ class PdfAnnotator(object):
         the given location of the PDF.
 
         :param str annotation_type: E.g. 'square'
-        :param Location location:
+        :param Location location: Annotation's Location object, specified in
+            the coordinate system of the client. Coordinates will be
+            transformed to PDF user space via get_transform.
         :param Appearance appearance:
         :param Metadata|None|UNSET metadata: Metadata object. If UNSET, no
             metadata is written on the entire annotation. If None, default
@@ -141,6 +143,7 @@ class PdfAnnotator(object):
         """
         self._before_add(location)
         metadata = self._resolve_metadata(metadata)
+        self._validate_appearance_stream(appearance)
         annotation = self.get_annotation(
             annotation_type,
             location,
@@ -149,7 +152,8 @@ class PdfAnnotator(object):
         )
         self._add_annotation(annotation)
 
-    def _resolve_metadata(self, metadata):
+    @staticmethod
+    def _resolve_metadata(metadata):
         if isinstance(metadata, Metadata):
             return metadata
         elif metadata is None:
@@ -158,6 +162,13 @@ class PdfAnnotator(object):
             return None
         else:
             raise ValueError('Invalid metadata')
+
+    @staticmethod
+    def _validate_appearance_stream(appearance):
+        stream = appearance.appearance_stream
+        if stream is not None and not isinstance(stream, ContentStream):
+            raise ValueError(
+                'Invalid appearance stream format: {}'.format(type(stream)))
 
     def _before_add(self, location):
         # Steps to take before trying to add an annotation to `location`
@@ -176,14 +187,7 @@ class PdfAnnotator(object):
                 annotation_type
             ))
 
-        rotation = self._pdf.get_rotation(location.page)
-        transform = self.get_transform(location.page, rotation)
-        if transform != identity():
-            location = annotation_cls.transform(location, transform)
-
-        appearance = resolve_appearance_stream(appearance, transform)
-
-        annotation = annotation_cls(location, appearance, metadata, rotation)
+        annotation = annotation_cls(location, appearance, metadata)
         annotation.validate(self._pdf.pdf_version)
         return annotation
 
@@ -272,9 +276,16 @@ class PdfAnnotator(object):
         return transform
 
     def _add_annotation(self, annotation):
+        """Add the annotation to the PDF document, transforming annotation
+        metadata and content stream to PDF user space.
+        """
         page = self._pdf.get_page(annotation.page)
-        annotation_obj = annotation.as_pdf_object()
-        annotation_obj.P = page
+        transform = self.get_transform(
+            annotation.page,
+            self._pdf.get_rotation(annotation.page),
+        )
+        annotation_obj = annotation.as_pdf_object(transform, page)
+
         if page.Annots:
             page.Annots.append(annotation_obj)
         else:
