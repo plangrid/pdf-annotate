@@ -2,8 +2,8 @@
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 
+from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.metadata import serialize_value
-from pdf_annotate.graphics import GRAPHICS_STATE_NAME
 from pdf_annotate.util.geometry import transform_rect
 from pdf_annotate.util.geometry import translate
 
@@ -17,8 +17,6 @@ class Annotation(object):
     Concrete annotations should define the following:
         * subtype (e.g. "Square")
         * make_rect() - bounding box of annotation
-        * get_matrix() - matrix entry of AP XObject
-        * transform() - transformation function for the annotation's location
         * add_additional_pdf_object_data [optional] - additional entries to go
           in the PDF object
         * add_additional_resources [optional] - additional entries to go in the
@@ -40,8 +38,6 @@ class Annotation(object):
         :param Location location:
         :param Appearance appearance:
         :param Metadata metadata:
-        :param int rotation: text annotation cares about page orientation when
-            building the graphics stream for the text content.
         """
         self._location = location
         self._appearance = appearance
@@ -54,6 +50,7 @@ class Annotation(object):
         :param list transform: Transformation matrix to transform the coords
             of the annotation from client-specified space to PDF user space.
         :param int page: The annotation's page in the PDF doc
+        :returns PdfDict: the annotation object to be inserted into the PDF
         """
         bounding_box = transform_rect(self.make_rect(), transform)
         appearance_stream = self._make_appearance_stream_dict(

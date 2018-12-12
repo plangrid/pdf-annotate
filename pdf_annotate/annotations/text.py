@@ -12,7 +12,6 @@ from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
-from pdf_annotate.graphics import CTM
 from pdf_annotate.graphics import EndText
 from pdf_annotate.graphics import FillColor
 from pdf_annotate.graphics import Font
@@ -22,7 +21,6 @@ from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
-from pdf_annotate.util.geometry import rotate
 from pdf_annotate.util.geometry import translate
 from pdf_annotate.util.text import get_wrapped_lines
 
@@ -68,13 +66,13 @@ class FreeText(Annotation):
         # style when you edit it.
 
     def add_additional_resources(self, resources):
-        resources[PdfName('Font')] = PdfDict(
-            PDF_ANNOTATOR_FONT=PdfDict(
-                Type=PdfName('Font'),
-                Subtype=PdfName('Type1'),
-                BaseFont=PdfName('Helvetica'),
-            )
+        font_dict = PdfDict()
+        font_dict[PdfName(PDF_ANNOTATOR_FONT)] = PdfDict(
+            Type=PdfName('Font'),
+            Subtype=PdfName('Type1'),
+            BaseFont=PdfName('Helvetica'),
         )
+        resources[PdfName('Font')] = font_dict
 
     def make_appearance_stream(self):
         A = self._appearance
@@ -82,7 +80,6 @@ class FreeText(Annotation):
 
         stream = ContentStream([
             Save(),
-            CTM(self._get_graphics_cm()),
             # Not quite sure why we write black + the stroke color before BT
             StrokeColor(1, 1, 1),
             FillColor(*A.stroke_color),
@@ -96,7 +93,6 @@ class FreeText(Annotation):
             L.x1, L.y1, L.x2, L.y2,
             text=A.content,
             font_size=A.font_size,
-            rotation=self._rotation,
             wrap_text=A.wrap_text,
             align=A.text_align,
             baseline=A.text_baseline,
@@ -109,13 +105,10 @@ class FreeText(Annotation):
 
         return stream
 
-    def _get_graphics_cm(self):
-        return rotate(self._rotation)
-
 
 def get_text_commands(
     x1, y1, x2, y2,
-    text, font_size, rotation, wrap_text,
+    text, font_size, wrap_text,
     align, baseline, line_spacing,
 ):
     """Return the graphics stream commands necessary to render a free text
@@ -130,7 +123,6 @@ def get_text_commands(
     :param number y2: bounding box upper right y
     :param str text: text to add to annotation
     :param number font_size: font size
-    :param int rotation: page's rotation, int that's a multiple of 90
     :param bool wrap_text: whether to wrap the text
     :param str align: 'left'|'center'|'right'
     :param str baseline: 'top'|'middle'|'bottom'
@@ -139,8 +131,6 @@ def get_text_commands(
     font = ImageFont.truetype(HELVETICA_PATH, size=font_size)
 
     def measure(text): return font.getsize(text)[0]
-
-    x1, y1, x2, y2 = _get_rotated_bbox(x1, y1, x2, y2, rotation)
 
     lines = get_wrapped_lines(text, measure, x2 - x1) if wrap_text else [text]
     # Line breaking cares about the whitespace in the string, but for the
@@ -163,18 +153,6 @@ def get_text_commands(
             Text(line),
         ])
     return commands
-
-
-def _get_rotated_bbox(x1, y1, x2, y2, rotation):
-    """Swap bounding box corners if the page is rotated."""
-    if rotation == 0:
-        return x1, y1, x2, y2
-    elif rotation == 90:
-        return y1, -x2, y2, -x1
-    elif rotation == 180:
-        return -x2, -y1, -x1, -y2
-    else:  # 270
-        return -y2, x2, -y1, x1
 
 
 def _get_vertical_coordinates(
