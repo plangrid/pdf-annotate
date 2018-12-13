@@ -1,0 +1,2 @@
+include pdf_annotate/fonts/Helvetica.ttf
+prune tests
