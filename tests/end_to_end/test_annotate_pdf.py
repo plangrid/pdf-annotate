@@ -62,7 +62,7 @@ class EndToEndMixin(object):
         )
 
         self.top_left = self.gaudy.copy(
-            stroke_color=[0, 0.5, 0.75],
+            fill=[0, 0.5, 0.75],
             content=(
                 r"Though yet of Hamlet, our dear brother's death \\ "
                 r"The memory be green"
