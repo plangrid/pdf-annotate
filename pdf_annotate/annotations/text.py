@@ -19,7 +19,6 @@ from pdf_annotate.graphics import FillColor
 from pdf_annotate.graphics import Font
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
-from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.util.geometry import translate
@@ -50,7 +49,7 @@ class FreeText(Annotation):
         """
         A = self._appearance
         stream = ContentStream([
-            StrokeColor(*A.stroke_color),
+            FillColor(*A.fill),
             Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         return stream.resolve()
@@ -65,22 +64,17 @@ class FreeText(Annotation):
         # style when you edit it.
 
     @staticmethod
-    def make_font_object(base_font=None):
+    def make_font_object():
         """Make a PDF Type1 font object for embedding in the annotation's
-        Resources dict.
+        Resources dict. Only Helvetica is supported as a base font.
 
-        :param str base_font: Name of base font. If None, defaults to
-            Helvetica. Note that base fonts other than Helvetica will not
-            necessarily have correct text wrapping behavior, since measurement
-            of the font glyphs is currently hardcoded to Helvetica metrics.
         :returns PdfDict: Resources PdfDict object, ready to be included in the
             Resources 'Font' subdictionary.
         """
-        base_font = DEFAULT_BASE_FONT if base_font is None else base_font
         return PdfDict(
             Type=PdfName('Font'),
             Subtype=PdfName('Type1'),
-            BaseFont=PdfName(base_font),
+            BaseFont=PdfName(DEFAULT_BASE_FONT),
         )
 
     def add_additional_resources(self, resources):
@@ -95,7 +89,7 @@ class FreeText(Annotation):
         stream = ContentStream([
             Save(),
             BeginText(),
-            FillColor(*A.stroke_color),
+            FillColor(*A.fill),
             Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         # Actually draw the text inside the rectangle
