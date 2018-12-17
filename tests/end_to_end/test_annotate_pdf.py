@@ -80,7 +80,11 @@ class EndToEndMixin(object):
 
         self.bottom_left = self.top_left.copy(text_baseline='bottom')
         self.bottom_center = self.bottom_left.copy(text_align='center')
-        self.bottom_right = self.bottom_left.copy(text_align='right')
+        # One text annotation is transparent grey
+        self.bottom_right = self.bottom_left.copy(
+            text_align='right',
+            fill=[0, 0, 0, 0.25],
+        )
 
         self.texts = [
             self.top_left, self.top_center, self.top_right,
