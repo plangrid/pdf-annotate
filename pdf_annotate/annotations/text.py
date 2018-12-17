@@ -11,12 +11,14 @@ from PIL import ImageFont
 from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.config.constants import DEFAULT_BASE_FONT
+from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import EndText
 from pdf_annotate.graphics import FillColor
 from pdf_annotate.graphics import Font
+from pdf_annotate.graphics import GraphicsState as CSGraphicsState
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Text
@@ -49,7 +51,7 @@ class FreeText(Annotation):
         """
         A = self._appearance
         stream = ContentStream([
-            FillColor(*A.fill),
+            FillColor(*A.fill[:3]),
             Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
         return stream.resolve()
@@ -89,9 +91,14 @@ class FreeText(Annotation):
         stream = ContentStream([
             Save(),
             BeginText(),
-            FillColor(*A.fill),
+            FillColor(*A.fill[:3]),
             Font(PDF_ANNOTATOR_FONT, A.font_size),
         ])
+
+        graphics_state = A.get_graphics_state()
+        if graphics_state.has_content():
+            stream.add(CSGraphicsState(GRAPHICS_STATE_NAME))
+
         # Actually draw the text inside the rectangle
         stream.extend(get_text_commands(
             L.x1, L.y1, L.x2, L.y2,
