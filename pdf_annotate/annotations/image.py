@@ -69,9 +69,11 @@ class Image(RectAnnotation):
         image = Image.resolve_image(image)
         width, height = image.size
 
-        if image.mode == 'RGBA':
-            # TODO this drops the alpha channel. PDF has its own transparency
-            # model that we'll have to understand eventually.
+        if image.mode in ('RGBA', 'P'):
+            # Right now the alpha channel from RGBA images is dropped; we
+            # should eventually incorporate this into the transparency model.
+            # 'P' images are .png files with a "palette" colorspace. These
+            # should convert nicely to RGB space.
             image = image.convert('RGB')
 
         xobj = PdfDict(
