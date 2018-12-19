@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import zlib
+from io import BytesIO
 
 from pdfrw import PdfDict
 from pdfrw import PdfName
@@ -34,9 +35,7 @@ class Image(RectAnnotation):
     Additional work needs to be done. For example:
         - supporting transparency
         - better compression (e.g. using a Predictor value for FlateDecode)
-        - support for other image types. For example I think the PDF spec has
-          some limited support for just including JPEGs directly.
-        - more color spaces - Pillow lists a ton of potential image modes.
+        - supporting DeviceCMYK directly
     """
 
     subtype = 'Square'
@@ -67,19 +66,40 @@ class Image(RectAnnotation):
         :returns PdfDict: Image XObject
         """
         image = Image.resolve_image(image)
+        # PILImage.convert drops the format attribute
+        image_format = image.format
         width, height = image.size
 
-        if image.mode in ('RGBA', 'P'):
+        if image_format == 'PNG' and image.mode in ('RGBA', 'P'):
             # Right now the alpha channel from RGBA images is dropped; we
             # should eventually incorporate this into the transparency model.
             # 'P' images are .png files with a "palette" colorspace. These
             # should convert nicely to RGB space.
             image = image.convert('RGB')
+        if image_format == 'JPEG' and image.mode == 'CMYK':
+            # The DeviceCMYK PDF color space has some weird properties. In a
+            # future release we can debug these and be smart about it but this
+            # is an easy workaround.
+            image = image.convert('RGB')
+
+        if image_format == 'PNG':
+            content = Image.make_png_image_content(image)
+            filter_type = 'FlateDecode'  # TODO use a predictor
+        elif image_format == 'JPEG':
+            content = Image.make_jpeg_image_content(image)
+            filter_type = 'DCTDecode'
+        elif image_format == 'GIF':
+            pass
+        else:
+            raise ValueError(
+                'Unsupported image format: {}. Supported formats are '
+                'PNG, JPEG, and GIF'.format(image.format)
+            )
 
         xobj = PdfDict(
-            stream=Image.make_image_content(image),
+            stream=content,
             BitsPerComponent=8,
-            Filter=PdfName('FlateDecode'),  # TODO use a predictor
+            Filter=PdfName(filter_type),
             ColorSpace=Image._get_color_space_name(image),
             Width=width,
             Height=height,
@@ -106,13 +126,24 @@ class Image(RectAnnotation):
         raise ValueError('Image color space not yet supported')
 
     @staticmethod
-    def make_image_content(image):
+    def make_png_image_content(image):
         compressed = zlib.compress(Image.get_raw_image_bytes(image))
         if sys.version_info.major < 3:
             return compressed
         # Right now, pdfrw needs strings, not bytes like you'd expect in py3,
         # for binary stream objects. This might change in future versions.
         return compressed.decode('Latin-1')
+
+    @staticmethod
+    def make_jpeg_image_content(image):
+        file_obj = BytesIO()
+        # This is the only way to preserve the JPEG encoding. It also seems to
+        # recompress the data, so that the raw bytes of this differ from the
+        # raw bytes of the original file. It'll probably be better to provide a
+        # special wrapper around PILImage that preserves the original bytes so
+        # we can just use those for JPEGs. TODO.
+        image.save(file_obj, format='JPEG')
+        return file_obj.getvalue().decode('Latin-1')
 
     @staticmethod
     def get_raw_image_bytes(image):

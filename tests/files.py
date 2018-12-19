@@ -19,3 +19,15 @@ PNG_FILES = [
     RGB_PNG,
     ALPHA_PNG,
 ]
+
+GRAYSCALE_JPEG = os.path.join(dirname, 'images', 'grayscale.jpeg')
+RGB_JPEG = os.path.join(dirname, 'images', 'rgb.jpeg')
+CMYK_JPEG = os.path.join(dirname, 'images', 'cmyk.jpeg')
+
+JPEG_files = [
+    GRAYSCALE_JPEG,
+    RGB_JPEG,
+    CMYK_JPEG,
+]
+
+IMAGE_FILES = PNG_FILES + JPEG_files
