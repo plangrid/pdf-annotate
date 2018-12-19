@@ -28,7 +28,7 @@ from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
-from tests.files import PNG_FILES
+from tests.files import IMAGE_FILES
 from tests.files import ROTATED_180
 from tests.files import ROTATED_270
 from tests.files import ROTATED_90
@@ -176,8 +176,8 @@ class EndToEndMixin(object):
         )
 
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):
-        xs = [10, 60, 110, 160]
-        for x, image_file in zip(xs, PNG_FILES):
+        xs = [10 + (i * 50) for i in range(len(IMAGE_FILES))]
+        for x, image_file in zip(xs, IMAGE_FILES):
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
@@ -215,7 +215,7 @@ class EndToEndMixin(object):
         appearance = Appearance(
             appearance_stream=content_stream,
             xobjects={
-                'MyXObject': Image.make_image_xobject(PNG_FILES[0]),
+                'MyXObject': Image.make_image_xobject(IMAGE_FILES[0]),
             },
         )
 
