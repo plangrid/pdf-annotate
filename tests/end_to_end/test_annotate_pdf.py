@@ -28,7 +28,9 @@ from pdf_annotate.graphics import Stroke
 from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
-from tests.files import IMAGE_FILES
+from tests.files import GIF_FILES
+from tests.files import JPEG_FILES
+from tests.files import PNG_FILES
 from tests.files import ROTATED_180
 from tests.files import ROTATED_270
 from tests.files import ROTATED_90
@@ -176,13 +178,50 @@ class EndToEndMixin(object):
         )
 
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):
-        xs = [10 + (i * 50) for i in range(len(IMAGE_FILES))]
-        for x, image_file in zip(xs, IMAGE_FILES):
+        x = 10
+        text_appearance = Appearance(
+            font_size=5,
+            text_baseline=constants.TEXT_BASELINE_BOTTOM,
+            fill=[0, 0, 0]
+        )
+        a.add_annotation(
+            'text',
+            Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
+            text_appearance.copy(content='PNG'),
+        )
+        for i in range(len(PNG_FILES)):
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
-                appearance.copy(image=image_file),
+                appearance.copy(image=PNG_FILES[i]),
             )
+            x += 50
+
+        a.add_annotation(
+            'text',
+            Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
+            text_appearance.copy(content='JPEG'),
+        )
+        for i in range(len(JPEG_FILES)):
+            a.add_annotation(
+                'image',
+                Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
+                appearance.copy(image=JPEG_FILES[i]),
+            )
+            x += 50
+
+        a.add_annotation(
+            'text',
+            Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
+            text_appearance.copy(content='GIF'),
+        )
+        for i in range(len(GIF_FILES)):
+            a.add_annotation(
+                'image',
+                Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
+                appearance.copy(image=GIF_FILES[i]),
+            )
+            x += 50
 
     def _add_text_annotations(self, a, y1=220, y2=300):
         xs = [10 + (i * 50) for i in range(len(self.texts))]
@@ -215,7 +254,7 @@ class EndToEndMixin(object):
         appearance = Appearance(
             appearance_stream=content_stream,
             xobjects={
-                'MyXObject': Image.make_image_xobject(IMAGE_FILES[0]),
+                'MyXObject': Image.make_image_xobject(PNG_FILES[0]),
             },
         )
 
