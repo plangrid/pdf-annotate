@@ -151,7 +151,10 @@ class Image(RectAnnotation):
         # special wrapper around PILImage that preserves the original bytes so
         # we can just use those for JPEGs. TODO.
         image.save(file_obj, format='JPEG')
-        return file_obj.getvalue().decode('Latin-1')
+        jpeg_bytes = file_obj.getvalue()
+        if sys.version_info.major < 3:
+            return jpeg_bytes
+        return jpeg_bytes.decode('Latin-1')
 
     @staticmethod
     def get_raw_image_bytes(image):
