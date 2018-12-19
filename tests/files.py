@@ -24,10 +24,16 @@ GRAYSCALE_JPEG = os.path.join(dirname, 'images', 'grayscale.jpeg')
 RGB_JPEG = os.path.join(dirname, 'images', 'rgb.jpeg')
 CMYK_JPEG = os.path.join(dirname, 'images', 'cmyk.jpeg')
 
-JPEG_files = [
+JPEG_FILES = [
     GRAYSCALE_JPEG,
     RGB_JPEG,
     CMYK_JPEG,
 ]
 
-IMAGE_FILES = PNG_FILES + JPEG_files
+RGB_GIF = os.path.join(dirname, 'images', 'rgb.gif')
+GRAYSCALE_GIF = os.path.join(dirname, 'images', 'grayscale.gif')
+
+GIF_FILES = [
+    GRAYSCALE_GIF,
+    RGB_GIF,
+]

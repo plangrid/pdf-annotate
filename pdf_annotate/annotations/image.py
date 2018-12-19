@@ -28,12 +28,15 @@ class Image(RectAnnotation):
     can be easily approximated by drawing an Image XObject in the appearance
     stream.
 
+    Supported formats are PNG, JPEG, and GIF. Only the first frame from multi-
+    frame GIFs is used.
+
     This implementation relies on the python Pillow library to retrieve the
     image's raw sample data, then formats that data as expected by the PDF
     spec.
 
     Additional work needs to be done. For example:
-        - supporting transparency
+        - supporting the reading of transparency directly from RGBA images
         - better compression (e.g. using a Predictor value for FlateDecode)
         - supporting DeviceCMYK directly
     """
@@ -60,6 +63,13 @@ class Image(RectAnnotation):
         """Construct a PdfDict representing the Image XObject, for inserting
         into the AP Resources dict.
 
+        PNGs and GIFs are treated equally - the raw sample values are included
+        using PDF's FlateDecode compression format. JPEGs can be included in
+        their original form using the DCTDecode filter.
+
+        Details about file formats and allowed modes can be found at
+        https://pillow.readthedocs.io/en/5.3.x/handbook/image-file-formats.html
+
         :param str|ImageFile image: Either a str representing the path to the
             image filename, or a PIL.ImageFile.ImageFile object representing
             the image loaded using the PIL library.
@@ -70,26 +80,24 @@ class Image(RectAnnotation):
         image_format = image.format
         width, height = image.size
 
-        if image_format == 'PNG' and image.mode in ('RGBA', 'P'):
+        if image_format in ('PNG', 'GIF') and image.mode in ('RGBA', 'P'):
             # Right now the alpha channel from RGBA images is dropped; we
             # should eventually incorporate this into the transparency model.
-            # 'P' images are .png files with a "palette" colorspace. These
-            # should convert nicely to RGB space.
+            # 'P' images are image files with a "palette" colorspace. These
+            # should convert nicely to RGB space, for either PNGs or GIFs.
             image = image.convert('RGB')
-        if image_format == 'JPEG' and image.mode == 'CMYK':
+        if image.mode == 'CMYK':
             # The DeviceCMYK PDF color space has some weird properties. In a
             # future release we can debug these and be smart about it but this
             # is an easy workaround.
             image = image.convert('RGB')
 
-        if image_format == 'PNG':
-            content = Image.make_png_image_content(image)
+        if image_format in ('PNG', 'GIF'):
+            content = Image.make_compressed_image_content(image)
             filter_type = 'FlateDecode'  # TODO use a predictor
         elif image_format == 'JPEG':
             content = Image.make_jpeg_image_content(image)
             filter_type = 'DCTDecode'
-        elif image_format == 'GIF':
-            pass
         else:
             raise ValueError(
                 'Unsupported image format: {}. Supported formats are '
@@ -126,7 +134,7 @@ class Image(RectAnnotation):
         raise ValueError('Image color space not yet supported')
 
     @staticmethod
-    def make_png_image_content(image):
+    def make_compressed_image_content(image):
         compressed = zlib.compress(Image.get_raw_image_bytes(image))
         if sys.version_info.major < 3:
             return compressed

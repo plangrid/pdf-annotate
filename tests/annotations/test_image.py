@@ -25,24 +25,3 @@ class TestImage(TestCase):
         assert obj.Rect == [x1, y1, x2, y2]
         assert obj.AP.N.BBox == [x1, y1, x2, y2]
         assert obj.AP.N.Matrix == translate(-x1, -y1)
-
-
-class TestMakeImageXObject(TestCase):
-
-    def test_filenane(self):
-        pass
-
-    def test_png(self):
-        pass
-
-    def test_jpeg(self):
-        pass
-
-    def test_gif(self):
-        pass
-
-    def test_png_conversion(self):
-        pass
-
-    def test_jpeg_conversion(self):
-        pass
