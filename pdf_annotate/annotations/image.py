@@ -136,11 +136,7 @@ class Image(RectAnnotation):
     @staticmethod
     def make_compressed_image_content(image):
         compressed = zlib.compress(Image.get_raw_image_bytes(image))
-        if sys.version_info.major < 3:
-            return compressed
-        # Right now, pdfrw needs strings, not bytes like you'd expect in py3,
-        # for binary stream objects. This might change in future versions.
-        return compressed.decode('Latin-1')
+        return Image.get_decoded_bytes(compressed)
 
     @staticmethod
     def make_jpeg_image_content(image):
@@ -151,10 +147,15 @@ class Image(RectAnnotation):
         # special wrapper around PILImage that preserves the original bytes so
         # we can just use those for JPEGs. TODO.
         image.save(file_obj, format='JPEG')
-        jpeg_bytes = file_obj.getvalue()
+        return Image.get_decoded_bytes(file_obj.getvalue())
+
+    @staticmethod
+    def get_decoded_bytes(content):
+        # Right now, pdfrw needs strings, not bytes like you'd expect in py3,
+        # for binary stream objects. This might change in future versions.
         if sys.version_info.major < 3:
-            return jpeg_bytes
-        return jpeg_bytes.decode('Latin-1')
+            return content
+        return content.decode('Latin-1')
 
     @staticmethod
     def get_raw_image_bytes(image):

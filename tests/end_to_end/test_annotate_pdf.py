@@ -178,6 +178,8 @@ class EndToEndMixin(object):
         )
 
     def _add_image_annotations(self, a, appearance, y1=120, y2=160):
+        # Draw a row of image annotations for each type of image, with a label
+        # on top of the image type
         x = 10
         text_appearance = Appearance(
             font_size=5,
@@ -189,11 +191,11 @@ class EndToEndMixin(object):
             Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
             text_appearance.copy(content='PNG'),
         )
-        for i in range(len(PNG_FILES)):
+        for png_file in PNG_FILES:
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
-                appearance.copy(image=PNG_FILES[i]),
+                appearance.copy(image=png_file),
             )
             x += 50
 
@@ -202,11 +204,11 @@ class EndToEndMixin(object):
             Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
             text_appearance.copy(content='JPEG'),
         )
-        for i in range(len(JPEG_FILES)):
+        for jpeg_file in JPEG_FILES:
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
-                appearance.copy(image=JPEG_FILES[i]),
+                appearance.copy(image=jpeg_file),
             )
             x += 50
 
@@ -215,11 +217,11 @@ class EndToEndMixin(object):
             Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
             text_appearance.copy(content='GIF'),
         )
-        for i in range(len(GIF_FILES)):
+        for gif_file in GIF_FILES:
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
-                appearance.copy(image=GIF_FILES[i]),
+                appearance.copy(image=gif_file),
             )
             x += 50
 
