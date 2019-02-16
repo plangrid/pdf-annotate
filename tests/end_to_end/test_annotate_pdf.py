@@ -191,13 +191,26 @@ class EndToEndMixin(object):
             Location(x1=x, y1=y2, x2=(x + 20), y2=(y2 + 10), page=0),
             text_appearance.copy(content='PNG'),
         )
-        for png_file in PNG_FILES:
+        for png_file in PNG_FILES[:-1]:
             a.add_annotation(
                 'image',
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance.copy(image=png_file),
             )
             x += 50
+        # The last PNG file has transparency, so let's draw a rectangle behind
+        # so you can see that it's transparent.
+        a.add_annotation(
+            'square',
+            Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
+            self.gaudy.copy(stroke_width=0),
+        )
+        a.add_annotation(
+            'image',
+            Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
+            appearance.copy(image=PNG_FILES[-1]),
+        )
+        x += 50
 
         a.add_annotation(
             'text',

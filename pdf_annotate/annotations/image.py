@@ -67,6 +67,9 @@ class Image(RectAnnotation):
         using PDF's FlateDecode compression format. JPEGs can be included in
         their original form using the DCTDecode filter.
 
+        PNGs with transparency have the alpha channel split out and included as
+        an SMask, since PDFs don't natively support transparent PNGs.
+
         Details about file formats and allowed modes can be found at
         https://pillow.readthedocs.io/en/5.3.x/handbook/image-file-formats.html
 
@@ -80,11 +83,10 @@ class Image(RectAnnotation):
         image_format = image.format
         width, height = image.size
 
+        smask_xobj = None
         if image_format in ('PNG', 'GIF') and image.mode in ('RGBA', 'P'):
-            # Right now the alpha channel from RGBA images is dropped; we
-            # should eventually incorporate this into the transparency model.
-            # 'P' images are image files with a "palette" colorspace. These
-            # should convert nicely to RGB space, for either PNGs or GIFs.
+            if image.mode == 'RGBA':
+                smask_xobj = Image.get_png_smask(image)
             image = image.convert('RGB')
         if image.mode == 'CMYK':
             # The DeviceCMYK PDF color space has some weird properties. In a
@@ -114,7 +116,26 @@ class Image(RectAnnotation):
             Subtype=PdfName('Image'),
             Type=PdfName('XObject'),
         )
+        if smask_xobj is not None:
+            xobj.SMask = smask_xobj
         return xobj
+
+    @staticmethod
+    def get_png_smask(image):
+        width, height = image.size
+        smask = Image.make_compressed_image_content(image.getchannel('A'))
+        smask_xobj = PdfDict(
+            stream=smask,
+            Width=width,
+            Height=height,
+            BitsPerComponent=8,
+            Filter=PdfName('FlateDecode'),
+            ColorSpace=PdfName('DeviceGray'),
+            Subtype=PdfName('Image'),
+            Type=PdfName('XObject'),
+        )
+        smask_xobj.indirect = True
+        return smask_xobj
 
     @staticmethod
     def resolve_image(image_or_filename):
