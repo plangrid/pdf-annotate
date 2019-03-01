@@ -76,6 +76,26 @@ def matrix_multiply(*args):
     return r
 
 
+def matrix_inverse(matrix):
+    """Invert a 6-item homogenous transform matrix.
+
+    A transform matrix [a, b, c, d, e, f] is part of a 3x3 matrix:
+
+        a b 0
+        c d 0
+        e f 1
+
+    Invert it using the formula for the inverse of a 3x3 matrix from
+    http://mathworld.wolfram.com/MatrixInverse.html
+    """
+    a, b, c, d, e, f = matrix
+
+    determinant = a * d - b * c
+    unscaled = [d, -b, -c, a, c * f - d * e, b * e - a * f]
+
+    return [x / determinant for x in unscaled]
+
+
 def _matrix_multiply(A, B):
     a00, a01, a10, a11, a20, a21 = A
 
