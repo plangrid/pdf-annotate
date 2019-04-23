@@ -139,7 +139,7 @@ def get_text_commands(
     :param str baseline: 'top'|'middle'|'bottom'
     :param number line_spacing: multiplier to determine line spacing
     """
-    font = ImageFont.truetype(HELVETICA_PATH, size=font_size)
+    font = ImageFont.truetype(HELVETICA_PATH, size=int(round(font_size)))
 
     def measure(text): return font.getsize(text)[0]
 
