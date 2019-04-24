@@ -20,3 +20,6 @@ tests/end_to_end/pdfs/end_to_end*
 
 build/
 dist/
+
+# pycharm
+.idea
