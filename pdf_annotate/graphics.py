@@ -1,3 +1,5 @@
+from __future__ import division
+
 from collections import namedtuple
 
 from pdf_annotate.util.geometry import matrix_multiply
@@ -232,3 +234,19 @@ def format_number(n):
     while string[i] == '0':
         i -= 1
     return string[:i + 1]
+
+
+def quadratic_to_cubic_bezier(
+    start_x, start_y,
+    control_x, control_y,
+    end_x, end_y
+):
+    """Make a cubic bezier curve from the parameters of a quadratic bezier.
+
+    This is necessary because PDF doesn't have quadratic beziers.
+    """
+    cp1x = start_x + 2 / 3 * (control_x - start_x)
+    cp1y = start_y + 2 / 3 * (control_y - start_y)
+    cp2x = end_x + 2 / 3 * (control_x - end_x)
+    cp2y = end_y + 2 / 3 * (control_y - end_y)
+    return Bezier(cp1x, cp1y, cp2x, cp2y, end_x, end_y)

@@ -8,6 +8,7 @@ from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
 from pdf_annotate.annotations.image import Image
+from pdf_annotate.annotations.rect import add_rounded_rectangle
 from pdf_annotate.annotations.text import FreeText
 from pdf_annotate.annotations.text import get_text_commands
 from pdf_annotate.config import constants
@@ -25,6 +26,7 @@ from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Stroke
+from pdf_annotate.graphics import StrokeAndFill
 from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
@@ -130,6 +132,7 @@ class EndToEndMixin(object):
         self._add_explicit_image_annotation(a)
         self._add_explicit_graphics_state_annotation(a)
         self._add_explicit_text_annotation(a)
+        self._add_rounded_rectangles(a)
 
     def _add_shape_annotations(self, a, appearance, y1=20, y2=60):
         a.add_annotation(
@@ -246,6 +249,38 @@ class EndToEndMixin(object):
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance,
             )
+
+    def _add_rounded_rectangles(self, a):
+        """Add a few rounded rectangles with different border radii."""
+        y1, y2 = 360, 410
+        xs = [10, 60, 110]
+        rxs = [5, 10, 15]
+        rys = [5, 5, 15]
+        for x1, rx, ry in zip(xs, rxs, rys):
+            x2 = x1 + 40
+            location = Location(x1=x1, y1=y1, x2=x2, y2=y2, page=0)
+            content_stream = ContentStream([
+                Save(),
+                StrokeColor(1, 0, 0),
+                FillColor(0, 1, 0),
+            ])
+            add_rounded_rectangle(
+                stream=content_stream,
+                x=x1,
+                y=y1,
+                width=(x2 - x1),
+                height=(y2 - y1),
+                rx=rx,
+                ry=ry,
+            )
+            content_stream.extend([
+                StrokeAndFill(),
+                Restore(),
+            ])
+            appearance = Appearance(
+                appearance_stream=content_stream,
+            )
+            a.add_annotation('square', location, appearance)
 
     def _add_explicit_image_annotation(self, a):
         """Add an image annotation using ContentStream commands instead of the

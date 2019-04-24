@@ -9,7 +9,9 @@ from pdf_annotate.config.appearance import stroke_or_fill
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
 from pdf_annotate.graphics import ContentStream
+from pdf_annotate.graphics import Line
 from pdf_annotate.graphics import Move
+from pdf_annotate.graphics import quadratic_to_cubic_bezier
 from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
@@ -60,6 +62,57 @@ class Square(RectAnnotation):
 
         # TODO dash array
         return stream
+
+
+def add_rounded_rectangle(stream, x, y, width, height, rx, ry):
+    """Creates a rounded rectangle and adds it to the content stream.
+
+    :param ContentStream stream:
+    :param float x1:
+    :param float y1:
+    :param float width:
+    :param float height:
+    :param float rx: x radius of the rounded corners
+    :param float ry: y radius of the rounded corners
+    """
+    stream.add(Move(x + rx, y))
+    stream.add(Line(x + width - rx, y))
+    stream.add(quadratic_to_cubic_bezier(
+        start_x=(x + width - rx),
+        start_y=y,
+        control_x=(x + width),
+        control_y=y,
+        end_x=(x + width),
+        end_y=(y + ry),
+    ))
+    stream.add(Line(x + width, y + height - ry))
+    stream.add(quadratic_to_cubic_bezier(
+        start_x=(x + width),
+        start_y=(y + height - ry),
+        control_x=(x + width),
+        control_y=(y + height),
+        end_x=(x + width - rx),
+        end_y=(y + height),
+    ))
+    stream.add(Line(x + rx, y + height))
+    stream.add(quadratic_to_cubic_bezier(
+        start_x=(x + rx),
+        start_y=(y + height),
+        control_x=x,
+        control_y=(y + height),
+        end_x=x,
+        end_y=(y + height - ry),
+    ))
+    stream.add(Line(x, y + ry))
+    stream.add(quadratic_to_cubic_bezier(
+        start_x=x,
+        start_y=(y + ry),
+        control_x=x,
+        control_y=y,
+        end_x=(x + rx),
+        end_y=y,
+    ))
+    stream.add(Close())
 
 
 def add_bezier_circle(stream, x1, y1, x2, y2):
