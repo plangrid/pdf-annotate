@@ -114,14 +114,20 @@ class EndText(BaseCommand):
 class Stroke(BaseCommand):
     COMMAND = 'S'
 
+# also need shortcut operators:
+#   b --> h B
+#   b* --> h B*
+#   s --> h S
 
 class StrokeAndFill(BaseCommand):
     COMMAND = 'B'
 
 
 class Fill(BaseCommand):
+    # PDF spec has a note that reading should accept F as equivalent, but only write f.
     COMMAND = 'f'
 
+# also need f* -> fill with even-odd rule
 
 class Save(BaseCommand):
     COMMAND = 'q'
