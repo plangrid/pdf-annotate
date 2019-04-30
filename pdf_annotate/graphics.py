@@ -62,17 +62,17 @@ class ContentStream(object):
         return ContentStream(stream1.commands + stream2.commands)
 
 
-class NoOpTransformBase(object):
+class BaseCommand(object):
+    COMMAND = ''
+
     def transform(self, t):
         return self
 
-
-class StaticCommand(NoOpTransformBase):
     def resolve(self):
         return self.COMMAND
 
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
+class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), BaseCommand):
     COMMAND = 'RG'
 
     def resolve(self):
@@ -84,14 +84,14 @@ class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
         )
 
 
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), NoOpTransformBase):
+class StrokeWidth(namedtuple('StrokeWidth', ['width']), BaseCommand):
     COMMAND = 'w'
 
     def resolve(self):
         return '{} {}'.format(format_number(self.width), self.COMMAND)
 
 
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), NoOpTransformBase):
+class FillColor(namedtuple('Fill', ['r', 'g', 'b']), BaseCommand):
     COMMAND = 'rg'
 
     def resolve(self):
@@ -103,67 +103,67 @@ class FillColor(namedtuple('Fill', ['r', 'g', 'b']), NoOpTransformBase):
         )
 
 
-class BeginText(StaticCommand):
+class BeginText(BaseCommand):
     COMMAND = 'BT'
 
 
-class EndText(StaticCommand):
+class EndText(BaseCommand):
     COMMAND = 'ET'
 
 
-class Stroke(StaticCommand):
+class Stroke(BaseCommand):
     COMMAND = 'S'
 
 
-class StrokeAndFill(StaticCommand):
+class StrokeAndFill(BaseCommand):
     COMMAND = 'B'
 
 
-class Fill(StaticCommand):
+class Fill(BaseCommand):
     COMMAND = 'f'
 
 
-class Save(StaticCommand):
+class Save(BaseCommand):
     COMMAND = 'q'
 
 
-class Restore(StaticCommand):
+class Restore(BaseCommand):
     COMMAND = 'Q'
 
 
-class Close(StaticCommand):
+class Close(BaseCommand):
     COMMAND = 'h'
 
 
-class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
+class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
     COMMAND = 'Tf'
 
     def resolve(self):
         return '/{} {} {}'.format(self.font, self.font_size, self.COMMAND)
 
 
-class Text(namedtuple('Text', ['text']), NoOpTransformBase):
+class Text(namedtuple('Text', ['text']), BaseCommand):
     COMMAND = 'Tj'
 
     def resolve(self):
         return '({}) {}'.format(self.text, self.COMMAND)
 
 
-class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
+class XObject(namedtuple('XObject', ['name']), BaseCommand):
     COMMAND = 'Do'
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
+class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
     COMMAND = 'gs'
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), BaseCommand):
     COMMAND = 're'
 
     def resolve(self):
@@ -181,7 +181,7 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y'])):
+class Move(namedtuple('Move', ['x', 'y']), BaseCommand):
     COMMAND = 'm'
 
     def resolve(self):
@@ -196,7 +196,7 @@ class Move(namedtuple('Move', ['x', 'y'])):
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y'])):
+class Line(namedtuple('Line', ['x', 'y']), BaseCommand):
     COMMAND = 'l'
 
     def resolve(self):
@@ -211,7 +211,7 @@ class Line(namedtuple('Line', ['x', 'y'])):
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
+class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), BaseCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
@@ -236,7 +236,7 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
 #  x1 y1 x3 y3 y --> x3 y3 is the second control point
 
 
-class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
+class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
     COMMAND = 'cm'
 
     def resolve(self):
@@ -249,7 +249,7 @@ class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
         return CTM(matrix_multiply(t, self.matrix))
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), NoOpTransformBase):
+class TextMatrix(namedtuple('TextMatrix', ['matrix']), BaseCommand):
     COMMAND = 'Tm'
 
     def resolve(self):
