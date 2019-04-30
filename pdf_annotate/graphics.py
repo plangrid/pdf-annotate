@@ -73,25 +73,33 @@ class StaticCommand(NoOpTransformBase):
 
 
 class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
+    COMMAND = 'RG'
+
     def resolve(self):
-        return '{} {} {} RG'.format(
+        return '{} {} {} {}'.format(
             format_number(self.r),
             format_number(self.g),
             format_number(self.b),
+            self.COMMAND
         )
 
 
 class StrokeWidth(namedtuple('StrokeWidth', ['width']), NoOpTransformBase):
+    COMMAND = 'w'
+
     def resolve(self):
-        return '{} w'.format(format_number(self.width))
+        return '{} {}'.format(format_number(self.width), self.COMMAND)
 
 
 class FillColor(namedtuple('Fill', ['r', 'g', 'b']), NoOpTransformBase):
+    COMMAND = 'rg'
+
     def resolve(self):
-        return '{} {} {} rg'.format(
+        return '{} {} {} {}'.format(
             format_number(self.r),
             format_number(self.g),
             format_number(self.b),
+            self.COMMAND
         )
 
 
@@ -128,32 +136,43 @@ class Close(StaticCommand):
 
 
 class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
+    COMMAND = 'Tf'
+
     def resolve(self):
-        return '/{} {} Tf'.format(self.font, self.font_size)
+        return '/{} {} {}'.format(self.font, self.font_size, self.COMMAND)
 
 
 class Text(namedtuple('Text', ['text']), NoOpTransformBase):
+    COMMAND = 'Tj'
+
     def resolve(self):
-        return '({}) Tj'.format(self.text)
+        return '({}) {}'.format(self.text, self.COMMAND)
 
 
 class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
+    COMMAND = 'Do'
+
     def resolve(self):
-        return '/{} Do'.format(self.name)
+        return '/{} {}'.format(self.name, self.COMMAND)
 
 
 class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
+    COMMAND = 'gs'
+
     def resolve(self):
-        return '/{} gs'.format(self.name)
+        return '/{} {}'.format(self.name, self.COMMAND)
 
 
 class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
+    COMMAND = 're'
+
     def resolve(self):
-        return '{} {} {} {} re'.format(
+        return '{} {} {} {} {}'.format(
             format_number(self.x),
             format_number(self.y),
             format_number(self.width),
             format_number(self.height),
+            self.COMMAND
         )
 
     def transform(self, t):
@@ -163,8 +182,14 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
 
 
 class Move(namedtuple('Move', ['x', 'y'])):
+    COMMAND = 'm'
+
     def resolve(self):
-        return '{} {} m'.format(format_number(self.x), format_number(self.y))
+        return '{} {} {}'.format(
+            format_number(self.x),
+            format_number(self.y),
+            self.COMMAND,
+        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -172,8 +197,14 @@ class Move(namedtuple('Move', ['x', 'y'])):
 
 
 class Line(namedtuple('Line', ['x', 'y'])):
+    COMMAND = 'l'
+
     def resolve(self):
-        return '{} {} l'.format(format_number(self.x), format_number(self.y))
+        return '{} {} {}'.format(
+            format_number(self.x),
+            format_number(self.y),
+            self.COMMAND,
+        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -184,13 +215,14 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
+    COMMAND = 'c'
 
     def resolve(self):
         formatted = [
             format_number(n) for n in
             (self.x1, self.y1, self.x2, self.y2, self.x3, self.y3)
         ]
-        return '{} {} {} {} {} {} c'.format(*formatted)
+        return '{} {} {} {} {} {} {}'.format(*formatted, self.COMMAND)
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -199,10 +231,18 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
+# also need Bezier y and v:
+#  x2 y2 x3 y3 v --> current point is the first control point
+#  x1 y1 x3 y3 y --> x3 y3 is the second control point
+
+
 class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
+    COMMAND = 'cm'
+
     def resolve(self):
-        return '{} {} {} {} {} {} cm'.format(
-            *[format_number(n) for n in self.matrix]
+        return '{} {} {} {} {} {} {}'.format(
+            *[format_number(n) for n in self.matrix],
+            self.COMMAND,
         )
 
     def transform(self, t):
@@ -210,9 +250,12 @@ class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
 
 
 class TextMatrix(namedtuple('TextMatrix', ['matrix']), NoOpTransformBase):
+    COMMAND = 'Tm'
+
     def resolve(self):
-        return '{} {} {} {} {} {} Tm'.format(
-            *[format_number(n) for n in self.matrix]
+        return '{} {} {} {} {} {} {}'.format(
+            *[format_number(n) for n in self.matrix],
+            self.COMMAND,
         )
 
     def transform(self, t):
