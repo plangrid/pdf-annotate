@@ -1,6 +1,7 @@
 from __future__ import division
 
 from collections import namedtuple
+from inspect import isclass
 
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
@@ -8,6 +9,17 @@ from pdf_annotate.util.geometry import transform_vector
 
 
 ZERO_TOLERANCE = 0.00000000000001
+
+
+def create_command_map():
+    """Return a dict mapping PDF command strings to classes."""
+    mapping = {}
+
+    for _, obj in globals().items():
+        if isclass(obj) and issubclass(obj, BaseCommand):
+            mapping[obj.COMMAND] = obj
+
+    return mapping
 
 
 class ContentStream(object):
@@ -32,7 +44,7 @@ class ContentStream(object):
     )
 
     This would draw a "square" annotation as a line, which is kind of silly,
-    but it show the flexibility for the user to draw more complex annotations.
+    but it shows the flexibility for the user to draw more complex annotations.
     Behind the scenes, the pdf-annotator library transforms the Move and Line
     operations to be properly placed in PDF user space.
     """
@@ -61,9 +73,24 @@ class ContentStream(object):
         """Combine two content streams."""
         return ContentStream(stream1.commands + stream2.commands)
 
+    @classmethod
+    def parse(cls, stream_string):
+        """Create a ContentStream by parsing a string of PDF commands."""
+        command_map = create_command_map()
+        tokens = stream_string.strip().split()
+        commands = []
+
+        for idx, tok in enumerate(tokens):
+            cmd = command_map.get(tok)
+            if cmd is not None:
+                commands.append(cmd.from_tokens(idx, tokens))
+
+        return cls(commands)
+
 
 class BaseCommand(object):
     COMMAND = ''
+    NUM_ARGS = 0
 
     def transform(self, t):
         return self
@@ -71,9 +98,20 @@ class BaseCommand(object):
     def resolve(self):
         return self.COMMAND
 
+    @classmethod
+    def from_tokens(idx, tokens):
+        return cls(*tokens[idx-cls.NUM_ARGS:idx])
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), BaseCommand):
+
+class FloatTokenMixin(object):
+    @classmethod
+    def from_tokens(cls, idx, tokens):
+        return cls(*map(float, tokens[idx-cls.NUM_ARGS:idx]))
+
+
+class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatTokenMixin, BaseCommand):
     COMMAND = 'RG'
+    NUM_ARGS = 3
 
     def resolve(self):
         return '{} {} {} {}'.format(
@@ -84,15 +122,17 @@ class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), BaseCommand):
         )
 
 
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), BaseCommand):
+class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatTokenMixin, BaseCommand):
     COMMAND = 'w'
+    NUM_ARGS = 1
 
     def resolve(self):
         return '{} {}'.format(format_number(self.width), self.COMMAND)
 
 
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), BaseCommand):
+class FillColor(namedtuple('Fill', ['r', 'g', 'b']), FloatTokenMixin, BaseCommand):
     COMMAND = 'rg'
+    NUM_ARGS = 3
 
     def resolve(self):
         return '{} {} {} {}'.format(
@@ -114,20 +154,50 @@ class EndText(BaseCommand):
 class Stroke(BaseCommand):
     COMMAND = 'S'
 
-# also need shortcut operators:
-#   b --> h B
-#   b* --> h B*
-#   s --> h S
+
+class CloseAndStroke(BaseCommand):
+    COMMAND = 's'
+
 
 class StrokeAndFill(BaseCommand):
     COMMAND = 'B'
 
 
+class StrokeAndFillEvenOdd(BaseCommand):
+    COMMAND = 'B*'
+
+
 class Fill(BaseCommand):
-    # PDF spec has a note that reading should accept F as equivalent, but only write f.
     COMMAND = 'f'
 
-# also need f* -> fill with even-odd rule
+
+class ReadOnlyFill(BaseCommand):
+    # PDF reading should accept F as equivalent to f, but only write f.
+    # - Table 60 in PDF spec.
+    COMMAND = 'F'
+
+    def resolve(self):
+        return Fill.COMMAND
+
+
+class FillEvenOdd(BaseCommand):
+    COMMAND = 'f*'
+
+
+class CloseFillAndStroke(BaseCommand):
+    # equivalent to h B
+    COMMAND = 'b'
+
+
+class CloseFillAndStrokeEvenOdd(BaseCommand):
+    # equivalent to h B*
+    COMMAND = 'b*'
+
+
+class EndPath(BaseCommand):
+    # End path without filling or stroking; used for clipping paths.
+    COMMAND = 'n'
+
 
 class Save(BaseCommand):
     COMMAND = 'q'
@@ -143,6 +213,7 @@ class Close(BaseCommand):
 
 class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
     COMMAND = 'Tf'
+    NUM_ARGS = 2
 
     def resolve(self):
         return '/{} {} {}'.format(self.font, self.font_size, self.COMMAND)
@@ -150,6 +221,7 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
 
 class Text(namedtuple('Text', ['text']), BaseCommand):
     COMMAND = 'Tj'
+    NUM_ARGS = 1
 
     def resolve(self):
         return '({}) {}'.format(self.text, self.COMMAND)
@@ -157,6 +229,7 @@ class Text(namedtuple('Text', ['text']), BaseCommand):
 
 class XObject(namedtuple('XObject', ['name']), BaseCommand):
     COMMAND = 'Do'
+    NUM_ARGS = 1
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
@@ -164,13 +237,15 @@ class XObject(namedtuple('XObject', ['name']), BaseCommand):
 
 class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
     COMMAND = 'gs'
+    NUM_ARGS = 1
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), BaseCommand):
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatTokenMixin,  BaseCommand):
     COMMAND = 're'
+    NUM_ARGS = 4
 
     def resolve(self):
         return '{} {} {} {} {}'.format(
@@ -187,8 +262,9 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), BaseCommand):
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y']), BaseCommand):
+class Move(namedtuple('Move', ['x', 'y']), FloatTokenMixin, BaseCommand):
     COMMAND = 'm'
+    NUM_ARGS = 2
 
     def resolve(self):
         return '{} {} {}'.format(
@@ -202,8 +278,9 @@ class Move(namedtuple('Move', ['x', 'y']), BaseCommand):
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y']), BaseCommand):
+class Line(namedtuple('Line', ['x', 'y']), FloatTokenMixin, BaseCommand):
     COMMAND = 'l'
+    NUM_ARGS = 2
 
     def resolve(self):
         return '{} {} {}'.format(
@@ -217,11 +294,12 @@ class Line(namedtuple('Line', ['x', 'y']), BaseCommand):
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), BaseCommand):
+class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
     COMMAND = 'c'
+    NUM_ARGS = 6
 
     def resolve(self):
         formatted = [
@@ -237,13 +315,49 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), BaseCom
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-# also need Bezier y and v:
-#  x2 y2 x3 y3 v --> current point is the first control point
-#  x1 y1 x3 y3 y --> x3 y3 is the second control point
+class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
+    """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
+    and (x3, y3) as control points.
+    """
+    COMMAND = 'v'
+    NUM_ARGS = 4
+
+    def resolve(self):
+        formatted = [
+            format_number(n) for n in
+            (self.x2, self.y2, self.x3, self.y3)
+        ]
+        return '{} {} {} {} {}'.format(*formatted, self.COMMAND)
+
+    def transform(self, t):
+        x2, y2 = transform_point((self.x2, self.y2), t)
+        x3, y3 = transform_point((self.x3, self.y3), t)
+        return BezierV(x2, y2, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
+class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
+    """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
+    and (x3, y3) as control points.
+    """
+    COMMAND = 'y'
+    NUM_ARGS = 4
+
+    def resolve(self):
+        formatted = [
+            format_number(n) for n in
+            (self.x1, self.y1, self.x3, self.y3)
+        ]
+        return '{} {} {} {} {}'.format(*formatted, self.COMMAND)
+
+    def transform(self, t):
+        x1, y1 = transform_point((self.x1, self.y1), t)
+        x3, y3 = transform_point((self.x3, self.y3), t)
+        return BezierY(x1, y1, x3, y3)
+
+
+class CTM(namedtuple('CTM', ['matrix']), FloatTokenMixin, BaseCommand):
     COMMAND = 'cm'
+    NUM_ARGS = 6
 
     def resolve(self):
         return '{} {} {} {} {} {} {}'.format(
@@ -255,8 +369,9 @@ class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
         return CTM(matrix_multiply(t, self.matrix))
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), BaseCommand):
+class TextMatrix(namedtuple('TextMatrix', ['matrix']), FloatTokenMixin, BaseCommand):
     COMMAND = 'Tm'
+    NUM_ARGS = 6
 
     def resolve(self):
         return '{} {} {} {} {} {} {}'.format(
