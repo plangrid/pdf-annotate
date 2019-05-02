@@ -103,44 +103,28 @@ class BaseCommand(object):
         return cls(*tokens[idx-cls.NUM_ARGS:idx])
 
 
-class FloatTokenMixin(object):
+class FloatMixin(object):
+    def resolve(self):
+        return ' '.join([format_number(n) for n in self] + [self.COMMAND])
+
     @classmethod
     def from_tokens(cls, idx, tokens):
         return cls(*map(float, tokens[idx-cls.NUM_ARGS:idx]))
 
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatTokenMixin, BaseCommand):
+class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatMixin, BaseCommand):
     COMMAND = 'RG'
     NUM_ARGS = 3
 
-    def resolve(self):
-        return '{} {} {} {}'.format(
-            format_number(self.r),
-            format_number(self.g),
-            format_number(self.b),
-            self.COMMAND
-        )
 
-
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatTokenMixin, BaseCommand):
+class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatMixin, BaseCommand):
     COMMAND = 'w'
     NUM_ARGS = 1
 
-    def resolve(self):
-        return '{} {}'.format(format_number(self.width), self.COMMAND)
 
-
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), FloatTokenMixin, BaseCommand):
+class FillColor(namedtuple('Fill', ['r', 'g', 'b']), FloatMixin, BaseCommand):
     COMMAND = 'rg'
     NUM_ARGS = 3
-
-    def resolve(self):
-        return '{} {} {} {}'.format(
-            format_number(self.r),
-            format_number(self.g),
-            format_number(self.b),
-            self.COMMAND
-        )
 
 
 class BeginText(BaseCommand):
@@ -243,18 +227,9 @@ class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatTokenMixin,  BaseCommand):
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin,  BaseCommand):
     COMMAND = 're'
     NUM_ARGS = 4
-
-    def resolve(self):
-        return '{} {} {} {} {}'.format(
-            format_number(self.x),
-            format_number(self.y),
-            format_number(self.width),
-            format_number(self.height),
-            self.COMMAND
-        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -262,51 +237,30 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatTokenMixin,  
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y']), FloatTokenMixin, BaseCommand):
+class Move(namedtuple('Move', ['x', 'y']), FloatMixin, BaseCommand):
     COMMAND = 'm'
     NUM_ARGS = 2
-
-    def resolve(self):
-        return '{} {} {}'.format(
-            format_number(self.x),
-            format_number(self.y),
-            self.COMMAND,
-        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y']), FloatTokenMixin, BaseCommand):
+class Line(namedtuple('Line', ['x', 'y']), FloatMixin, BaseCommand):
     COMMAND = 'l'
     NUM_ARGS = 2
-
-    def resolve(self):
-        return '{} {} {}'.format(
-            format_number(self.x),
-            format_number(self.y),
-            self.COMMAND,
-        )
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
+class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
     COMMAND = 'c'
     NUM_ARGS = 6
-
-    def resolve(self):
-        formatted = [
-            format_number(n) for n in
-            (self.x1, self.y1, self.x2, self.y2, self.x3, self.y3)
-        ]
-        return '{} {} {} {} {} {} {}'.format(*formatted, self.COMMAND)
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -315,19 +269,12 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatTo
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
+class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
     and (x3, y3) as control points.
     """
     COMMAND = 'v'
     NUM_ARGS = 4
-
-    def resolve(self):
-        formatted = [
-            format_number(n) for n in
-            (self.x2, self.y2, self.x3, self.y3)
-        ]
-        return '{} {} {} {} {}'.format(*formatted, self.COMMAND)
 
     def transform(self, t):
         x2, y2 = transform_point((self.x2, self.y2), t)
@@ -335,19 +282,12 @@ class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatTokenMixin, 
         return BezierV(x2, y2, x3, y3)
 
 
-class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatTokenMixin, BaseCommand):
+class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x3, y3) as control points.
     """
     COMMAND = 'y'
     NUM_ARGS = 4
-
-    def resolve(self):
-        formatted = [
-            format_number(n) for n in
-            (self.x1, self.y1, self.x3, self.y3)
-        ]
-        return '{} {} {} {} {}'.format(*formatted, self.COMMAND)
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -355,7 +295,7 @@ class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatTokenMixin, 
         return BezierY(x1, y1, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), FloatTokenMixin, BaseCommand):
+class CTM(namedtuple('CTM', ['matrix']), FloatMixin, BaseCommand):
     COMMAND = 'cm'
     NUM_ARGS = 6
 
@@ -369,7 +309,7 @@ class CTM(namedtuple('CTM', ['matrix']), FloatTokenMixin, BaseCommand):
         return CTM(matrix_multiply(t, self.matrix))
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), FloatTokenMixin, BaseCommand):
+class TextMatrix(namedtuple('TextMatrix', ['matrix']), FloatMixin, BaseCommand):
     COMMAND = 'Tm'
     NUM_ARGS = 6
 
