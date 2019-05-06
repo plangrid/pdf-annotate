@@ -199,6 +199,8 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
     COMMAND = 'Tf'
     NUM_ARGS = 2
 
+    # TODO from_tokens needs to parse font_size into a number
+
     def resolve(self):
         return '/{} {} {}'.format(self.font, self.font_size, self.COMMAND)
 
