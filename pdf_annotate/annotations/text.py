@@ -77,6 +77,7 @@ class FreeText(Annotation):
             Type=PdfName('Font'),
             Subtype=PdfName('Type1'),
             BaseFont=PdfName(DEFAULT_BASE_FONT),
+            Encoding=PdfName('WinAnsiEncoding'),
         )
 
     def add_additional_resources(self, resources):
