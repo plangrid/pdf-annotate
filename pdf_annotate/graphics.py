@@ -134,7 +134,10 @@ class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
 
 class Text(namedtuple('Text', ['text']), NoOpTransformBase):
     def resolve(self):
-        return '({}) Tj'.format(self.text)
+        # hex_str = ''.join([format(ord(i), '0>4x') for i in self.text])
+        hex_str = ''.join([format(i, '0>4x') for i in [36, 37, 38]])
+        # print(hex_str)
+        return '<{}> Tj'.format(hex_str)
 
 
 class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):

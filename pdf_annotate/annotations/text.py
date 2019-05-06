@@ -4,6 +4,7 @@ FreeText annotation.
 """
 import os.path
 
+from pdfrw import PdfArray
 from pdfrw import PdfDict
 from pdfrw import PdfName
 from PIL import ImageFont
@@ -75,9 +76,27 @@ class FreeText(Annotation):
         """
         return PdfDict(
             Type=PdfName('Font'),
-            Subtype=PdfName('Type1'),
+            # Subtype=PdfName('Type1'),
+            Subtype=PdfName('Type0'),
             BaseFont=PdfName(DEFAULT_BASE_FONT),
-            Encoding=PdfName('WinAnsiEncoding'),
+            # Encoding=PdfName('WinAnsiEncoding'),
+            Encoding=PdfName('Identity-H'),
+            DescendantFonts=PdfArray([
+                PdfDict(
+                    BaseFont=PdfName(DEFAULT_BASE_FONT),
+                    CIDSystemInfo=PdfDict(
+                        Ordering='Identity',
+                        Registry='Adobe',
+                        Supplement=0,
+                    ),
+                    # TODO: is this the right CIDtoGIDMap?
+                    CIDToGIDMap=PdfName('Identity'),
+                    Subtype=PdfName('CIDFontType2'),
+                    Type=PdfName('Font')
+                    # TODO: W array
+                )
+            ]),
+            # TODO: ToUnicode
         )
 
     def add_additional_resources(self, resources):
