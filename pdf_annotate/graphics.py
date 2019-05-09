@@ -203,10 +203,19 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
     COMMAND = 'Tf'
     NUM_ARGS = 2
 
-    # TODO from_tokens needs to parse font_size into a number
-
     def resolve(self):
-        return '/{} {} {}'.format(self.font, self.font_size, self.COMMAND)
+        return '/{} {} {}'.format(
+            self.font,
+            format_number(self.font_size),
+            self.COMMAND,
+        )
+
+    @classmethod
+    def from_tokens(idx, tokens):
+        # PDF spec calls font_size a "scale parameter" which implies > 0, but it
+        # doesn't declare constraints on it. Unclear if/how we should validate.
+        font, font_size = cls._get_tokens(idx, tokens)
+        return cls(font, float(font_size))
 
 
 class Text(namedtuple('Text', ['text']), BaseCommand):
