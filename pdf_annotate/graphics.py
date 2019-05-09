@@ -3,6 +3,8 @@ from __future__ import division
 from collections import namedtuple
 from inspect import isclass
 
+from six import add_metaclass
+
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
@@ -118,6 +120,13 @@ class BaseCommand(object):
     def from_tokens(cls, idx, tokens):
         return cls(*cls._get_tokens(idx, tokens))
 
+
+# meta classes???
+# class SomeName(type):
+#     pass
+
+
+# we said TupleCommand & FloatTupleCommand...
 
 class FloatMixin(object):
     def resolve(self):
