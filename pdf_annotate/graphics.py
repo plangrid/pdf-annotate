@@ -128,17 +128,17 @@ class FloatMixin(object):
         return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatMixin, BaseCommand):
+class StrokeColor(BaseCommand, namedtuple('Stroke', ['r', 'g', 'b']), FloatMixin):
     COMMAND = 'RG'
     NUM_ARGS = 3
 
 
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatMixin, BaseCommand):
+class StrokeWidth(BaseCommand, namedtuple('StrokeWidth', ['width']), FloatMixin):
     COMMAND = 'w'
     NUM_ARGS = 1
 
 
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), FloatMixin, BaseCommand):
+class FillColor(BaseCommand, namedtuple('Fill', ['r', 'g', 'b']), FloatMixin):
     COMMAND = 'rg'
     NUM_ARGS = 3
 
@@ -211,7 +211,7 @@ class Close(BaseCommand):
     COMMAND = 'h'
 
 
-class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
+class Font(BaseCommand, namedtuple('Font', ['font', 'font_size'])):
     COMMAND = 'Tf'
     NUM_ARGS = 2
 
@@ -230,7 +230,7 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
         return cls(font, float(font_size))
 
 
-class Text(namedtuple('Text', ['text']), BaseCommand):
+class Text(BaseCommand, namedtuple('Text', ['text'])):
     COMMAND = 'Tj'
     NUM_ARGS = 1
 
@@ -238,7 +238,7 @@ class Text(namedtuple('Text', ['text']), BaseCommand):
         return '({}) {}'.format(self.text, self.COMMAND)
 
 
-class XObject(namedtuple('XObject', ['name']), BaseCommand):
+class XObject(BaseCommand, namedtuple('XObject', ['name'])):
     COMMAND = 'Do'
     NUM_ARGS = 1
 
@@ -246,7 +246,7 @@ class XObject(namedtuple('XObject', ['name']), BaseCommand):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
+class GraphicsState(BaseCommand, namedtuple('GraphicsState', ['name'])):
     COMMAND = 'gs'
     NUM_ARGS = 1
 
@@ -254,7 +254,7 @@ class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin, BaseCommand):
+class Rect(BaseCommand, namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin):
     COMMAND = 're'
     NUM_ARGS = 4
 
@@ -264,7 +264,7 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin, BaseCo
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y']), FloatMixin, BaseCommand):
+class Move(BaseCommand, namedtuple('Move', ['x', 'y']), FloatMixin):
     COMMAND = 'm'
     NUM_ARGS = 2
 
@@ -273,7 +273,7 @@ class Move(namedtuple('Move', ['x', 'y']), FloatMixin, BaseCommand):
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y']), FloatMixin, BaseCommand):
+class Line(BaseCommand, namedtuple('Line', ['x', 'y']), FloatMixin):
     COMMAND = 'l'
     NUM_ARGS = 2
 
@@ -282,7 +282,7 @@ class Line(namedtuple('Line', ['x', 'y']), FloatMixin, BaseCommand):
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
+class Bezier(BaseCommand, namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
@@ -296,7 +296,7 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMi
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
+class BezierV(BaseCommand, namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
     and (x3, y3) as control points.
     """
@@ -309,7 +309,7 @@ class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin, BaseC
         return BezierV(x2, y2, x3, y3)
 
 
-class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseCommand):
+class BezierY(BaseCommand, namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x3, y3) as control points.
     """
@@ -322,7 +322,7 @@ class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseC
         return BezierY(x1, y1, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
+class CTM(BaseCommand, namedtuple('CTM', ['matrix'])):
     COMMAND = 'cm'
     NUM_ARGS = 6
 
@@ -340,7 +340,7 @@ class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
         return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), BaseCommand):
+class TextMatrix(BaseCommand, namedtuple('TextMatrix', ['matrix'])):
     COMMAND = 'Tm'
     NUM_ARGS = 6
 
