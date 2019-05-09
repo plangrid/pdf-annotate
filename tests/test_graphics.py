@@ -23,6 +23,17 @@ from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 
 
+class TestCommandEquality(TestCase):
+    def test_static_commands(self):
+        assert Stroke() == Stroke()
+        assert Stroke() != Save()
+
+    def test_tuple_commands(self):
+        assert StrokeColor(1, 2, 3) == StrokeColor(1, 2, 3)
+        assert Text('Hello') == Text('Hello')
+        assert StrokeColor(1, 2, 3) != FillColor(1, 2, 3)
+
+
 class TestContentStream(TestCase):
     # a list of (ContentStream, stream_string) pairs for testing parse/resolve
     FIXTURES = [
@@ -64,6 +75,17 @@ class TestContentStream(TestCase):
             )
         ),
     ]
+
+    def test_equality(self):
+        assert ContentStream() == ContentStream()
+
+        cs1 = ContentStream([Save(), FillColor(1, 0, 0)])
+        cs2 = ContentStream([Save(), FillColor(1, 0, 0)])
+        assert cs1 == cs2
+
+    def test_content_stream_not_equal_to_string(self):
+        assert ContentStream() != ''
+        assert ContentStream([Save()]) != 'q'
 
     def test_parse_resolve(self):
         for cs, stream_string in self.FIXTURES:
