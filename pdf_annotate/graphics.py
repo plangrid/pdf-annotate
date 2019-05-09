@@ -53,7 +53,7 @@ class ContentStream(object):
         self.commands = commands or []
 
     def __eq__(self, other):
-        if not issubclass(other, ContentStream):
+        if not isinstance(other, ContentStream):
             return False
 
         return self.resolve() == other.resolve()
