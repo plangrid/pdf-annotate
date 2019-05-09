@@ -24,6 +24,51 @@ from pdf_annotate.graphics import TextMatrix
 
 
 class TestContentStream(TestCase):
+    # a list of (ContentStream, stream_string) pairs for testing parse/resolve
+    FIXTURES = [
+        (
+            ContentStream([
+                CTM([1, 0, 0, 1, 0, 0]),
+                Font('Helvetica', 12),
+                TextMatrix([1, 0, 0, 1, 20, 50]),
+                BeginText(),
+                Text('Sure, why not?'),
+                EndText(),
+            ]),
+            (
+                '1 0 0 1 0 0 cm /Helvetica 12 Tf '
+                '1 0 0 1 20 50 Tm BT '
+                '(Sure, why not?) Tj ET'
+            )
+        ),
+        (
+            ContentStream([
+                Save(),
+                StrokeWidth(2),
+                StrokeColor(0, 0, 0),
+                FillColor(1, 0, 0),
+                Move(10, 10),
+                Line(20, 20),
+                Bezier(30, 30, 40, 40, 50, 50),
+                Rect(50, 50, 10, 10),
+                Close(),
+                StrokeAndFill(),
+                Stroke(),
+                Fill(),
+                Restore(),
+            ]),
+            (
+                'q 2 w 0 0 0 RG 1 0 0 rg 10 10 m 20 20 l '
+                '30 30 40 40 50 50 c 50 50 10 10 re '
+                'h B S f Q'
+            )
+        ),
+    ]
+
+    def test_parse_resolve(self):
+        for cs, stream_string in self.FIXTURES:
+            assert cs.resolve() == stream_string
+            assert cs == ContentStream.parse(stream_string)
 
     def test_content_stream(self):
         # Basically a smoke test for all the simple functions of ContentStream
