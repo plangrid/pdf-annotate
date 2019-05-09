@@ -99,7 +99,7 @@ class BaseCommand(object):
         return self.COMMAND
 
     @classmethod
-    def _get_tokesn(idx, tokens):
+    def _get_tokens(idx, tokens):
         return tokens[idx-cls.NUM_ARGS:idx]
 
     @classmethod
