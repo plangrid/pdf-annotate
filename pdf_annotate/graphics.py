@@ -52,6 +52,12 @@ class ContentStream(object):
     def __init__(self, commands=None):
         self.commands = commands or []
 
+    def __eq__(self, other):
+        if not issubclass(other, ContentStream):
+            return False
+
+        return self.resolve() == other.resolve()
+
     def add(self, command):
         self.commands.append(command)
 
@@ -91,6 +97,12 @@ class ContentStream(object):
 class BaseCommand(object):
     COMMAND = ''
     NUM_ARGS = 0
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return self.resolve() == other.resolve()
 
     def transform(self, t):
         return self
@@ -242,7 +254,7 @@ class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin,  BaseCommand):
+class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin, BaseCommand):
     COMMAND = 're'
     NUM_ARGS = 4
 
