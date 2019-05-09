@@ -99,11 +99,11 @@ class BaseCommand(object):
         return self.COMMAND
 
     @classmethod
-    def _get_tokens(idx, tokens):
+    def _get_tokens(cls, idx, tokens):
         return tokens[idx-cls.NUM_ARGS:idx]
 
     @classmethod
-    def from_tokens(idx, tokens):
+    def from_tokens(cls, idx, tokens):
         return cls(*cls._get_tokens(idx, tokens))
 
 
@@ -211,7 +211,7 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
         )
 
     @classmethod
-    def from_tokens(idx, tokens):
+    def from_tokens(cls, idx, tokens):
         # PDF spec calls font_size a "scale parameter" which implies > 0, but it
         # doesn't declare constraints on it. Unclear if/how we should validate.
         font, font_size = cls._get_tokens(idx, tokens)
@@ -310,23 +310,30 @@ class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseC
         return BezierY(x1, y1, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), FloatMixin, BaseCommand):
+class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
     COMMAND = 'cm'
     NUM_ARGS = 6
-
-    def resolve(self):
-        return '{} {} {} {} {} {} {}'.format(
-            *[format_number(n) for n in self.matrix],
-            self.COMMAND,
-        )
 
     def transform(self, t):
         return CTM(matrix_multiply(t, self.matrix))
 
+    def resolve(self):
+        return '{} {} {} {} {} {} {}'.format(
+            *[format_number(n) for n in self.matrix],
+            self.COMMAND,
+        )
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), FloatMixin, BaseCommand):
+    @classmethod
+    def from_tokens(cls, idx, tokens):
+        return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
+
+
+class TextMatrix(namedtuple('TextMatrix', ['matrix']), BaseCommand):
     COMMAND = 'Tm'
     NUM_ARGS = 6
+
+    def transform(self, t):
+        return TextMatrix(matrix_multiply(t, self.matrix))
 
     def resolve(self):
         return '{} {} {} {} {} {} {}'.format(
@@ -334,8 +341,9 @@ class TextMatrix(namedtuple('TextMatrix', ['matrix']), FloatMixin, BaseCommand):
             self.COMMAND,
         )
 
-    def transform(self, t):
-        return TextMatrix(matrix_multiply(t, self.matrix))
+    @classmethod
+    def from_tokens(cls, idx, tokens):
+        return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
 
 
 def format_number(n):
