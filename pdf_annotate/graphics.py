@@ -99,8 +99,12 @@ class BaseCommand(object):
         return self.COMMAND
 
     @classmethod
+    def _get_tokesn(idx, tokens):
+        return tokens[idx-cls.NUM_ARGS:idx]
+
+    @classmethod
     def from_tokens(idx, tokens):
-        return cls(*tokens[idx-cls.NUM_ARGS:idx])
+        return cls(*cls._get_tokens(idx, tokens))
 
 
 class FloatMixin(object):
@@ -109,7 +113,7 @@ class FloatMixin(object):
 
     @classmethod
     def from_tokens(cls, idx, tokens):
-        return cls(*map(float, tokens[idx-cls.NUM_ARGS:idx]))
+        return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
 class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatMixin, BaseCommand):
