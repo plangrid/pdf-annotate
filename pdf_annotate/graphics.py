@@ -137,20 +137,50 @@ class FloatMixin(object):
         return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), FloatMixin, BaseCommand):
+class StrokeColor(FloatMixin, BaseCommand):
     COMMAND = 'RG'
     NUM_ARGS = 3
 
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def resolve(self):
+        return ' '.join([format_number(n) for n in [self.r, self.g, self.b]] + [self.COMMAND])
+
+# it'd be cool to...
+@with_metaclass(Thinger)  # and metaclass gives you inheritance. soo...
+class StrokeColor:
+    COMMAND = 'RG'
+    args = ['r', 'g', 'b']  # or fields or maybe ARGS
+
+
+class Thinger(type):
+    def __new__(cls, name, bases, dct):
+        tuper = namedtuple(name, dct['args'])
+        tuper.__eq__  = BaseCommand.__eq__
+
+        return type.__new__(cls, name, (tuper, BaseCommand), dct)
+
+# kind of works, but missing the resolve from float mixin
 
 class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatMixin, BaseCommand):
     COMMAND = 'w'
     NUM_ARGS = 1
 
 
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), FloatMixin, BaseCommand):
+class FillColor(FloatMixin, BaseCommand):
     COMMAND = 'rg'
     NUM_ARGS = 3
 
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def resolve(self):
+        return ' '.join([format_number(n) for n in [self.r, self.g, self.b]] + [self.COMMAND])
 
 class BeginText(BaseCommand):
     COMMAND = 'BT'
