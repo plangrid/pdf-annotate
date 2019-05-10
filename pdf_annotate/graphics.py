@@ -165,6 +165,22 @@ class Thinger(type):
 
 # kind of works, but missing the resolve from float mixin
 
+
+class AttrInterface(type):  # names are hard. this has PDF command functionality in it.
+    def __new__(cls, name, parents, attrs):
+
+        def __init__(self, foo, bang):
+            print(foo, bang)
+
+        attrs['__init__'] = __init__
+        # feels like another seam here -> one to give the formatted values,
+        # another to do the string format
+        # def resolve(self):
+        #    return ' '.join([str(getattr(self, field)) for field in self.fields] + [self.COMMAND])
+
+        return type.__new__(cls, name, parents, attrs)
+
+
 class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatMixin, BaseCommand):
     COMMAND = 'w'
     NUM_ARGS = 1
