@@ -165,16 +165,20 @@ class Thinger(type):
 
 class TryAgain(type):
     def __new__(cls, name, parents, attrs):
-        nt_klass = namedtuple(name, attrs['args'])
+        nt_klass = namedtuple(name + '_stupid_tuple', attrs['args'])
 
         attrs['NUM_ARGS'] = len(attrs['args'])
         attrs.pop('args')
 
         foo_format = ' '.join(['{}']*attrs['NUM_ARGS'] + [attrs['COMMAND']])
         def resolve(self):
-            foo_format.format(*self)
+            return foo_format.format(*self)
 
         attrs['resolve'] = resolve
+
+        # don't put object at beginning of MRO
+        if parents == (object,):
+            parents = ()
 
         return type.__new__(cls, name, (*parents, BaseCommand, nt_klass), attrs)
 
