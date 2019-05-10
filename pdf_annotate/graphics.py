@@ -163,6 +163,21 @@ class Thinger(type):
 
         return type.__new__(cls, name, (tuper, BaseCommand), dct)
 
+class TryAgain(type):
+    def __new__(cls, name, parents, attrs):
+        nt_klass = namedtuple(name, attrs['args'])
+
+        attrs['NUM_ARGS'] = len(attrs['args'])
+        attrs.pop('args')
+
+        foo_format = ' '.join(['{}']*attrs['NUM_ARGS'] + [attrs['COMMAND']])
+        def resolve(self):
+            foo_format.format(*self)
+
+        attrs['resolve'] = resolve
+
+        return type.__new__(cls, name, (*parents, BaseCommand, nt_klass), attrs)
+
 # kind of works, but missing the resolve from float mixin
 
 
