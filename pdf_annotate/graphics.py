@@ -154,13 +154,11 @@ class TupleCommand(type):
         return type.__new__(cls, name, (*parents, BaseCommand, namedtuple_klass), attrs)
 
     def __init__(cls, name, parents, attrs):
-        if 'resolve' not in attrs:
+        if cls.resolve is BaseCommand.resolve:
             def resolve(self):
                 return ' '.join([*self] + [self.COMMAND])
 
-            attrs['resolve'] = resolve
-
-        return super(TupleCommand, cls).__init__(name, parents, attrs)
+            setattr(cls, 'resolve', resolve)
 
 
 # we said TupleCommand & FloatTupleCommand...
