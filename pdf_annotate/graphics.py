@@ -317,30 +317,33 @@ class Rect(FloatMixin):
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y']), FloatMixin, BaseCommand):
+@add_metaclass(TupleCommand)
+class Move(FloatMixin):
     COMMAND = 'm'
-    NUM_ARGS = 2
+    ARGS = ['x', 'y']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y']), FloatMixin, BaseCommand):
+@add_metaclass(TupleCommand)
+class Line(FloatMixin):
     COMMAND = 'l'
-    NUM_ARGS = 2
+    ARGS = ['x', 'y']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
+@add_metaclass(TupleCommand)
+class Bezier(FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
     COMMAND = 'c'
-    NUM_ARGS = 6
+    ARGS = ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -349,12 +352,13 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']), FloatMi
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin, BaseCommand):
+@add_metaclass(TupleCommand)
+class BezierV(FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
     and (x3, y3) as control points.
     """
     COMMAND = 'v'
-    NUM_ARGS = 4
+    ARGS = ['x2', 'y2', 'x3', 'y3']
 
     def transform(self, t):
         x2, y2 = transform_point((self.x2, self.y2), t)
@@ -362,12 +366,13 @@ class BezierV(namedtuple('BezierV', ['x2', 'y2', 'x3', 'y3']), FloatMixin, BaseC
         return BezierV(x2, y2, x3, y3)
 
 
-class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseCommand):
+@add_metaclass(TupleCommand)
+class BezierY(FloatMixin):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x3, y3) as control points.
     """
     COMMAND = 'y'
-    NUM_ARGS = 4
+    ARGS = ['x1', 'y1', 'x3', 'y3']
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -375,8 +380,10 @@ class BezierY(namedtuple('BezierY', ['x1', 'y1', 'x3', 'y3']), FloatMixin, BaseC
         return BezierY(x1, y1, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
+@add_metaclass(TupleCommand)
+class CTM(object):
     COMMAND = 'cm'
+    ARGS = ['matrix']
     NUM_ARGS = 6
 
     def transform(self, t):
@@ -393,8 +400,10 @@ class CTM(namedtuple('CTM', ['matrix']), BaseCommand):
         return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), BaseCommand):
+@add_metaclass(TupleCommand)
+class TextMatrix(object):
     COMMAND = 'Tm'
+    ARGS = ['matrix']
     NUM_ARGS = 6
 
     def transform(self, t):
