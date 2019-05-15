@@ -130,16 +130,20 @@ class TupleCommand(type):
 
         attrs.pop('ARGS')
 
-        def resolve(self):
-            return ' '.join([*self] + [self.COMMAND])
-
-        attrs['resolve'] = resolve
-
         # don't put object at beginning of MRO
         if parents == (object,):
                 parents = ()
 
         return type.__new__(cls, name, (*parents, BaseCommand, namedtuple_klass), attrs)
+
+    def __init__(cls, name, parents, attrs):
+        if 'resolve' not in attrs:
+            def resolve(self):
+                return ' '.join([*self] + [self.COMMAND])
+
+            attrs['resolve'] = resolve
+
+        return super(TupleCommand, cls).__init__(name, parents, attrs)
 
 
 # we said TupleCommand & FloatTupleCommand...
