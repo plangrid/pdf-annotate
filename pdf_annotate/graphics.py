@@ -3,7 +3,7 @@ from __future__ import division
 from collections import namedtuple
 from inspect import isclass
 
-from six import add_metaclass
+from six import with_metaclass
 
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
@@ -121,13 +121,28 @@ class BaseCommand(object):
         return cls(*cls._get_tokens(idx, tokens))
 
 
-# meta classes???
-# class SomeName(type):
-#     pass
+class TupleCommand(type):
+    def __new__(cls, name, parents, attrs):
+        namedtuple_klass = namedtuple(name + '_namedtuple', attrs['ARGS'])
+
+        if 'NUM_ARGS' not in attrs:
+            attrs['NUM_ARGS'] = len(attrs['ARGS'])
+
+        attrs.pop('ARGS')
+
+        def resolve(self):
+            return ' '.join([*self] + [self.COMMAND])
+
+        attrs['resolve'] = resolve
+
+        # don't put object at beginning of MRO
+        if parents == (object,):
+                parents = ()
+
+        return type.__new__(cls, name, (*parents, BaseCommand, namedtuple_klass), attrs)
 
 
 # we said TupleCommand & FloatTupleCommand...
-
 class FloatMixin(object):
     def resolve(self):
         return ' '.join([format_number(n) for n in self] + [self.COMMAND])
@@ -137,85 +152,23 @@ class FloatMixin(object):
         return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
-class StrokeColor(FloatMixin, BaseCommand):
+@with_metaclass(TupleCommand)
+class StrokeColor(FloatMixin):
     COMMAND = 'RG'
-    NUM_ARGS = 3
-
-    def __init__(self, r, g, b):
-        self.r = r
-        self.g = g
-        self.b = b
-
-    def resolve(self):
-        return ' '.join([format_number(n) for n in [self.r, self.g, self.b]] + [self.COMMAND])
-
-# it'd be cool to...
-@with_metaclass(Thinger)  # and metaclass gives you inheritance. soo...
-class StrokeColor:
-    COMMAND = 'RG'
-    args = ['r', 'g', 'b']  # or fields or maybe ARGS
+    ARGS = ['r', 'g', 'b']
 
 
-class Thinger(type):
-    def __new__(cls, name, bases, dct):
-        tuper = namedtuple(name, dct['args'])
-        tuper.__eq__  = BaseCommand.__eq__
-
-        return type.__new__(cls, name, (tuper, BaseCommand), dct)
-
-class TryAgain(type):
-    def __new__(cls, name, parents, attrs):
-        nt_klass = namedtuple(name + '_stupid_tuple', attrs['args'])
-
-        attrs['NUM_ARGS'] = len(attrs['args'])
-        attrs.pop('args')
-
-        foo_format = ' '.join(['{}']*attrs['NUM_ARGS'] + [attrs['COMMAND']])
-        def resolve(self):
-            return foo_format.format(*self)
-
-        attrs['resolve'] = resolve
-
-        # don't put object at beginning of MRO
-        if parents == (object,):
-            parents = ()
-
-        return type.__new__(cls, name, (*parents, BaseCommand, nt_klass), attrs)
-
-# kind of works, but missing the resolve from float mixin
-
-
-class AttrInterface(type):  # names are hard. this has PDF command functionality in it.
-    def __new__(cls, name, parents, attrs):
-
-        def __init__(self, foo, bang):
-            print(foo, bang)
-
-        attrs['__init__'] = __init__
-        # feels like another seam here -> one to give the formatted values,
-        # another to do the string format
-        # def resolve(self):
-        #    return ' '.join([str(getattr(self, field)) for field in self.fields] + [self.COMMAND])
-
-        return type.__new__(cls, name, parents, attrs)
-
-
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), FloatMixin, BaseCommand):
+@with_metaclass(TupleCommand)
+class StrokeWidth(FloatMixin):
     COMMAND = 'w'
-    NUM_ARGS = 1
+    ARGS = ['width']
 
 
-class FillColor(FloatMixin, BaseCommand):
+@with_metaclass(TupleCommand)
+class StrokeColor(FloatMixin):
     COMMAND = 'rg'
-    NUM_ARGS = 3
+    ARGS = ['r', 'g', 'b']
 
-    def __init__(self, r, g, b):
-        self.r = r
-        self.g = g
-        self.b = b
-
-    def resolve(self):
-        return ' '.join([format_number(n) for n in [self.r, self.g, self.b]] + [self.COMMAND])
 
 class BeginText(BaseCommand):
     COMMAND = 'BT'
@@ -285,9 +238,10 @@ class Close(BaseCommand):
     COMMAND = 'h'
 
 
-class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
+@with_metaclass(TupleCommand)
+class Font(object):
     COMMAND = 'Tf'
-    NUM_ARGS = 2
+    ARGS = ['font', 'font_size']
 
     def resolve(self):
         return '/{} {} {}'.format(
@@ -304,33 +258,37 @@ class Font(namedtuple('Font', ['font', 'font_size']), BaseCommand):
         return cls(font, float(font_size))
 
 
-class Text(namedtuple('Text', ['text']), BaseCommand):
+@with_metaclass(TupleCommand)
+class Text(object):
     COMMAND = 'Tj'
-    NUM_ARGS = 1
+    ARGS = ['text']
 
     def resolve(self):
         return '({}) {}'.format(self.text, self.COMMAND)
 
 
-class XObject(namedtuple('XObject', ['name']), BaseCommand):
+@with_metaclass(TupleCommand)
+class XObject(object):
     COMMAND = 'Do'
-    NUM_ARGS = 1
+    ARGS = ['name']
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class GraphicsState(namedtuple('GraphicsState', ['name']), BaseCommand):
+@with_metaclass(TupleCommand)
+class GraphicsState(object):
     COMMAND = 'gs'
-    NUM_ARGS = 1
+    ARGS = ['name']
 
     def resolve(self):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height']), FloatMixin, BaseCommand):
+@with_metaclass(TupleCommand)
+class Rect(FloatMixin):
     COMMAND = 're'
-    NUM_ARGS = 4
+    ARGS = ['x', 'y', 'width', 'height']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
