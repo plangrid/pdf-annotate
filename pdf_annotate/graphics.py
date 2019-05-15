@@ -171,20 +171,20 @@ class FloatMixin(object):
         return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
-@add_metaclass(TupleCommand)
-class StrokeColor(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class StrokeColor(object):
     COMMAND = 'RG'
     ARGS = ['r', 'g', 'b']
 
 
-@add_metaclass(TupleCommand)
-class StrokeWidth(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class StrokeWidth(object):
     COMMAND = 'w'
     ARGS = ['width']
 
 
-@add_metaclass(TupleCommand)
-class FillColor(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class FillColor(object):
     COMMAND = 'rg'
     ARGS = ['r', 'g', 'b']
 
@@ -304,8 +304,8 @@ class GraphicsState(object):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-@add_metaclass(TupleCommand)
-class Rect(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class Rect(object):
     COMMAND = 're'
     ARGS = ['x', 'y', 'width', 'height']
 
@@ -315,8 +315,8 @@ class Rect(FloatMixin):
         return Rect(x, y, width, height)
 
 
-@add_metaclass(TupleCommand)
-class Move(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class Move(object):
     COMMAND = 'm'
     ARGS = ['x', 'y']
 
@@ -325,8 +325,8 @@ class Move(FloatMixin):
         return Move(x, y)
 
 
-@add_metaclass(TupleCommand)
-class Line(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class Line(object):
     COMMAND = 'l'
     ARGS = ['x', 'y']
 
@@ -335,8 +335,8 @@ class Line(FloatMixin):
         return Line(x, y)
 
 
-@add_metaclass(TupleCommand)
-class Bezier(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class Bezier(object):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
@@ -350,8 +350,8 @@ class Bezier(FloatMixin):
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-@add_metaclass(TupleCommand)
-class BezierV(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class BezierV(object):
     """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
     and (x3, y3) as control points.
     """
@@ -364,8 +364,8 @@ class BezierV(FloatMixin):
         return BezierV(x2, y2, x3, y3)
 
 
-@add_metaclass(TupleCommand)
-class BezierY(FloatMixin):
+@add_metaclass(FloatTupleCommand)
+class BezierY(object):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x3, y3) as control points.
     """
