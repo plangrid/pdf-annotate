@@ -1,6 +1,7 @@
 from __future__ import division
 
 from collections import namedtuple
+from functools import total_ordering
 from inspect import isclass
 
 from six import add_metaclass
@@ -96,15 +97,31 @@ class ContentStream(object):
         return cls(commands)
 
 
+@total_ordering
 class BaseCommand(object):
     COMMAND = ''
     NUM_ARGS = 0
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if self.__class__ is not other.__class__:
             return False
 
         return self.resolve() == other.resolve()
+
+    def __ne__(self, other):
+        # yes you really have to define this
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        if self.__class__ is not other.__class__:
+            raise TypeError(
+                'Comparison not supported between instances of {} and {}'.format(
+                    self.__class__.__name__,
+                    other.__class__.__name__,
+                ),
+            )
+
+        return self.resolve() < other.resolve()
 
     def transform(self, t):
         return self
