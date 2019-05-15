@@ -3,7 +3,7 @@ from __future__ import division
 from collections import namedtuple
 from inspect import isclass
 
-from six import with_metaclass
+from six import add_metaclass
 
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
@@ -152,20 +152,20 @@ class FloatMixin(object):
         return cls(*map(float, cls._get_tokens(idx, tokens)))
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class StrokeColor(FloatMixin):
     COMMAND = 'RG'
     ARGS = ['r', 'g', 'b']
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class StrokeWidth(FloatMixin):
     COMMAND = 'w'
     ARGS = ['width']
 
 
-@with_metaclass(TupleCommand)
-class StrokeColor(FloatMixin):
+@add_metaclass(TupleCommand)
+class FillColor(FloatMixin):
     COMMAND = 'rg'
     ARGS = ['r', 'g', 'b']
 
@@ -238,7 +238,7 @@ class Close(BaseCommand):
     COMMAND = 'h'
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class Font(object):
     COMMAND = 'Tf'
     ARGS = ['font', 'font_size']
@@ -258,7 +258,7 @@ class Font(object):
         return cls(font, float(font_size))
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class Text(object):
     COMMAND = 'Tj'
     ARGS = ['text']
@@ -267,7 +267,7 @@ class Text(object):
         return '({}) {}'.format(self.text, self.COMMAND)
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class XObject(object):
     COMMAND = 'Do'
     ARGS = ['name']
@@ -276,7 +276,7 @@ class XObject(object):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class GraphicsState(object):
     COMMAND = 'gs'
     ARGS = ['name']
@@ -285,7 +285,7 @@ class GraphicsState(object):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-@with_metaclass(TupleCommand)
+@add_metaclass(TupleCommand)
 class Rect(FloatMixin):
     COMMAND = 're'
     ARGS = ['x', 'y', 'width', 'height']
