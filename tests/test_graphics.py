@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from six import add_metaclass
+
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
@@ -21,6 +23,7 @@ from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
+from pdf_annotate.graphics import TupleCommand
 
 
 class TestCommandEquality(TestCase):
@@ -32,6 +35,27 @@ class TestCommandEquality(TestCase):
         assert StrokeColor(1, 2, 3) == StrokeColor(1, 2, 3)
         assert Text('Hello') == Text('Hello')
         assert StrokeColor(1, 2, 3) != FillColor(1, 2, 3)
+
+
+@add_metaclass(TupleCommand)
+class FakeTupleCommand(object):
+    COMMAND = 'fake'
+    ARGS = ['foo', 'bar']
+
+
+class TestTupleCommand(TestCase):
+    def test_num_args_filled_in(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert hasattr(ft, 'NUM_ARGS')
+        assert ft.NUM_ARGS == 2
+
+    def test_args_list_removed(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert not hasattr(ft, 'ARGS')
+
+    def test_meta_resolve(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert ft.resolve() == 'one two fake'
 
 
 class TestContentStream(TestCase):
