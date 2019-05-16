@@ -172,8 +172,8 @@ class FloatTupleCommand(TupleCommand):
             setattr(cls, 'resolve', resolve)
 
         @classmethod
-        def from_tokens(klass, idx, tokens):
-            return klass(*map(float, klass._get_tokens(idx, tokens)))
+        def from_tokens(cls, idx, tokens):
+            return cls(*map(float, cls._get_tokens(idx, tokens)))
 
         setattr(cls, 'from_tokens', from_tokens)
 
