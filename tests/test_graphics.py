@@ -59,7 +59,9 @@ class TestTupleCommand(TestCase):
         assert ft.resolve() == 'one two fake'
 
     def test_from_tokens(self):
-        ft = FakeTupleCommand.from_tokens(3, ['one', 'two'])
+        ft = FakeTupleCommand.from_tokens(2, ['one', 'two'])
+        assert ft.foo == 'one'
+        assert ft.bar == 'two'
         assert ft == FakeTupleCommand('one', 'two')
 
 
@@ -74,7 +76,9 @@ class TestFloatTupleCommand(TestCase):
         assert FakeFloatTupleCommand(1, 2).resolve() == '1 2 fake'
 
     def test_from_tokens(self):
-        ft = FakeFloatTupleCommand.from_tokens(3, ['1', '2'])
+        ft = FakeFloatTupleCommand.from_tokens(2, ['1', '2'])
+        assert ft.one == 1
+        assert ft.two == 2
         assert ft == FakeFloatTupleCommand(1, 2)
 
 
