@@ -14,6 +14,7 @@ from pdf_annotate.graphics import FloatTupleCommand
 from pdf_annotate.graphics import Font
 from pdf_annotate.graphics import format_number
 from pdf_annotate.graphics import Line
+from pdf_annotate.graphics import MatrixCommand
 from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
@@ -59,7 +60,7 @@ class TestTupleCommand(TestCase):
         assert ft.resolve() == 'one two fake'
 
     def test_from_tokens(self):
-        ft = FakeTupleCommand.from_tokens(2, ['one', 'two'])
+        ft = FakeTupleCommand.from_tokens(2, ['one', 'two', 'fake'])
         assert ft.foo == 'one'
         assert ft.bar == 'two'
         assert ft == FakeTupleCommand('one', 'two')
@@ -76,10 +77,41 @@ class TestFloatTupleCommand(TestCase):
         assert FakeFloatTupleCommand(1, 2).resolve() == '1 2 fake'
 
     def test_from_tokens(self):
-        ft = FakeFloatTupleCommand.from_tokens(2, ['1', '2'])
+        ft = FakeFloatTupleCommand.from_tokens(2, ['1', '2', 'fake'])
         assert ft.one == 1
         assert ft.two == 2
         assert ft == FakeFloatTupleCommand(1, 2)
+
+
+@add_metaclass(MatrixCommand)
+class FakeMatrixCommand(object):
+    COMMAND = 'fake'
+
+
+class TestMatrixCommand(TestCase):
+    def test_raises_for_bad_matrix_size(self):
+        with self.assertRaises(ValueError):
+            FakeMatrixCommand([])
+
+    def test_transform(self):
+        fm = FakeMatrixCommand([0, 1, -1, 0, 0, 0])
+        transformed = fm.transform([0, 1, -1, 0, 0, 0])
+        assert transformed.matrix == [-1, 0, 0, -1, 0, 0]
+
+    def test_from_tokens(self):
+        fm = FakeMatrixCommand.from_tokens(6, ['1', '2', '3', '4', '5', '6', 'fake'])
+        assert fm.matrix == [1, 2, 3, 4, 5, 6]
+
+    def test_resolve(self):
+        fm = FakeMatrixCommand([1, 2, 3, 4, 5, 6])
+        assert fm.resolve() == '1 2 3 4 5 6 fake'
+
+    def test_equality(self):
+        tm = TextMatrix([1, 2, 3, 4, 5, 6])
+        ctm = CTM([1, 2, 3, 4, 5, 6])
+
+        assert tm.matrix == ctm.matrix
+        assert tm != ctm
 
 
 class TestContentStream(TestCase):

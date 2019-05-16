@@ -385,44 +385,42 @@ class BezierY(object):
         return BezierY(x1, y1, x3, y3)
 
 
-@add_metaclass(TupleCommand)
-class CTM(object):
-    COMMAND = 'cm'
-    ARGS = ['matrix']
-    NUM_ARGS = 6
+class MatrixCommand(TupleCommand):
+    def __new__(cls, name, parents, attrs):
+        attrs['ARGS'] = ['matrix']
+        attrs['NUM_ARGS'] = 6
 
-    def transform(self, t):
-        return CTM(matrix_multiply(t, self.matrix))
+        return super(MatrixCommand, cls).__new__(cls, name, parents, attrs)
 
-    def resolve(self):
-        return '{} {} {} {} {} {} {}'.format(
-            *[format_number(n) for n in self.matrix],
-            self.COMMAND,
-        )
+    def __init__(cls, name, parents, attrs):
+        def transform(self, t):
+            return cls(matrix_multiply(t, self.matrix))
 
-    @classmethod
-    def from_tokens(cls, idx, tokens):
-        return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
+        def resolve(self):
+            return ' '.join([format_number(n) for n in self.matrix] + [self.COMMAND])
+
+        @classmethod
+        def from_tokens(cls, idx, tokens):
+            return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
+
+        def __init__(self, matrix):
+            if len(matrix) != 6:
+                raise ValueError('go away you bad dude')
+
+        setattr(cls, 'transform', transform)
+        setattr(cls, 'resolve', resolve)
+        setattr(cls, 'from_tokens', from_tokens)
+        setattr(cls, '__init__', __init__)
 
 
-@add_metaclass(TupleCommand)
+@add_metaclass(MatrixCommand)
 class TextMatrix(object):
     COMMAND = 'Tm'
-    ARGS = ['matrix']
-    NUM_ARGS = 6
 
-    def transform(self, t):
-        return TextMatrix(matrix_multiply(t, self.matrix))
 
-    def resolve(self):
-        return '{} {} {} {} {} {} {}'.format(
-            *[format_number(n) for n in self.matrix],
-            self.COMMAND,
-        )
-
-    @classmethod
-    def from_tokens(cls, idx, tokens):
-        return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
+@add_metaclass(MatrixCommand)
+class CTM(object):
+    COMMAND = 'cm'
 
 
 def format_number(n):
