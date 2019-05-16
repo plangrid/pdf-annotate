@@ -168,7 +168,7 @@ class TestContentStream(TestCase):
         assert ContentStream([Save()]) != 'q'
 
     def test_parse_resolve(self):
-        for cs, stream_string in self.FIXTURES[1:]:
+        for cs, stream_string in self.FIXTURES:
             assert cs.resolve() == stream_string
             assert cs == ContentStream.parse(stream_string)
 
