@@ -163,14 +163,19 @@ class TupleCommand(type):
             setattr(cls, 'resolve', resolve)
 
 
-# we said TupleCommand & FloatTupleCommand...
-class FloatMixin(object):
-    def resolve(self):
-        return ' '.join([format_number(n) for n in self] + [self.COMMAND])
+class FloatTupleCommand(TupleCommand):
+    def __init__(cls, name, parents, attrs):
+        if cls.resolve is BaseCommand.resolve:
+            def resolve(self):
+                return ' '.join([format_number(n) for n in self] + [self.COMMAND])
 
-    @classmethod
-    def from_tokens(cls, idx, tokens):
-        return cls(*map(float, cls._get_tokens(idx, tokens)))
+            setattr(cls, 'resolve', resolve)
+
+        @classmethod
+        def from_tokens(klass, idx, tokens):
+            return klass(*map(float, klass._get_tokens(idx, tokens)))
+
+        setattr(cls, 'from_tokens', from_tokens)
 
 
 @add_metaclass(FloatTupleCommand)
