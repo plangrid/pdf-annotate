@@ -10,6 +10,7 @@ from pdf_annotate.graphics import CTM
 from pdf_annotate.graphics import EndText
 from pdf_annotate.graphics import Fill
 from pdf_annotate.graphics import FillColor
+from pdf_annotate.graphics import FloatTupleCommand
 from pdf_annotate.graphics import Font
 from pdf_annotate.graphics import format_number
 from pdf_annotate.graphics import Line
@@ -56,6 +57,25 @@ class TestTupleCommand(TestCase):
     def test_meta_resolve(self):
         ft = FakeTupleCommand('one', 'two')
         assert ft.resolve() == 'one two fake'
+
+    def test_from_tokens(self):
+        ft = FakeTupleCommand.from_tokens(3, ['one', 'two'])
+        assert ft == FakeTupleCommand('one', 'two')
+
+
+@add_metaclass(FloatTupleCommand)
+class FakeFloatTupleCommand(object):
+    COMMAND = 'fake'
+    ARGS = ['one', 'two']
+
+
+class TestFloatTupleCommand(TestCase):
+    def test_resolve(self):
+        assert FakeFloatTupleCommand(1, 2).resolve() == '1 2 fake'
+
+    def test_from_tokens(self):
+        ft = FakeFloatTupleCommand.from_tokens(3, ['1', '2'])
+        assert ft == FakeFloatTupleCommand(1, 2)
 
 
 class TestContentStream(TestCase):
