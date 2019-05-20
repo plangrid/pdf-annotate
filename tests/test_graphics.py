@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from six import add_metaclass
+
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
@@ -8,9 +10,11 @@ from pdf_annotate.graphics import CTM
 from pdf_annotate.graphics import EndText
 from pdf_annotate.graphics import Fill
 from pdf_annotate.graphics import FillColor
+from pdf_annotate.graphics import FloatTupleCommand
 from pdf_annotate.graphics import Font
 from pdf_annotate.graphics import format_number
 from pdf_annotate.graphics import Line
+from pdf_annotate.graphics import MatrixCommand
 from pdf_annotate.graphics import Move
 from pdf_annotate.graphics import Rect
 from pdf_annotate.graphics import Restore
@@ -21,9 +25,155 @@ from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
+from pdf_annotate.graphics import TupleCommand
+
+
+class TestCommandEquality(TestCase):
+    def test_static_commands(self):
+        assert Stroke() == Stroke()
+        assert Stroke() != Save()
+
+    def test_tuple_commands(self):
+        assert StrokeColor(1, 2, 3) == StrokeColor(1, 2, 3)
+        assert Text('Hello') == Text('Hello')
+        assert StrokeColor(1, 2, 3) != FillColor(1, 2, 3)
+
+    def test_no_ordering(self):
+        with self.assertRaises(TypeError):
+            assert StrokeColor(1, 2, 3) < StrokeColor(2, 3 , 4)
+
+
+@add_metaclass(TupleCommand)
+class FakeTupleCommand(object):
+    COMMAND = 'fake'
+    ARGS = ['foo', 'bar']
+
+
+class TestTupleCommand(TestCase):
+    def test_num_args_filled_in(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert hasattr(ft, 'NUM_ARGS')
+        assert ft.NUM_ARGS == 2
+
+    def test_args_list_removed(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert not hasattr(ft, 'ARGS')
+
+    def test_meta_resolve(self):
+        ft = FakeTupleCommand('one', 'two')
+        assert ft.resolve() == 'one two fake'
+
+    def test_from_tokens(self):
+        ft = FakeTupleCommand.from_tokens(2, ['one', 'two', 'fake'])
+        assert ft.foo == 'one'
+        assert ft.bar == 'two'
+        assert ft == FakeTupleCommand('one', 'two')
+
+
+@add_metaclass(FloatTupleCommand)
+class FakeFloatTupleCommand(object):
+    COMMAND = 'fake'
+    ARGS = ['one', 'two']
+
+
+class TestFloatTupleCommand(TestCase):
+    def test_resolve(self):
+        assert FakeFloatTupleCommand(1, 2).resolve() == '1 2 fake'
+
+    def test_from_tokens(self):
+        ft = FakeFloatTupleCommand.from_tokens(2, ['1', '2', 'fake'])
+        assert ft.one == 1
+        assert ft.two == 2
+        assert ft == FakeFloatTupleCommand(1, 2)
+
+
+@add_metaclass(MatrixCommand)
+class FakeMatrixCommand(object):
+    COMMAND = 'fake'
+
+
+class TestMatrixCommand(TestCase):
+    def test_raises_for_bad_matrix_size(self):
+        with self.assertRaises(ValueError):
+            FakeMatrixCommand([])
+
+    def test_transform(self):
+        fm = FakeMatrixCommand([0, 1, -1, 0, 0, 0])
+        transformed = fm.transform([0, 1, -1, 0, 0, 0])
+        assert transformed.matrix == [-1, 0, 0, -1, 0, 0]
+
+    def test_from_tokens(self):
+        fm = FakeMatrixCommand.from_tokens(6, ['1', '2', '3', '4', '5', '6', 'fake'])
+        assert fm.matrix == [1, 2, 3, 4, 5, 6]
+
+    def test_resolve(self):
+        fm = FakeMatrixCommand([1, 2, 3, 4, 5, 6])
+        assert fm.resolve() == '1 2 3 4 5 6 fake'
+
+    def test_equality(self):
+        tm = TextMatrix([1, 2, 3, 4, 5, 6])
+        ctm = CTM([1, 2, 3, 4, 5, 6])
+
+        assert tm.matrix == ctm.matrix
+        assert tm != ctm
 
 
 class TestContentStream(TestCase):
+    # a list of (ContentStream, stream_string) pairs for testing parse/resolve
+    FIXTURES = [
+        (
+            ContentStream([
+                CTM([1, 0, 0, 1, 0, 0]),
+                Font('Helvetica', 12),
+                TextMatrix([1, 0, 0, 1, 20, 50]),
+                BeginText(),
+                Text('Sure, why not?'),
+                EndText(),
+            ]),
+            (
+                '1 0 0 1 0 0 cm /Helvetica 12 Tf '
+                '1 0 0 1 20 50 Tm BT '
+                '(Sure, why not?) Tj ET'
+            )
+        ),
+        (
+            ContentStream([
+                Save(),
+                StrokeWidth(2),
+                StrokeColor(0, 0, 0),
+                FillColor(1, 0, 0),
+                Move(10, 10),
+                Line(20, 20),
+                Bezier(30, 30, 40, 40, 50, 50),
+                Rect(50, 50, 10, 10),
+                Close(),
+                StrokeAndFill(),
+                Stroke(),
+                Fill(),
+                Restore(),
+            ]),
+            (
+                'q 2 w 0 0 0 RG 1 0 0 rg 10 10 m 20 20 l '
+                '30 30 40 40 50 50 c 50 50 10 10 re '
+                'h B S f Q'
+            )
+        ),
+    ]
+
+    def test_equality(self):
+        assert ContentStream() == ContentStream()
+
+        cs1 = ContentStream([Save(), FillColor(1, 0, 0)])
+        cs2 = ContentStream([Save(), FillColor(1, 0, 0)])
+        assert cs1 == cs2
+
+    def test_content_stream_not_equal_to_string(self):
+        assert ContentStream() != ''
+        assert ContentStream([Save()]) != 'q'
+
+    def test_resolve(self):
+        for cs, stream_string in self.FIXTURES:
+            assert cs.resolve() == stream_string
 
     def test_content_stream(self):
         # Basically a smoke test for all the simple functions of ContentStream
