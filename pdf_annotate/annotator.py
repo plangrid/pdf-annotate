@@ -100,21 +100,28 @@ class PdfAnnotator(object):
         """
         self._dimensions[page_number] = dimensions
 
-    def get_mediabox(self, page_number):
+    def get_page_bounding_box(self, page_number):
         page = self._pdf.get_page(page_number)
-        return list(map(float, page.inheritable.MediaBox))
+        # PDF bounding boxes are complicated. We choose to use the CropBox, if
+        # it's available, because that's what Acrobat uses to display the
+        # actual PDF, and what pdfinfo uses to determine the PDF's dimensions.
+        # If CropBox isn't available, we use MediaBox. We ignore the TrimBox
+        # because Acrobat also ignores this when displaying the PDF.
+        crop_box = page.inheritable.CropBox
+        if crop_box is not None:
+            return [float(n) for n in crop_box]
+        return [float(n) for n in page.inheritable.MediaBox]
 
     def get_size(self, page_number):
-        """Returns the size of the specified page's MediaBox (pts), accounting
-        for page rotation.
+        """Returns the size of the specified page's bounding box (pts),
+        accounting for page rotation.
 
         :param int page_number:
         :returns tuple: If page is rotated 90° or 270°, the returned value will
             be (height, width) in PDF user space. Otherwise the returned value
             will be (width, height).
         """
-        page = self._pdf.get_page(page_number)
-        x1, y1, x2, y2 = map(float, page.inheritable.MediaBox)
+        x1, y1, x2, y2 = self.get_page_bounding_box(page_number)
         rotation = self._pdf.get_rotation(page_number)
 
         if rotation in (0, 180):
@@ -198,8 +205,8 @@ class PdfAnnotator(object):
         :returns 2-tuple: (x_scale, y_scale)
         """
         rotation = self._pdf.get_rotation(page_number)
-        media_box = self.get_mediabox(page_number)
-        return self._get_scale(page_number, media_box, rotation)
+        bounding_box = self.get_page_bounding_box(page_number)
+        return self._get_scale(page_number, bounding_box, rotation)
 
     def get_rotation(self, page_number):
         """Public API to get the rotation of the give page.
@@ -209,9 +216,9 @@ class PdfAnnotator(object):
         """
         return self._pdf.get_rotation(page_number)
 
-    def _get_scale(self, page_number, media_box, rotation):
-        W = media_box[2] - media_box[0]
-        H = media_box[3] - media_box[1]
+    def _get_scale(self, page_number, bounding_box, rotation):
+        W = bounding_box[2] - bounding_box[0]
+        H = bounding_box[3] - bounding_box[1]
 
         dimensions = self._dimensions.get(page_number)
         if dimensions is not None:
@@ -229,24 +236,24 @@ class PdfAnnotator(object):
         return x_scale, y_scale
 
     def get_transform(self, page_number, rotation):
-        media_box = self.get_mediabox(page_number)
-        _scale = self._get_scale(page_number, media_box, rotation)
-        return self._get_transform(media_box, rotation, _scale)
+        bounding_box = self.get_page_bounding_box(page_number)
+        _scale = self._get_scale(page_number, bounding_box, rotation)
+        return self._get_transform(bounding_box, rotation, _scale)
 
     @staticmethod
-    def _get_transform(media_box, rotation, _scale):
+    def _get_transform(bounding_box, rotation, _scale):
         """Get the transformation required to go from the user's desired
         coordinate space to PDF user space, taking into account rotation,
         scaling, translation (for things like weird media boxes).
         """
         # Unrotated width and height, in pts
-        W = media_box[2] - media_box[0]
-        H = media_box[3] - media_box[1]
+        W = bounding_box[2] - bounding_box[0]
+        H = bounding_box[3] - bounding_box[1]
 
         scale_matrix = scale(*_scale)
 
-        x_translate = 0 + media_box[0]
-        y_translate = 0 + media_box[1]
+        x_translate = 0 + bounding_box[0]
+        y_translate = 0 + bounding_box[1]
         mb_translate = translate(x_translate, y_translate)
 
         # Because of how rotation works the point isn't rotated around an axis,

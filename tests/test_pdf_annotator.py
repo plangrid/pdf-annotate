@@ -31,6 +31,23 @@ class TestPdf(TestCase):
 
 class TestPdfAnnotator(TestCase):
 
+    def test_get_page_bounding_box(self):
+        a = PdfAnnotator(files.SIMPLE)
+        # The simple file has both MediaBox and CropBox set to the same value
+        assert a.get_page_bounding_box(0) == [0, 0, 612, 792]
+
+        page = a._pdf.get_page(0)
+
+        # Still works without CropBox
+        page.CropBox = None
+        assert a.get_page_bounding_box(0) == [0, 0, 612, 792]
+        page.MediaBox = [1, 1, 611, 791]
+        assert a.get_page_bounding_box(0) == [1, 1, 611, 791]
+
+        # But CropBox takes precedence
+        page.CropBox = [12, 16, 600, 792]
+        assert a.get_page_bounding_box(0) == [12, 16, 600, 792]
+
     def test_get_size(self):
         a = PdfAnnotator(files.SIMPLE)
         size = a.get_size(0)
@@ -85,7 +102,7 @@ class TestPdfAnnotatorGetTransform(TestCase):
 
     def test_identity(self):
         t = PdfAnnotator._get_transform(
-            media_box=[0, 0, 100, 200],
+            bounding_box=[0, 0, 100, 200],
             rotation=0,
             _scale=(1, 1),
         )
@@ -96,11 +113,11 @@ class TestPdfAnnotatorGetTransform(TestCase):
         expected,
         rotation=0,
         scale=(1, 1),
-        media_box=None,
+        bounding_box=None,
     ):
-        media_box = media_box or [0, 0, 100, 200]
+        bounding_box = bounding_box or [0, 0, 100, 200]
         t = PdfAnnotator._get_transform(
-            media_box=media_box,
+            bounding_box=bounding_box,
             rotation=rotation,
             _scale=scale,
         )
@@ -121,19 +138,19 @@ class TestPdfAnnotatorGetTransform(TestCase):
             rotation=90,
         )
 
-    def test_weird_media_box(self):
-        self._assert_transform(translate(0, -30), media_box=[0, -30, 20, 0])
+    def test_weird_bounding_box(self):
+        self._assert_transform(translate(0, -30), bounding_box=[0, -30, 20, 0])
 
-    def test_weird_media_box_rotated(self):
+    def test_weird_bounding_box_rotated(self):
         self._assert_transform(
             [0, 1, -1, 0, 20, -30],
-            media_box=[0, -30, 20, 0],
+            bounding_box=[0, -30, 20, 0],
             rotation=90,
         )
 
-    def test_weird_media_box_scaled(self):
+    def test_weird_bounding_box_scaled(self):
         self._assert_transform(
             [2, 0, 0, 4, 0, -30],
-            media_box=[0, -30, 20, 0],
+            bounding_box=[0, -30, 20, 0],
             scale=(2, 4),
         )
