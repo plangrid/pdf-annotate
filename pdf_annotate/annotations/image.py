@@ -10,6 +10,13 @@ from PIL.ImageFile import ImageFile
 
 from pdf_annotate.annotations.rect import RectAnnotation
 from pdf_annotate.config.appearance import set_appearance_state
+from pdf_annotate.config.constants import CMYK_MODE
+from pdf_annotate.config.constants import GRAYSCALE_ALPHA_MODE
+from pdf_annotate.config.constants import GRAYSCALE_MODE
+from pdf_annotate.config.constants import PALETTE_MODE
+from pdf_annotate.config.constants import RGB_MODE
+from pdf_annotate.config.constants import RGBA_MODE
+from pdf_annotate.config.constants import SINGLE_CHANNEL_MODE
 from pdf_annotate.graphics import ContentStream
 from pdf_annotate.graphics import CTM
 from pdf_annotate.graphics import Rect
@@ -83,16 +90,12 @@ class Image(RectAnnotation):
         image_format = image.format
         width, height = image.size
 
-        smask_xobj = None
-        if image_format in ('PNG', 'GIF') and image.mode in ('RGBA', 'P'):
-            if image.mode == 'RGBA':
-                smask_xobj = Image.get_png_smask(image)
-            image = image.convert('RGB')
-        if image.mode == 'CMYK':
-            # The DeviceCMYK PDF color space has some weird properties. In a
-            # future release we can debug these and be smart about it but this
-            # is an easy workaround.
-            image = image.convert('RGB')
+        # Normalize images to RGB or grayscale color spaces, and split out the
+        # alpha layer into a PDF smask XObject
+        image, smask_xobj = Image.convert_to_compatible_image(
+            image,
+            image_format,
+        )
 
         if image_format in ('PNG', 'GIF'):
             content = Image.make_compressed_image_content(image)
@@ -119,6 +122,30 @@ class Image(RectAnnotation):
         if smask_xobj is not None:
             xobj.SMask = smask_xobj
         return xobj
+
+    @staticmethod
+    def convert_to_compatible_image(image, image_format):
+        smask_xobj = None
+
+        if image_format in ('PNG', 'GIF'):
+            if image.mode in (RGBA_MODE, GRAYSCALE_ALPHA_MODE):
+                smask_xobj = Image.get_png_smask(image)
+
+            # 'P' and 'RGBA' images can just be converted to 'RGB' mode, since
+            # alpha layer is preserved in the smask.
+            if image.mode in (RGBA_MODE, PALETTE_MODE):
+                image = image.convert(RGB_MODE)
+
+            if image.mode == GRAYSCALE_ALPHA_MODE:
+                image = image.convert(GRAYSCALE_MODE)
+
+        if image.mode == CMYK_MODE:
+            # The DeviceCMYK PDF color space has some weird properties. In a
+            # future release we can debug these and be smart about it but this
+            # is an easy workaround.
+            image = image.convert(RGB_MODE)
+
+        return image, smask_xobj
 
     @staticmethod
     def get_png_smask(image):
@@ -148,9 +175,9 @@ class Image(RectAnnotation):
 
     @staticmethod
     def _get_color_space_name(image):
-        if image.mode == 'RGB':
+        if image.mode == RGB_MODE:
             return PdfName('DeviceRGB')
-        elif image.mode in ('L', '1'):
+        elif image.mode in (GRAYSCALE_MODE, SINGLE_CHANNEL_MODE):
             return PdfName('DeviceGray')
         raise ValueError('Image color space not yet supported')
 
@@ -180,13 +207,13 @@ class Image(RectAnnotation):
 
     @staticmethod
     def get_raw_image_bytes(image):
-        if image.mode in ('L', '1'):
+        if image.mode in (GRAYSCALE_MODE, SINGLE_CHANNEL_MODE):
             # If this is grayscale or single-channel, we can avoid dealing with
             # the nested tuples in multi-channel images. This bytes/bytearray
             # wrapped approach is the only way that works in both py2 and py3.
             return bytes(bytearray(image.getdata()))
 
-        elif image.mode == 'RGB':
+        elif image.mode == RGB_MODE:
             raw_image_data = list(image.getdata())
             array = bytearray()
             for rgb in raw_image_data:
