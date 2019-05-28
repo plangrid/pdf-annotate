@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pdf-annotate',
-    version='0.7.2',
+    version='0.7.3',
     description='Add annotations to PDFs',
     author='Michael Bryant',
     author_email='smart-recordset@plangrid.com',
