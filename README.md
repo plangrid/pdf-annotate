@@ -1,6 +1,8 @@
 # pdf-annotate
 A pure-python library to add annotations to PDFs.
 
+[![Build Status](https://travis-ci.com/plangrid/pdf-annotate.svg?branch=master)](https://travis-ci.com/plangrid/pdf-annotate)
+
 ## About
 pdf-annotate is a simple library to add PDF annotations to PDFs. Under the hood
 it uses the powerful and unopinionated `pdfrw` library to parse the PDF to
