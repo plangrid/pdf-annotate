@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
-import nose
+import pytest
 from pdfrw import PdfDict
 from pdfrw import PdfName
 
@@ -39,11 +39,11 @@ class TestGraphicsState(TestCase):
         )
 
     def test_dash_array(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             GraphicsState(dash_array=[1, 1])
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             GraphicsState(dash_array=[[1.5], 1])
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             GraphicsState(dash_array='--- 1')
 
         state = GraphicsState(dash_array=[[2, 1], 1])
