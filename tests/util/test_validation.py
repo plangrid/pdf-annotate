@@ -2,7 +2,7 @@
 from unittest import TestCase
 
 import attr
-import nose
+import pytest
 
 from pdf_annotate.config.constants import BLACK
 from pdf_annotate.graphics import ContentStream
@@ -30,7 +30,7 @@ class TestRequired(TestCase):
         e = Enum(VALUES)
 
     def test_required(self):
-        with nose.tools.assert_raises(TypeError):
+        with pytest.raises(TypeError):
             self.R()
             self.R(b=False)
         assert self.R(b=False, e=1)
@@ -59,11 +59,11 @@ class TestColor(TestCase):
         assert self.C(GRAY).c == GRAY
 
     def test_invalid_colors(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.C(['a', 1, 1])
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.C([1, 1])
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.C('black')
 
 
@@ -76,7 +76,7 @@ class TestEnum(TestCase):
         assert self.E().e == 2
 
     def test_not_in_enum(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.E(54)
 
 
@@ -94,7 +94,7 @@ class TestField(TestCase):
         custom = Field(dict, default=None, validator=validate_custom_field)
 
     def test_disallowed_type(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.F(integer='string')
 
     def test_field(self):
@@ -104,7 +104,7 @@ class TestField(TestCase):
         assert f.content_stream is content_stream
 
     def test_custom_validator(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.F(custom={})
         d = {'a': 1, 'b': 2}
         assert self.F(custom=d).custom == d
@@ -122,12 +122,12 @@ class TestInteger(TestCase):
         assert self.Int(12).i == 12
 
     def test_positive(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.Int(positive=-1)
         assert self.Int(positive=2).positive == 2
 
     def test_invalid_integer(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.Int('abc')
 
 
@@ -140,12 +140,12 @@ class TestNumber(TestCase):
         between = Number(default=None, validator=between(0, 1))
 
     def test_positive(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.N(positive=-15)
         assert self.N(positive=15).positive == 15
 
     def test_between(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.N(between=-1)
         assert self.N(between=0.5).between == 0.5
 
@@ -164,9 +164,9 @@ class TestPoints(TestCase):
         assert self.P(points).p == points
 
     def test_not_points(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.P([[1, 'a']])
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.P('points')
 
 
@@ -181,5 +181,5 @@ class TestString(TestCase):
         assert self.S('string').s == 'string'
 
     def test_not_string(self):
-        with nose.tools.assert_raises(ValueError):
+        with pytest.raises(ValueError):
             self.S(12)
