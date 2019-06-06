@@ -1,1 +1,0 @@
-# SBS requires that this file exist, but we store our dependencies in setup.py
