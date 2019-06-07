@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+    Constants
+    ~~~~~~~~~
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 TEXT_ALIGN_LEFT = 'left'
 TEXT_ALIGN_CENTER = 'center'
 TEXT_ALIGN_RIGHT = 'right'

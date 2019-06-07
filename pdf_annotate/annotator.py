@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Tool for adding annotations to PDF documents. Like, real PDF annotations, not
-just additional shapes/whatever burned into the PDF content stream.
+    PdfAnnotator
+    ~~~~~~~~~~~~
+    The core annotator class.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
 """
 import warnings
 

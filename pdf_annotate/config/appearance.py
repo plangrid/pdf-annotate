@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    Appearance Config
+    ~~~~~~~~~~~~~~~~~
+    Configuration for an annotation's appearance.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 import attr
 
 from pdf_annotate.config.constants import ALLOWED_ALIGNS

@@ -1,3 +1,11 @@
+"""
+    Graphics
+    ~~~~~~~~~~~~
+    Classes for manipulating PDF graphics streams.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 from __future__ import division
 
 from collections import namedtuple
