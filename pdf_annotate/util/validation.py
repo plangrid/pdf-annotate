@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Provides validation primitives for defining attrs-style "data classes". By
-default all the schema types default to (and thus allow) None. Specifying
-required attributes isn't yet supported.
+    Validation Utils
+    ~~~~~~~~~~~~~~~~
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
 """
 import attr
 import six

@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+    Text Utils
+    ~~~~~~~~~~
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
+
+
 def unshift_token(text):
     """Remove a token from the front of a string.
 

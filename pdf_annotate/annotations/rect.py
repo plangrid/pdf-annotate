@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Square and Circle annotations.
+    Rectangular Annotations
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Annotations defined by a width and a height: Square, Circle
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
 """
 from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.annotations.base import make_border_dict

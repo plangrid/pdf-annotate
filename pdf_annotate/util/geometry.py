@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    Geometry
+    ~~~~~~~~
+    Geometry utility functions
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 import math
 
 

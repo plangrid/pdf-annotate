@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Line, Polygon, Polyline, and Ink annotations.
+    Points annotations
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    Annotations that are defined by a series of points: Line, Polygon, Polyline
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
 """
 from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.annotations.base import make_border_dict

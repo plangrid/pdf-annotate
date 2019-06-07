@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    Image
+    ~~~~~~~~~~~~
+    Image annotation class.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 import sys
 import zlib
 from io import BytesIO

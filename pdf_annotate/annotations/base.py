@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    Annotation
+    ~~~~~~~~~~~~
+    Base annotation class.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 from pdfrw.objects import PdfDict
 from pdfrw.objects import PdfName
 

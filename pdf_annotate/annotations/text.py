@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-FreeText annotation.
+    Text Annotations
+    ~~~~~~~~~~~~~~~~
+    The FreeText annotation
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
 """
 import os.path
 

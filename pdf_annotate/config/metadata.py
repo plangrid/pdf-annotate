@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    Metadata
+    ~~~~~~~~
+    Configuration for an annotation's metadata.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 from datetime import datetime
 from datetime import timedelta
 from datetime import tzinfo

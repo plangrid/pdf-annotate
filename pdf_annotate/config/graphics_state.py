@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    GraphicsState
+    ~~~~~~~~~~~~~
+    Configuration for an annotation's graphics state.
+
+    :copyright: Copyright 2019 Autodesk, Inc.
+    :license: MIT, see LICENSE for details.
+"""
 import attr
 from pdfrw import PdfDict
 from pdfrw import PdfName
