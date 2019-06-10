@@ -40,9 +40,10 @@ on this class apply to all annotations; documentation on this is forthcoming.
 
 ### Location
 Where an annotation is placed on the PDF is controlled by the `Location` class, passed
-to the `location` argument to `add_annotation`. By default (see [scaling and rotation](#scaling-and-rotation) below
-for changing this), these coordinates are in the PDF's user space scale, which is "points". 
-There are 72 pts/inch, so an 8.5"x11" PDF would have a coordinate system of 612x792.
+to the `location` argument to `add_annotation`. By default these coordinates are in the 
+PDF's user space scale, which is "points". There are 72 pts/inch, so an 8.5"x11" PDF 
+would have a coordinate system of 612x792. See [scaling and rotation](#scaling-and-rotation) below
+for changing the coordinate system.
 
 Annotations that are defined by width/height
 (square, circle, text, etc) require `x1`, `y1`, `x2`, `y2` attributes, while annotations
