@@ -47,7 +47,7 @@ There are 72 pts/inch, so an 8.5"x11" PDF would have a coordinate system of 612x
 Annotations that are defined by width/height
 (square, circle, text, etc) require `x1`, `y1`, `x2`, `y2` attributes, while annotations
 that are defined by a list of points (line, polygon, polyline) require a `points` attribute.
-All annotation require a `page` attribute, which determines which page of the PDF the
+All annotations require a `page` attribute, which determines which page of the PDF the
 annotations will be placed on.
 
 ### Metadata
