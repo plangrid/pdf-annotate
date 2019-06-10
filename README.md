@@ -19,6 +19,40 @@ a.add_annotation(
 )
 a.write('b.pdf')  # or use overwrite=True if you feel lucky
 ```
+### Annotation Types
+`pdf-annotate` includes most of the basic PDF annotation types, leaving out some
+of the more complex interactive types. Contributions for these welcome! Currently supported
+annotation types are:
+
+* square
+* circle
+* line
+* polygon
+* polyline
+* ink
+* text
+* image
+
+### Appearance
+Annotations' appearance is controlled by the `Appearance` class, passed to the
+`appearance` argument to `add_annotation`. Not all attributes
+on this class apply to all annotations; documentation on this is forthcoming.
+
+### Location
+Where an annotation is placed on the PDF is controlled by the `Location` class, passed
+to the `location` argument to `add_annotation`. Annotations that are defined by width/height
+(square, circle, text, etc) require `x1`, `y1`, `x2`, `y2` attributes, while annotations
+that are defined by a list of points (line, polygon, polyline) require a `points` attribute.
+All annotation require a `page` attribute, which determines which page of the PDF the
+annotations will be placed on.
+
+### Metadata
+PDF annotations can contain arbitrary metadata. This is controlled by the `Metadata` class,
+passed to the `metadata` argument to `add_annotation`. By default, annotations will contain
+default values for creation date, modification date, unique name (just a uuid), and the print flag
+set. To leave off any of these, use the `UNSET` singleton. For more context, check out the
+[`Metadata`](https://github.com/plangrid/pdf-annotate/blob/a59e1554f6bb912087932d1c0c4f3524524309fa/pdf_annotate/config/metadata.py#L43)
+class itself.
 
 ### Scaling and rotation
 `pdf-annotate` draws annotations as though you were drawing them in a PDF viewer,
@@ -38,6 +72,19 @@ a.set_page_dimensions((1275, 1650), 0)
 Note that these are the dimensions of an un-rotated 8.5"x11" page rastered at 150 DPI. If the same page is
 rotated 90° or 270°, you would pass in `(1650, 1275)`.
 Setting page dimensions specifically overrides document-wide scale and rotation settings.
+
+## Advanced Usage
+
+### Using the Content Stream
+`pdf-annotate` also includes an abstraction of the PDF content stream that you can use to
+draw arbitrary annotation shapes onto the PDF. To fully take advantage of this feature, we
+recommend reading the relevant parts of the [PDF specification](https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf):
+(Section 8 - Graphics and Section 12.5.5 - Annotation Appearance Streams).
+
+To use an explicit content stream in an annotation, specify the `appearance_stream`
+argument to the `Appearance` object as a `pdf_annotate.graphics.ContentStream` object.
+See the [end-to-end tests](https://github.com/plangrid/pdf-annotate/blob/a59e1554f6bb912087932d1c0c4f3524524309fa/tests/end_to_end/test_annotate_pdf.py#L317)
+for examples.
 
 ## Local Development
 Tests are run against several supported python versions using `tox`. To get this to
