@@ -4,6 +4,8 @@ from unittest import TestCase
 from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
+from pdf_annotate import Metadata
+from pdf_annotate.annotations.text import FreeText
 from pdf_annotate.util.geometry import identity
 from pdf_annotate.util.geometry import translate
 from tests import files
@@ -96,6 +98,31 @@ class TestPdfAnnotator(TestCase):
         # The outer bounding box of the square is padded outward by the stroke
         # width, and then scaled down by two.
         self.assertEqual(square.Rect, ['4.5', '9.5', '10.5', '15.5'])
+
+    def test_add_annotation_unicode_text(self):
+        a = PdfAnnotator(files.SIMPLE)
+        # Act like the PDF was rastered at 144 DPI (2x default user space)
+        a.set_page_dimensions((1224, 1584), 0)
+        a.add_annotation(
+            'text',
+            Location(x1=10, y1=20, x2=20, y2=30, page=0),
+            Appearance(
+                stroke_color=[1, 0, 0],
+                stroke_width=3,
+                fill=[0, 1, 0],
+                content='Testing «ταБЬℓσ»: 1<2 & 4+1>3, now 20% off!',
+                font_size=12,
+                wrap_text=True,
+                fonts={'MyFontyFont': FreeText.make_font_object()},
+            ),
+            Metadata(),
+        )
+        with write_to_temp(a) as t:
+            annotations = load_annotations_from_pdf(t)
+
+        text = annotations.pop()
+        assert len(annotations) == 0
+        assert text.Subtype == '/FreeText'
 
 
 class TestPdfAnnotatorGetTransform(TestCase):

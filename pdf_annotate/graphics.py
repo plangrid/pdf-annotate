@@ -13,6 +13,7 @@ from collections import namedtuple
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
+from pdfrw import PdfString
 
 
 ZERO_TOLERANCE = 0.00000000000001
@@ -142,7 +143,7 @@ class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
 
 class Text(namedtuple('Text', ['text']), NoOpTransformBase):
     def resolve(self):
-        return '({}) Tj'.format(self.text)
+        return PdfString.encode(self.text) + ' Tj'
 
 
 class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
