@@ -131,14 +131,14 @@ class TupleCommand(type):
         if parents == (object,):
                 parents = ()
 
-        new_parents = parents + (BaseCommand, namedtuple_klass)
+        new_parents = (*parents, BaseCommand, namedtuple_klass)
 
         return super(TupleCommand, cls).__new__(cls, name, new_parents, attrs)
 
     def __init__(cls, name, parents, attrs):
         if cls.resolve is BaseCommand.resolve:
             def resolve(self):
-                return ' '.join(list(self) + [self.COMMAND])
+                return ' '.join([*self] + [self.COMMAND])
 
             setattr(cls, 'resolve', resolve)
 
