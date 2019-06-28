@@ -131,7 +131,7 @@ class TupleCommand(type):
         if parents == (object,):
                 parents = ()
 
-        new_parents = (*parents, BaseCommand, namedtuple_klass)
+        new_parents = parents + (BaseCommand, namedtuple_klass)
 
         return super(TupleCommand, cls).__new__(cls, name, new_parents, attrs)
 
