@@ -40,8 +40,8 @@ on this class apply to all annotations; documentation on this is forthcoming.
 
 ### Location
 Where an annotation is placed on the PDF is controlled by the `Location` class, passed
-to the `location` argument to `add_annotation`. By default these coordinates are in the 
-PDF's user space scale, which is "points". There are 72 points/inch, so an 8.5"x11" PDF 
+to the `location` argument to `add_annotation`. By default these coordinates are in the
+PDF's user space scale, which is "points". There are 72 points/inch, so an 8.5"x11" PDF
 would have a coordinate system of 612x792. See [scaling and rotation](#scaling-and-rotation) below
 for changing the coordinate system.
 
@@ -107,4 +107,4 @@ with `expected.pdf` in the same directory. To ensure rotation is handled correct
 there is also `end_to_end_rotated_90.pdf` and corresponding expected file.
 
 By default, the file will be the one generated during the last python version's `tox` run.
-To check a specific version, use e.g. `tox -e py27`.
+To check a specific version, use e.g. `tox -e py35`.

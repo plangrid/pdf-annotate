@@ -12,8 +12,6 @@ from collections import namedtuple
 from functools import total_ordering
 from inspect import isclass
 
-from six import add_metaclass
-
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
@@ -158,20 +156,17 @@ class FloatTupleCommand(TupleCommand):
         setattr(cls, 'from_tokens', from_tokens)
 
 
-@add_metaclass(FloatTupleCommand)
-class StrokeColor(object):
+class StrokeColor(metaclass=FloatTupleCommand):
     COMMAND = 'RG'
     ARGS = ['r', 'g', 'b']
 
 
-@add_metaclass(FloatTupleCommand)
-class StrokeWidth(object):
+class StrokeWidth(metaclass=FloatTupleCommand):
     COMMAND = 'w'
     ARGS = ['width']
 
 
-@add_metaclass(FloatTupleCommand)
-class FillColor(object):
+class FillColor(metaclass=FloatTupleCommand):
     COMMAND = 'rg'
     ARGS = ['r', 'g', 'b']
 
@@ -244,8 +239,7 @@ class Close(BaseCommand):
     COMMAND = 'h'
 
 
-@add_metaclass(TupleCommand)
-class Font(object):
+class Font(metaclass=TupleCommand):
     COMMAND = 'Tf'
     ARGS = ['font', 'font_size']
 
@@ -264,8 +258,7 @@ class Font(object):
         return cls(font, float(font_size))
 
 
-@add_metaclass(TupleCommand)
-class Text(object):
+class Text(metaclass=TupleCommand):
     COMMAND = 'Tj'
     ARGS = ['text']
 
@@ -273,8 +266,7 @@ class Text(object):
         return '({}) {}'.format(self.text, self.COMMAND)
 
 
-@add_metaclass(TupleCommand)
-class XObject(object):
+class XObject(metaclass=TupleCommand):
     COMMAND = 'Do'
     ARGS = ['name']
 
@@ -282,8 +274,7 @@ class XObject(object):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-@add_metaclass(TupleCommand)
-class GraphicsState(object):
+class GraphicsState(metaclass=TupleCommand):
     COMMAND = 'gs'
     ARGS = ['name']
 
@@ -291,8 +282,7 @@ class GraphicsState(object):
         return '/{} {}'.format(self.name, self.COMMAND)
 
 
-@add_metaclass(FloatTupleCommand)
-class Rect(object):
+class Rect(metaclass=FloatTupleCommand):
     COMMAND = 're'
     ARGS = ['x', 'y', 'width', 'height']
 
@@ -302,8 +292,7 @@ class Rect(object):
         return Rect(x, y, width, height)
 
 
-@add_metaclass(FloatTupleCommand)
-class Move(object):
+class Move(metaclass=FloatTupleCommand):
     COMMAND = 'm'
     ARGS = ['x', 'y']
 
@@ -312,8 +301,7 @@ class Move(object):
         return Move(x, y)
 
 
-@add_metaclass(FloatTupleCommand)
-class Line(object):
+class Line(metaclass=FloatTupleCommand):
     COMMAND = 'l'
     ARGS = ['x', 'y']
 
@@ -322,8 +310,7 @@ class Line(object):
         return Line(x, y)
 
 
-@add_metaclass(FloatTupleCommand)
-class Bezier(object):
+class Bezier(metaclass=FloatTupleCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
@@ -337,8 +324,7 @@ class Bezier(object):
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-@add_metaclass(FloatTupleCommand)
-class BezierV(object):
+class BezierV(metaclass=FloatTupleCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
     and (x3, y3) as control points.
     """
@@ -351,8 +337,7 @@ class BezierV(object):
         return BezierV(x2, y2, x3, y3)
 
 
-@add_metaclass(FloatTupleCommand)
-class BezierY(object):
+class BezierY(metaclass=FloatTupleCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x3, y3) as control points.
     """
@@ -393,13 +378,11 @@ class MatrixCommand(TupleCommand):
         setattr(cls, '__init__', __init__)
 
 
-@add_metaclass(MatrixCommand)
-class TextMatrix(object):
+class TextMatrix(metaclass=MatrixCommand):
     COMMAND = 'Tm'
 
 
-@add_metaclass(MatrixCommand)
-class CTM(object):
+class CTM(metaclass=MatrixCommand):
     COMMAND = 'cm'
 
 

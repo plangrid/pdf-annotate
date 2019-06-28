@@ -1,7 +1,5 @@
 from unittest import TestCase
 
-from six import add_metaclass
-
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import Bezier
 from pdf_annotate.graphics import Close
@@ -43,8 +41,7 @@ class TestCommandEquality(TestCase):
             assert StrokeColor(1, 2, 3) < StrokeColor(2, 3 , 4)
 
 
-@add_metaclass(TupleCommand)
-class FakeTupleCommand(object):
+class FakeTupleCommand(metaclass=TupleCommand):
     COMMAND = 'fake'
     ARGS = ['foo', 'bar']
 
@@ -70,8 +67,7 @@ class TestTupleCommand(TestCase):
         assert ft == FakeTupleCommand('one', 'two')
 
 
-@add_metaclass(FloatTupleCommand)
-class FakeFloatTupleCommand(object):
+class FakeFloatTupleCommand(metaclass=FloatTupleCommand):
     COMMAND = 'fake'
     ARGS = ['one', 'two']
 
@@ -87,8 +83,7 @@ class TestFloatTupleCommand(TestCase):
         assert ft == FakeFloatTupleCommand(1, 2)
 
 
-@add_metaclass(MatrixCommand)
-class FakeMatrixCommand(object):
+class FakeMatrixCommand(metaclass=MatrixCommand):
     COMMAND = 'fake'
 
 

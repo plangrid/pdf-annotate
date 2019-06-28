@@ -7,10 +7,8 @@
     :license: MIT, see LICENSE for details.
 """
 import attr
-import six
 
-
-NUMERIC_TYPES = six.integer_types + (float,)
+NUMERIC_TYPES = (int, float)
 
 
 def Boolean(**kwargs):
@@ -19,7 +17,7 @@ def Boolean(**kwargs):
 
 
 def Integer(**kwargs):
-    _add_validator_to_kwargs(kwargs, instance_of(six.integer_types))
+    _add_validator_to_kwargs(kwargs, instance_of(int))
     return attr.ib(**kwargs)
 
 
