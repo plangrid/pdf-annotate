@@ -7,14 +7,9 @@ from pdf_annotate import PdfAnnotator
 from pdf_annotate.util.geometry import identity
 from pdf_annotate.util.geometry import translate
 from tests import files
+from tests.utils import assert_matrices_equal
 from tests.utils import load_annotations_from_pdf
 from tests.utils import write_to_temp
-
-
-def assert_matrices_equal(m, n):
-    _m = [round(v, 7) for v in m]
-    _n = [round(v, 7) for v in n]
-    assert _m == _n
 
 
 class TestPdf(TestCase):
