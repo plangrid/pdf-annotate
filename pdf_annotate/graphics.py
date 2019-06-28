@@ -138,7 +138,7 @@ class TupleCommand(type):
     def __init__(cls, name, parents, attrs):
         if cls.resolve is BaseCommand.resolve:
             def resolve(self):
-                return ' '.join([*self] + [self.COMMAND])
+                return ' '.join(list(self) + [self.COMMAND])
 
             setattr(cls, 'resolve', resolve)
 
