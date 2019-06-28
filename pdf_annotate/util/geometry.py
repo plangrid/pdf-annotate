@@ -90,7 +90,7 @@ def matrix_inverse(matrix):
     """
     a, b, c, d, e, f = matrix
 
-    determinant = a * d - b * c
+    determinant = float(a * d - b * c)
     unscaled = [d, -b, -c, a, c * f - d * e, b * e - a * f]
 
     return [x / determinant for x in unscaled]
