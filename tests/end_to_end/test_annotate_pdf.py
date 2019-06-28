@@ -388,10 +388,10 @@ class EndToEndMixin(object):
         content_stream.extend(get_text_commands(
             x1, y1, x2, y2,
             text=(
-                'Twas brilling and the slithy toves \/\n'
-                'Did gyre and gimbel in the wabe \/\n'
-                'All mimsy were the borogroves \/\n'
-                'And the mome raths outgrabe \/\n'
+                r'Twas brilling and the slithy toves \n'
+                r'Did gyre and gimbel in the wabe \n'
+                r'All mimsy were the borogroves \n'
+                r'And the mome raths outgrabe \n'
             ),
             font_size=font_size,
             wrap_text=True,
