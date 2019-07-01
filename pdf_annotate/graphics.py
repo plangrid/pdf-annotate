@@ -9,6 +9,8 @@
 from __future__ import division
 
 from collections import namedtuple
+from functools import total_ordering
+from inspect import isclass
 
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
@@ -40,13 +42,19 @@ class ContentStream(object):
     )
 
     This would draw a "square" annotation as a line, which is kind of silly,
-    but it show the flexibility for the user to draw more complex annotations.
+    but it shows the flexibility for the user to draw more complex annotations.
     Behind the scenes, the pdf-annotator library transforms the Move and Line
     operations to be properly placed in PDF user space.
     """
 
     def __init__(self, commands=None):
         self.commands = commands or []
+
+    def __eq__(self, other):
+        if not isinstance(other, ContentStream):
+            return False
+
+        return self.resolve() == other.resolve()
 
     def add(self, command):
         self.commands.append(command)
@@ -70,99 +78,213 @@ class ContentStream(object):
         return ContentStream(stream1.commands + stream2.commands)
 
 
-class NoOpTransformBase(object):
+@total_ordering
+class BaseCommand(object):
+    COMMAND = ''
+    NUM_ARGS = 0
+
+    def __eq__(self, other):
+        if self.__class__ is not other.__class__:
+            return False
+
+        return self.resolve() == other.resolve()
+
+    def __ne__(self, other):
+        # yes you really have to define this
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        raise TypeError(
+            'Comparison not supported between instances of {} and {}'.format(
+                self.__class__.__name__,
+                other.__class__.__name__,
+            ),
+        )
+
     def transform(self, t):
         return self
 
-
-class StaticCommand(NoOpTransformBase):
     def resolve(self):
         return self.COMMAND
 
+    @classmethod
+    def _get_tokens(cls, idx, tokens):
+        return tokens[idx-cls.NUM_ARGS:idx]
 
-class StrokeColor(namedtuple('Stroke', ['r', 'g', 'b']), NoOpTransformBase):
-    def resolve(self):
-        return '{} {} {} RG'.format(
-            format_number(self.r),
-            format_number(self.g),
-            format_number(self.b),
-        )
-
-
-class StrokeWidth(namedtuple('StrokeWidth', ['width']), NoOpTransformBase):
-    def resolve(self):
-        return '{} w'.format(format_number(self.width))
+    @classmethod
+    def from_tokens(cls, idx, tokens):
+        return cls(*cls._get_tokens(idx, tokens))
 
 
-class FillColor(namedtuple('Fill', ['r', 'g', 'b']), NoOpTransformBase):
-    def resolve(self):
-        return '{} {} {} rg'.format(
-            format_number(self.r),
-            format_number(self.g),
-            format_number(self.b),
-        )
+class TupleCommand(type):
+    def __new__(cls, name, parents, attrs):
+        namedtuple_klass = namedtuple(name + '_namedtuple', attrs['ARGS'])
+
+        if 'NUM_ARGS' not in attrs:
+            attrs['NUM_ARGS'] = len(attrs['ARGS'])
+
+        attrs.pop('ARGS')
+
+        # don't put object at beginning of MRO
+        if parents == (object,):
+                parents = ()
+
+        new_parents = (*parents, BaseCommand, namedtuple_klass)
+
+        return super(TupleCommand, cls).__new__(cls, name, new_parents, attrs)
+
+    def __init__(cls, name, parents, attrs):
+        if cls.resolve is BaseCommand.resolve:
+            def resolve(self):
+                return ' '.join([*self] + [self.COMMAND])
+
+            setattr(cls, 'resolve', resolve)
 
 
-class BeginText(StaticCommand):
+class FloatTupleCommand(TupleCommand):
+    def __init__(cls, name, parents, attrs):
+        if cls.resolve is BaseCommand.resolve:
+            def resolve(self):
+                return ' '.join([format_number(n) for n in self] + [self.COMMAND])
+
+            setattr(cls, 'resolve', resolve)
+
+        @classmethod
+        def from_tokens(cls, idx, tokens):
+            return cls(*map(float, cls._get_tokens(idx, tokens)))
+
+        setattr(cls, 'from_tokens', from_tokens)
+
+
+class StrokeColor(metaclass=FloatTupleCommand):
+    COMMAND = 'RG'
+    ARGS = ['r', 'g', 'b']
+
+
+class StrokeWidth(metaclass=FloatTupleCommand):
+    COMMAND = 'w'
+    ARGS = ['width']
+
+
+class FillColor(metaclass=FloatTupleCommand):
+    COMMAND = 'rg'
+    ARGS = ['r', 'g', 'b']
+
+
+class BeginText(BaseCommand):
     COMMAND = 'BT'
 
 
-class EndText(StaticCommand):
+class EndText(BaseCommand):
     COMMAND = 'ET'
 
 
-class Stroke(StaticCommand):
+class Stroke(BaseCommand):
     COMMAND = 'S'
 
 
-class StrokeAndFill(StaticCommand):
+class CloseAndStroke(BaseCommand):
+    COMMAND = 's'
+
+
+class StrokeAndFill(BaseCommand):
     COMMAND = 'B'
 
 
-class Fill(StaticCommand):
+class StrokeAndFillEvenOdd(BaseCommand):
+    COMMAND = 'B*'
+
+
+class Fill(BaseCommand):
     COMMAND = 'f'
 
 
-class Save(StaticCommand):
+class ReadOnlyFill(BaseCommand):
+    # PDF reading should accept F as equivalent to f, but only write f.
+    # - Table 60 in PDF spec.
+    COMMAND = 'F'
+
+    def resolve(self):
+        return Fill.COMMAND
+
+
+class FillEvenOdd(BaseCommand):
+    COMMAND = 'f*'
+
+
+class CloseFillAndStroke(BaseCommand):
+    # equivalent to h B
+    COMMAND = 'b'
+
+
+class CloseFillAndStrokeEvenOdd(BaseCommand):
+    # equivalent to h B*
+    COMMAND = 'b*'
+
+
+class EndPath(BaseCommand):
+    # End path without filling or stroking; used for clipping paths.
+    COMMAND = 'n'
+
+
+class Save(BaseCommand):
     COMMAND = 'q'
 
 
-class Restore(StaticCommand):
+class Restore(BaseCommand):
     COMMAND = 'Q'
 
 
-class Close(StaticCommand):
+class Close(BaseCommand):
     COMMAND = 'h'
 
 
-class Font(namedtuple('Font', ['font', 'font_size']), NoOpTransformBase):
+class Font(metaclass=TupleCommand):
+    COMMAND = 'Tf'
+    ARGS = ['font', 'font_size']
+
     def resolve(self):
-        return '/{} {} Tf'.format(self.font, self.font_size)
-
-
-class Text(namedtuple('Text', ['text']), NoOpTransformBase):
-    def resolve(self):
-        return '({}) Tj'.format(self.text)
-
-
-class XObject(namedtuple('XObject', ['name']), NoOpTransformBase):
-    def resolve(self):
-        return '/{} Do'.format(self.name)
-
-
-class GraphicsState(namedtuple('GraphicsState', ['name']), NoOpTransformBase):
-    def resolve(self):
-        return '/{} gs'.format(self.name)
-
-
-class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
-    def resolve(self):
-        return '{} {} {} {} re'.format(
-            format_number(self.x),
-            format_number(self.y),
-            format_number(self.width),
-            format_number(self.height),
+        return '/{} {} {}'.format(
+            self.font,
+            format_number(self.font_size),
+            self.COMMAND,
         )
+
+    @classmethod
+    def from_tokens(cls, idx, tokens):
+        # PDF spec calls font_size a "scale parameter" which implies > 0, but it
+        # doesn't declare constraints on it. Unclear if/how we should validate.
+        font, font_size = cls._get_tokens(idx, tokens)
+        return cls(font, float(font_size))
+
+
+class Text(metaclass=TupleCommand):
+    COMMAND = 'Tj'
+    ARGS = ['text']
+
+    def resolve(self):
+        return '({}) {}'.format(self.text, self.COMMAND)
+
+
+class XObject(metaclass=TupleCommand):
+    COMMAND = 'Do'
+    ARGS = ['name']
+
+    def resolve(self):
+        return '/{} {}'.format(self.name, self.COMMAND)
+
+
+class GraphicsState(metaclass=TupleCommand):
+    COMMAND = 'gs'
+    ARGS = ['name']
+
+    def resolve(self):
+        return '/{} {}'.format(self.name, self.COMMAND)
+
+
+class Rect(metaclass=FloatTupleCommand):
+    COMMAND = 're'
+    ARGS = ['x', 'y', 'width', 'height']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
@@ -170,35 +292,30 @@ class Rect(namedtuple('Rect', ['x', 'y', 'width', 'height'])):
         return Rect(x, y, width, height)
 
 
-class Move(namedtuple('Move', ['x', 'y'])):
-    def resolve(self):
-        return '{} {} m'.format(format_number(self.x), format_number(self.y))
+class Move(metaclass=FloatTupleCommand):
+    COMMAND = 'm'
+    ARGS = ['x', 'y']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Move(x, y)
 
 
-class Line(namedtuple('Line', ['x', 'y'])):
-    def resolve(self):
-        return '{} {} l'.format(format_number(self.x), format_number(self.y))
+class Line(metaclass=FloatTupleCommand):
+    COMMAND = 'l'
+    ARGS = ['x', 'y']
 
     def transform(self, t):
         x, y = transform_point((self.x, self.y), t)
         return Line(x, y)
 
 
-class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
+class Bezier(metaclass=FloatTupleCommand):
     """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
     and (x2, y2) as control points.
     """
-
-    def resolve(self):
-        formatted = [
-            format_number(n) for n in
-            (self.x1, self.y1, self.x2, self.y2, self.x3, self.y3)
-        ]
-        return '{} {} {} {} {} {} c'.format(*formatted)
+    COMMAND = 'c'
+    ARGS = ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']
 
     def transform(self, t):
         x1, y1 = transform_point((self.x1, self.y1), t)
@@ -207,24 +324,66 @@ class Bezier(namedtuple('Bezier', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])):
         return Bezier(x1, y1, x2, y2, x3, y3)
 
 
-class CTM(namedtuple('CTM', ['matrix']), NoOpTransformBase):
-    def resolve(self):
-        return '{} {} {} {} {} {} cm'.format(
-            *[format_number(n) for n in self.matrix]
-        )
+class BezierV(metaclass=FloatTupleCommand):
+    """Cubic bezier curve, from the current point to (x3, y3), using (x2, y2)
+    and (x3, y3) as control points.
+    """
+    COMMAND = 'v'
+    ARGS = ['x2', 'y2', 'x3', 'y3']
 
     def transform(self, t):
-        return CTM(matrix_multiply(t, self.matrix))
+        x2, y2 = transform_point((self.x2, self.y2), t)
+        x3, y3 = transform_point((self.x3, self.y3), t)
+        return BezierV(x2, y2, x3, y3)
 
 
-class TextMatrix(namedtuple('TextMatrix', ['matrix']), NoOpTransformBase):
-    def resolve(self):
-        return '{} {} {} {} {} {} Tm'.format(
-            *[format_number(n) for n in self.matrix]
-        )
+class BezierY(metaclass=FloatTupleCommand):
+    """Cubic bezier curve, from the current point to (x3, y3), using (x1, y1)
+    and (x3, y3) as control points.
+    """
+    COMMAND = 'y'
+    ARGS = ['x1', 'y1', 'x3', 'y3']
 
     def transform(self, t):
-        return TextMatrix(matrix_multiply(t, self.matrix))
+        x1, y1 = transform_point((self.x1, self.y1), t)
+        x3, y3 = transform_point((self.x3, self.y3), t)
+        return BezierY(x1, y1, x3, y3)
+
+
+class MatrixCommand(TupleCommand):
+    def __new__(cls, name, parents, attrs):
+        attrs['ARGS'] = ['matrix']
+        attrs['NUM_ARGS'] = 6
+
+        return super(MatrixCommand, cls).__new__(cls, name, parents, attrs)
+
+    def __init__(cls, name, parents, attrs):
+        def transform(self, t):
+            return cls(matrix_multiply(t, self.matrix))
+
+        def resolve(self):
+            return ' '.join([format_number(n) for n in self.matrix] + [self.COMMAND])
+
+        @classmethod
+        def from_tokens(cls, idx, tokens):
+            return cls([float(tok) for tok in cls._get_tokens(idx, tokens)])
+
+        def __init__(self, matrix):
+            if len(matrix) != 6:
+                raise ValueError('go away you bad dude')
+
+        setattr(cls, 'transform', transform)
+        setattr(cls, 'resolve', resolve)
+        setattr(cls, 'from_tokens', from_tokens)
+        setattr(cls, '__init__', __init__)
+
+
+class TextMatrix(metaclass=MatrixCommand):
+    COMMAND = 'Tm'
+
+
+class CTM(metaclass=MatrixCommand):
+    COMMAND = 'cm'
 
 
 def format_number(n):
