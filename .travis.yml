@@ -9,3 +9,13 @@ install:
     - pip install -r requirements/tests.txt
     - pip install -e .
 script: pytest
+deploy:
+    provider: pypi
+    user: plangrid
+    distributions: "sdist bdist_wheel"
+    skip_existing: true
+    password:
+        secure: "bUdPJ+PzDGEC8VifwLmY7EQGfbHs3hLxRIL4LwS/WkcHlE19RhNy7Xl9L0fw+84/LEWUQKeV6ngPGrgcb/rcmwEkNUJGWqOmx3HTXTXFaGnwAddH0X6n4dZi3zfB+z99HwXX/3zaNF3KW1Sa5JuUL8WjcgVaXSNv/5FHc2o2SwECyHJ5vGtXrwES0yQwGuCXa/3I2Rew8IX/K00L30Un78tryusaBD2soVHXuzfCHeeiZzU3avsbEDYyAIRy+UyIG4eJ2rYdbkrbej15A5aCmkN2hvTIJLuA1GbrIJZ6keTR5nuSE3X5WymwreG0BXP5tRvornp/GzctPvfCExvymdl1fC4xzovWWBySSvfYzZCN0j70yYKHdhlkvpvHB1m0cO61F7Xi6lXdqu7hmeCSQS8+z4gcVMtlL6D4YA895fB7ImucziJv9osHVQ7sugwaytpoPorhci8Wb+DrW3AEIKeP0H90aAUzhT0rd1EL8oy3BLAnRhKQX73uIu7AgvjyugRj9JcRUjLZGBmMUc7LKI2Vi8tHAncje/bpCVVY0tZ3auBxi2ZkvAVUxENFeftL2hKPs2EjDRcN4H4EHSTna9PWFgXD8t6aLiu9ldc1tKyNrLxXfvtKRPufHz9lzgEfhhypbihn4qwYkYdKfMY4/6xmMN4ent1muspFQmqhQi4="
+    on:
+        tags: true
+        branch: master
