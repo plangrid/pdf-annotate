@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pdf-annotate',
-    version='0.7.3',
+    version='0.8.0',
     description='Add annotations to PDFs',
     author='Michael Bryant',
     author_email='smart-recordset@plangrid.com',
@@ -16,4 +16,9 @@ setup(
         'pdfrw>=0.4',
         'pillow>=5.2.0',  # this could probably be lower, but it's not tested
     ],
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ]
 )
