@@ -1,21 +1,21 @@
 dist: xenial
 language: python
 python:
-    - "3.5"
-    - "3.6"
-    - "3.7"
-    - "3.8-dev"
+- '3.5'
+- '3.6'
+- '3.7'
+- 3.8-dev
 install:
-    - pip install -r requirements/tests.txt
-    - pip install -e .
+- pip install -r requirements/tests.txt
+- pip install -e .
 script: pytest
 deploy:
-    provider: pypi
-    user: plangrid
-    distributions: "sdist bdist_wheel"
-    skip_existing: true
-    password:
-        secure: "bUdPJ+PzDGEC8VifwLmY7EQGfbHs3hLxRIL4LwS/WkcHlE19RhNy7Xl9L0fw+84/LEWUQKeV6ngPGrgcb/rcmwEkNUJGWqOmx3HTXTXFaGnwAddH0X6n4dZi3zfB+z99HwXX/3zaNF3KW1Sa5JuUL8WjcgVaXSNv/5FHc2o2SwECyHJ5vGtXrwES0yQwGuCXa/3I2Rew8IX/K00L30Un78tryusaBD2soVHXuzfCHeeiZzU3avsbEDYyAIRy+UyIG4eJ2rYdbkrbej15A5aCmkN2hvTIJLuA1GbrIJZ6keTR5nuSE3X5WymwreG0BXP5tRvornp/GzctPvfCExvymdl1fC4xzovWWBySSvfYzZCN0j70yYKHdhlkvpvHB1m0cO61F7Xi6lXdqu7hmeCSQS8+z4gcVMtlL6D4YA895fB7ImucziJv9osHVQ7sugwaytpoPorhci8Wb+DrW3AEIKeP0H90aAUzhT0rd1EL8oy3BLAnRhKQX73uIu7AgvjyugRj9JcRUjLZGBmMUc7LKI2Vi8tHAncje/bpCVVY0tZ3auBxi2ZkvAVUxENFeftL2hKPs2EjDRcN4H4EHSTna9PWFgXD8t6aLiu9ldc1tKyNrLxXfvtKRPufHz9lzgEfhhypbihn4qwYkYdKfMY4/6xmMN4ent1muspFQmqhQi4="
-    on:
-        tags: true
-        branch: master
+  provider: pypi
+  user: plangrid
+  distributions: sdist bdist_wheel
+  skip_existing: true
+  on:
+    tags: true
+    branch: master
+  password:
+    secure: HgqYcE6hrhWg/orHzgI6yOnC0+B3K3zCXWFH0MvJtHcWiksbOwaFstriHcD3aIz2burRY+vWqQcf/PAfDuE2WLKQ/z4uNESXd09+GRGYfQkfDAUP1oocfjb2bSLJeRwflMDVAuipg8YZtTs6YhAzjFn8ZjtDNZAXS2qRJoX4606efGIK8Kfp+aPy5Pcshc6JGVoip5JMv/509JZASprDmK4mS7/xVcdTWTOfmM1fNDbW9XGj1k39raT2/xOvc+QqFX+J05rJr8bxtf3/7uY0QwS9h3StmTRSjU54aIgPwNUUFEMnntwUhdorjQQbEWFk3OBu87DkFz1XUw2Di6aOcDG0scI7t/Lpa9qSglDE0Q8f0di2hdQP21m8+/547WO6YYf8sg4AE5NAHvPu66+FWvnKPppXJE+chFw+BWcltXjHnRhVIzl2y8BbogEDRYkYBy04vclCFiURMw0vf1w4c5hD6m6u/GSOtwRMwdEmm0bjJ7Smq3XVnuo7uTFN+/CTbdq/973SiMaSplhm2ceeGezvDPcViMDily1zTq+txocCioBQdLl40891oA7I37dSStkqZ15nf9CY89gZEP2LqunzqPxxdm62UI7TjmFeL4VCBiZgdY4P/uKLogA5orB2rwmt+wJlKAAy8y2X/Atycl4SlsvZ1QhJqWiO+zZde30=
