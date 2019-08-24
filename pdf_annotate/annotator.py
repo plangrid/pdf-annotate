@@ -46,8 +46,8 @@ NAME_TO_ANNOTATION = {
 
 class PDF(object):
 
-    def __init__(self, filename):
-        self._reader = PdfReader(filename)
+    def __init__(self, pdf_reader):
+        self._reader = pdf_reader
         self.pdf_version = self._reader.private.pdfdict.version
 
     def get_page(self, page_number):
@@ -67,19 +67,20 @@ class PDF(object):
 
 class PdfAnnotator(object):
 
-    def __init__(self, filename, scale=None):
+    def __init__(self, file_or_reader, scale=None):
         """Draw annotations directly on PDFs. Annotations are always drawn on
         as if you're drawing them in a viewer, i.e. they take into account page
         rotation and weird, translated coordinate spaces.
 
-        :param str filename: file of PDF to read in
+        :param str|PdfReader file_or_reader: filename of PDF or pdfrw.PdfReader
         :param number|tuple|None scale: number by which to scale coordinates
             to get to default user space. Use this if, for example, your points
             in the coordinate space of the PDF viewed at a dpi. In this case,
             scale would be 72/dpi. Can also specify a 2-tuple of x and y scale.
         """
-        self._filename = filename
-        self._pdf = PDF(filename)
+        if isinstance(file_or_reader, str):
+            file_or_reader = PdfReader(file_or_reader)
+        self._pdf = PDF(file_or_reader)
         self._scale = self._expand_scale(scale)
         self._dimensions = {}
 

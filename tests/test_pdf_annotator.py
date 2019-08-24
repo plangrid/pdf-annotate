@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from unittest import TestCase
 
+from pdfrw import PdfReader
+
 from pdf_annotate import Appearance
 from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
@@ -12,19 +14,11 @@ from tests.utils import load_annotations_from_pdf
 from tests.utils import write_to_temp
 
 
-class TestPdf(TestCase):
-
-    def test_get_page(self):
-        pass
-
-    def test_get_page_out_of_bounds(self):
-        pass
-
-    def test_get_rotation(self):
-        pass
-
-
 class TestPdfAnnotator(TestCase):
+
+    def test_init_with_reader(self):
+        a = PdfAnnotator(PdfReader(files.SIMPLE))
+        assert a._pdf is not None
 
     def test_get_page_bounding_box(self):
         a = PdfAnnotator(files.SIMPLE)
