@@ -20,6 +20,11 @@ class TestPdfAnnotator(TestCase):
         a = PdfAnnotator(PdfReader(files.SIMPLE))
         assert a._pdf is not None
 
+    def test_write_with_compress_off_smoke_test(self):
+        a = PdfAnnotator(PdfReader(files.SIMPLE), compress=False)
+        with write_to_temp(a) as t:
+            assert load_annotations_from_pdf(t) is None
+
     def test_get_page_bounding_box(self):
         a = PdfAnnotator(files.SIMPLE)
         # The simple file has both MediaBox and CropBox set to the same value

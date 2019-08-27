@@ -67,7 +67,7 @@ class PDF(object):
 
 class PdfAnnotator(object):
 
-    def __init__(self, file_or_reader, scale=None):
+    def __init__(self, file_or_reader, scale=None, compress=True):
         """Draw annotations directly on PDFs. Annotations are always drawn on
         as if you're drawing them in a viewer, i.e. they take into account page
         rotation and weird, translated coordinate spaces.
@@ -77,12 +77,14 @@ class PdfAnnotator(object):
             to get to default user space. Use this if, for example, your points
             in the coordinate space of the PDF viewed at a dpi. In this case,
             scale would be 72/dpi. Can also specify a 2-tuple of x and y scale.
+        :param bool compress: whether to output flate-compressed PDFs
         """
         if isinstance(file_or_reader, str):
             file_or_reader = PdfReader(file_or_reader)
         self._pdf = PDF(file_or_reader)
         self._scale = self._expand_scale(scale)
         self._dimensions = {}
+        self._compress = compress
 
     def _expand_scale(self, scale):
         if scale is None:
@@ -311,5 +313,8 @@ class PdfAnnotator(object):
         if overwrite:
             filename = self._filename
 
-        writer = PdfWriter(version=self._pdf.pdf_version)
+        writer = PdfWriter(
+            version=self._pdf.pdf_version,
+            compress=self._compress,
+        )
         writer.write(fname=filename, trailer=self._pdf._reader)
