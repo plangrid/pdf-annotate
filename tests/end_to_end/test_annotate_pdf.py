@@ -30,7 +30,7 @@ from pdf_annotate.graphics import StrokeAndFill
 from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
-from tests.files import GIF_FILES, BASIC
+from tests.files import GIF_FILES
 from tests.files import JPEG_FILES
 from tests.files import PNG_FILES
 from tests.files import ROTATED_180

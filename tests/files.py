@@ -4,7 +4,6 @@ import os.path
 dirname, _ = os.path.split(os.path.abspath(__file__))
 
 SIMPLE = os.path.join(dirname, 'pdfs', 'simple.pdf')
-BASIC = os.path.join(dirname, 'pdfs', 'basic.pdf')
 ROTATED_90 = os.path.join(dirname, 'pdfs', 'rotated_90.pdf')
 ROTATED_180 = os.path.join(dirname, 'pdfs', 'rotated_180.pdf')
 ROTATED_270 = os.path.join(dirname, 'pdfs', 'rotated_270.pdf')
