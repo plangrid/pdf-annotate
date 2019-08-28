@@ -19,7 +19,7 @@ class TestFontMetrics(TestCase):
         glyph_set = [glyph]
         cids = [15]
         widths = FontMetrics._format_widths(glyph_set, cmap, cids)
-        p.assert_called_once()
+        assert p.call_count == 1
         assert widths == [15, 15, 250]
 
     def test__format_widths_constant_segment(self):
@@ -34,6 +34,7 @@ class TestFontMetrics(TestCase):
         glyph_set = [glyph, glyph, glyph]
         cids = [15, 16, 17]
         widths = FontMetrics._format_widths(glyph_set, cmap, cids)
+        assert p.call_count == 3
         assert widths == [15, 17, 250]
 
     def test__format_widths_both(self):
@@ -59,4 +60,7 @@ class TestFontMetrics(TestCase):
         glyph_set = [glyph, glyph2, glyph3]
         cids = [15, 16, 17, 19, 20, 22, 23, 24]
         widths = FontMetrics._format_widths(glyph_set, cmap, cids)
+        assert p.call_count == 4
+        assert p2.call_count == 3
+        assert p3.call_count == 1
         assert widths == [15, 17, 400, 19, 20, 800, 22, [600, 800, 400]]
