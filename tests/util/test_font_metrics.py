@@ -1,12 +1,12 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, PropertyMock
 
-from pdf_annotate.util.font_metrics import FontMetrics
+from pdf_annotate.util.true_type_font import TrueTypeFont
 
 
 class TestFontMetrics(TestCase):
     def test__format_widths_empty(self):
-        widths = FontMetrics._format_widths({}, {}, [])
+        widths = TrueTypeFont._format_widths({}, {}, [])
         assert widths == []
 
     def test__format_widths_single(self):
@@ -18,7 +18,7 @@ class TestFontMetrics(TestCase):
         type(glyph).width = p
         glyph_set = [glyph]
         cids = [15]
-        widths = FontMetrics._format_widths(glyph_set, cmap, cids)
+        widths = TrueTypeFont._format_widths(glyph_set, cmap, cids)
         assert p.call_count == 1
         assert widths == [15, 15, 250]
 
@@ -33,7 +33,7 @@ class TestFontMetrics(TestCase):
         type(glyph).width = p
         glyph_set = [glyph, glyph, glyph]
         cids = [15, 16, 17]
-        widths = FontMetrics._format_widths(glyph_set, cmap, cids)
+        widths = TrueTypeFont._format_widths(glyph_set, cmap, cids)
         assert p.call_count == 3
         assert widths == [15, 17, 250]
 
@@ -59,7 +59,7 @@ class TestFontMetrics(TestCase):
         type(glyph3).width = p3
         glyph_set = [glyph, glyph2, glyph3]
         cids = [15, 16, 17, 19, 20, 22, 23, 24]
-        widths = FontMetrics._format_widths(glyph_set, cmap, cids)
+        widths = TrueTypeFont._format_widths(glyph_set, cmap, cids)
         assert p.call_count == 4
         assert p2.call_count == 3
         assert p3.call_count == 1
