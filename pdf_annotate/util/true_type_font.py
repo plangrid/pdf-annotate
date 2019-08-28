@@ -17,11 +17,19 @@ class TrueTypeFont:
     """
     def __init__(self, path, font_name):
         self.ttfPath = path
-        self.ttfFont = TTFont(self.ttfPath)
+        self._ttfFont = TTFont(self.ttfPath)
         # Subsetted fonts have 6 random letters prepended to their names
         self.fontName = 'RXMLFT+' + font_name
 
-        self.metrics = self._calculate(self.ttfFont)
+        self.metrics = self._calculate(self._ttfFont)
+
+    def get_glyph_id(self, glyph_name):
+        """
+        Wrapper for getting a glyph name via font tools.
+        :param glyph_name: The name of the glyph we're retrieving.
+        :return: The corresponding glyph ID.
+        """
+        return self._ttfFont['glyf'].getGlyphID(glyph_name)
 
     @staticmethod
     def _calculate(font):

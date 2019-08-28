@@ -133,7 +133,7 @@ class FreeText(Annotation):
             # TODO: What is the expectation here since PDF only supports two bytes lookups?
             if cc >= mapping_size:
                 continue
-            glyph_id = tt_font.ttfFont['glyf'].getGlyphID(glyph_name)
+            glyph_id = tt_font.get_glyph_id(glyph_name)
             cid_to_gid_map[cc * 2] = chr(glyph_id >> 8)
             cid_to_gid_map[cc * 2 + 1] = chr(glyph_id & 0xFF)
         cid_to_gid_map = ''.join(cid_to_gid_map)
