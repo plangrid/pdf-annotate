@@ -35,11 +35,24 @@ class FontMetrics:
 
     @property
     def flags(self):
+        """
+        See Section 9.8.2 - Font Descriptor Flags of PDF 1.7 Spec
+        Bit 1 - FixedPitch
+        Bit 2 - Serif
+        Bit 3 - Symbolic
+        Bit 4 - Script
+        Bit 6 - Nonsymbolic
+        Bit 7 - Italic
+        Bit 17 - AllCap
+        Bit 18 - SmallCap
+        Bit 19 - ForceBold
+        :return:
+        """
         flags = 4
         if self.italicAngle != 0:
-            self.flags = self.flags | 64
+            flags = flags | 64
         if self.usWeightClass >= 600:
-            self.flags = self.flags | 262144
+            flags = flags | 262144
         if self.isFixedPitch:
-            self.flags = self.flags | 1
+            flags = flags | 1
         return flags

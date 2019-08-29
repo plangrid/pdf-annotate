@@ -19,6 +19,7 @@ class TrueTypeFont:
         self.ttfPath = path
         self._ttfFont = TTFont(self.ttfPath)
         # Subsetted fonts have 6 random letters prepended to their names
+        # See section 9.6.4 - Font Subsets of the PDF 1.7 Spec
         self.fontName = 'RXMLFT+' + font_name
 
         self.metrics = self._calculate(self._ttfFont)
@@ -96,19 +97,19 @@ class TrueTypeFont:
         widths = TrueTypeFont._format_widths(glyph_set, cmap, cids)
 
         return FontMetrics(
-            italic_angle,
-            us_weight_class,
-            is_fixed_pitch,
-            units_per_em,
-            scale,
-            bbox,
-            ascent,
-            descent,
-            cap_height,
-            stem_v,
-            default_width,
-            widths,
-            cmap,
+            italicAngle=italic_angle,
+            usWeightClass=us_weight_class,
+            isFixedPitch=is_fixed_pitch,
+            unitsPerEm=units_per_em,
+            scale=scale,
+            bbox=bbox,
+            ascent=ascent,
+            descent=descent,
+            capHeight=cap_height,
+            stemV=stem_v,
+            defaultWidth=default_width,
+            widths=widths,
+            cmap=cmap,
         )
 
     @staticmethod
