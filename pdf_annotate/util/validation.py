@@ -36,6 +36,16 @@ def String(**kwargs):
     return attr.ib(**kwargs)
 
 
+def List(**kwargs):
+    _add_validator_to_kwargs(kwargs, instance_of(list))
+    return attr.ib(**kwargs)
+
+
+def Dict(**kwargs):
+    _add_validator_to_kwargs(kwargs, instance_of(dict))
+    return attr.ib(**kwargs)
+
+
 def Color(**kwargs):
     """Color value. Can be specified as three-item list/tuple (RGB) or four-
     item list/tuple (RGBA).

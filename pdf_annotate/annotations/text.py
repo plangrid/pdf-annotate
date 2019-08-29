@@ -9,12 +9,12 @@
 """
 import os.path
 
-from pdfrw import PdfDict
-from pdfrw import PdfName
 from PIL import ImageFont
+from pdfrw import PdfDict, PdfArray, PdfString, IndirectPdfDict
+from pdfrw import PdfName
 
-from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
+from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.config.constants import DEFAULT_BASE_FONT
 from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
@@ -28,9 +28,9 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
+from pdf_annotate.util.true_type_font import TrueTypeFont
 from pdf_annotate.util.geometry import translate
 from pdf_annotate.util.text import get_wrapped_lines
-
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -69,6 +69,155 @@ class FreeText(Annotation):
         obj.BS = _make_border_dict(width=0, style='S')
         # TODO DS is required to have BB not redraw the annotation in their own
         # style when you edit it.
+
+    @staticmethod
+    def make_font_file_object(tt_font):
+        """Make an embedded font object from the true type font itself.
+
+        :param TrueTypeFont tt_font: Our utility class used to parse and calculate font metrics
+        from a true type font.
+        :returns PdfDict: font file PdfDict object stream.
+        """
+        # TODO: make subset font here
+        with open(tt_font.ttfPath, 'rb') as font_file:
+            data = font_file.read()
+
+        # Let's let pdfrw handle compressing streams
+        return IndirectPdfDict(stream=data.decode('Latin-1'))
+
+    @staticmethod
+    def make_to_unicode_object():
+        """Make a toUnicode object which allows the PDF reader to derive content from the PDF
+        with the CIDFont embedded.  This map converts from CIDs to Unicode code points.
+
+        :returns PdfDict: toUnicode CMAP PdfDict object.
+        """
+        # See section 9.10.3 ToUnicode CMaps of PDF 1.6 Spec
+        # TODO: For now we put an empty mapping in.
+        return IndirectPdfDict(stream='\n'.join((
+            "/CIDInit /ProcSet findresource begin",
+            "12 dict begin",
+            "begincmap",
+            "/CIDSystemInfo",
+            "<</Registry (Adobe)",
+            "/Ordering (UCS)",
+            "/Supplement 0",
+            ">> def",
+            "/CMapName /Adobe-Identity-UCS def",
+            "/CMapType 2 def",
+            "1 begincodespacerange",
+            "<0000> <FFFF>",
+            "endcodespacerange",
+            "1 beginbfrange",
+            "<0000> <FFFF> <0000>",
+            "endbfrange",
+            "endcmap",
+            "CMapName currentdict /CMap defineresource pop",
+            "end",
+            "end"
+        )))
+
+    @staticmethod
+    def make_cid_to_gid_map_object(tt_font):
+        """Make a CID to GID map that is used to map character ids to glyph ids in the font.
+
+        :param TrueTypeFont tt_font: Our utility class used to parse and calculate font metrics
+        from a true type font.
+        :returns PdfDict: CIDtoGID PdfDict object.
+        """
+        # Let's make this as large as possibly addressable for now, it will compress nicely.
+        mapping_size = 256 * 256
+        cid_to_gid_map = ["\x00"] * mapping_size * 2
+
+        for cc, glyph_name in tt_font.metrics.cmap.items():
+            # TODO: What is the expectation here since PDF only supports two bytes lookups?
+            if cc >= mapping_size:
+                continue
+            glyph_id = tt_font.get_glyph_id(glyph_name)
+            cid_to_gid_map[cc * 2] = chr(glyph_id >> 8)
+            cid_to_gid_map[cc * 2 + 1] = chr(glyph_id & 0xFF)
+        cid_to_gid_map = ''.join(cid_to_gid_map)
+
+        # Let's let pdfrw handle the compressing of streams
+        return IndirectPdfDict(stream=cid_to_gid_map)
+
+    @staticmethod
+    def make_font_descriptor_object(tt_font):
+        """Make a Font Descriptor object containing some calculated metrics
+        for the font.
+
+        :param TrueTypeFont tt_font: Our utility class used to parse and calculate font metrics
+        from a true type font.
+        :returns PdfDict: Font Descriptor PdfDict object.
+        """
+        return IndirectPdfDict(
+            Type=PdfName('FontDescriptor'),
+            FontName=PdfName(tt_font.fontName),
+            Flags=tt_font.metrics.flags,
+            FontBBox=tt_font.metrics.bbox,
+            ItalicAngle=int(tt_font.metrics.italicAngle),
+            Ascent=int(round(tt_font.metrics.ascent, 0)),
+            Descent=int(round(tt_font.metrics.descent, 0)),
+            CapHeight=int(round(tt_font.metrics.capHeight, 0)),
+            StemV=int(round(tt_font.metrics.stemV, 0)),
+            MissingWidth=int(round(tt_font.metrics.defaultWidth, 0)),
+            FontFile2=FreeText.make_font_file_object(tt_font)
+        )
+
+    @staticmethod
+    def make_cid_system_info_object():
+        """Make a CID System Info object.
+
+        :returns PdfDict: CID System Info PdfDict object.
+        """
+        return IndirectPdfDict(
+            Registry=PdfString('(Adobe)'),
+            Ordering=PdfString('(UCS)'),
+            Supplement=0
+        )
+
+    @staticmethod
+    def make_cid_font_object(tt_font):
+        """Make a CID Type 2 font object for including as a descendant of a composite
+        Type 0 font object.
+
+        :param TrueTypeFont tt_font: Our utility class used to parse and calculate font metrics
+        from a true type font.
+        :returns PdfDict: CID Font Type 2 PdfDict object.
+        """
+        return IndirectPdfDict(
+            Type=PdfName('Font'),
+            Subtype=PdfName('CIDFontType2'),
+            BaseFont=PdfName(tt_font.fontName),
+            CIDSystemInfo=FreeText.make_cid_system_info_object(),
+            FontDescriptor=FreeText.make_font_descriptor_object(tt_font),
+            DW=int(round(tt_font.metrics.defaultWidth, 0)),
+            Widths=PdfArray(tt_font.metrics.widths),
+            CIDToGIDMap=FreeText.make_cid_to_gid_map_object(tt_font),
+        )
+
+    @staticmethod
+    def make_composite_font_object(font_file_path):
+        """Make a PDF Type0 composite font object for embedding in the annotation's
+        Resources dict.
+
+        :param str font_file_path: The path and filename to the true type font we want to embed.
+        :returns PdfDict: Resources PdfDict object, ready to be included in the
+            Resources 'Font' subdictionary.
+        """
+        # TODO: Get font name from font program itself
+        tt_font = TrueTypeFont(font_file_path, DEFAULT_BASE_FONT)
+
+        return IndirectPdfDict(
+            Type=PdfName('Font'),
+            Subtype=PdfName('Type0'),
+            BaseFont=PdfName(tt_font.fontName),
+            Encoding=PdfName('Identity-H'),
+            DescendantFonts=PdfArray([
+                FreeText.make_cid_font_object(tt_font)
+            ]),
+            ToUnicode=FreeText.make_to_unicode_object()
+        )
 
     @staticmethod
     def make_font_object():

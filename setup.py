@@ -14,7 +14,8 @@ setup(
     install_requires=[
         'attrs>=18.1.0',  # this could probably be lower, but it's not tested
         'pdfrw>=0.4',
-        'pillow>=5.2.0',  # this could probably be lower, but it's not tested
+        'pillow>=5.2.0',  # this could probably be lower, but it's not tested'
+        'fonttools>=3.44.0'
     ],
     classifiers=[
         'Programming Language :: Python :: 3',

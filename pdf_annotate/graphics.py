@@ -10,12 +10,10 @@ from __future__ import division
 
 from collections import namedtuple
 from functools import total_ordering
-from inspect import isclass
 
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
-
 
 ZERO_TOLERANCE = 0.00000000000001
 

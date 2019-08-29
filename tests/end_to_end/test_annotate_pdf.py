@@ -433,3 +433,4 @@ class TestEndToEndRotated180(EndToEndMixin, TestCase):
 class TestEndToEndRotated270(EndToEndMixin, TestCase):
     INPUT_FILENAME = ROTATED_270
     OUTPUT_FILENAME = 'end_to_end_rotated_270.pdf'
+

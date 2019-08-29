@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pdf_annotate.annotations.text import FreeText
+from pdf_annotate.annotations.text import FreeText, HELVETICA_PATH
 from pdf_annotate.config.appearance import Appearance
 from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
 from pdf_annotate.config.location import Location
@@ -30,3 +30,16 @@ class TestText(TestCase):
         assert obj.Rect == [x1, y1, x2, y2]
         assert obj.AP.N.BBox == [x1, y1, x2, y2]
         assert obj.AP.N.Matrix == translate(-x1, -y1)
+
+    def test_make_composite_font(self):
+        font = FreeText.make_composite_font_object(HELVETICA_PATH)
+        keys = font.keys()
+        expected_keys = ['/Type', '/Subtype', '/BaseFont', '/Encoding', '/DescendantFonts', '/ToUnicode']
+        assert all(key in keys for key in expected_keys)
+        assert font['/Type'] == '/Font'
+        assert font['/Subtype'] == '/Type0'
+        assert len(font['/DescendantFonts']) == 1
+        descendant_font = font['/DescendantFonts'][0]
+        assert descendant_font['/Type'] == '/Font'
+        assert descendant_font['/Subtype'] == '/CIDFontType2'
+        assert descendant_font['/BaseFont'] == font['/BaseFont']

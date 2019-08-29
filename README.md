@@ -93,7 +93,7 @@ for examples.
 
 ## Local Development
 Tests are run against several supported python versions using `tox`. To get this to
-work, you need versioned python executables - e.g. `python3.5` - in your path.
+work, you need versioned python executables - e.g. `python3.6` - in your path.
 
 An opinionated setup, which assumes you have certain python versions installed,
 and that you use `pyenv`, is provided by `make setup`. After this you can run
@@ -107,4 +107,4 @@ with `expected.pdf` in the same directory. To ensure rotation is handled correct
 there is also `end_to_end_rotated_90.pdf` and corresponding expected file.
 
 By default, the file will be the one generated during the last python version's `tox` run.
-To check a specific version, use e.g. `tox -e py35`.
+To check a specific version, use e.g. `tox -e py36`.
