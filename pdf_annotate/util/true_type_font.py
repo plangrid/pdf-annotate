@@ -7,6 +7,7 @@
     :license: MIT, see LICENSE for details.
 """
 from fontTools.ttLib import TTFont
+
 from pdf_annotate.util.font_metrics import FontMetrics
 
 
@@ -15,7 +16,8 @@ class TrueTypeFont:
     Used to load a true type font and calculate font metrics from it that are
     needed to embed the font program in a PDF.
     """
-    def __init__(self, path, font_name):
+
+    def __init__(self, path, font_name, font_size=None):
         self.ttfPath = path
         self._ttfFont = TTFont(self.ttfPath)
         # Subsetted fonts have 6 random letters prepended to their names
@@ -23,6 +25,8 @@ class TrueTypeFont:
         self.fontName = 'RXMLFT+' + font_name
 
         self.metrics = self._calculate(self._ttfFont)
+        self._glyph_set = self._ttfFont.getGlyphSet()
+        self._font_size = font_size
 
     def get_glyph_id(self, glyph_name):
         """
@@ -31,6 +35,30 @@ class TrueTypeFont:
         :return: The corresponding glyph ID.
         """
         return self._ttfFont['glyf'].getGlyphID(glyph_name)
+
+    def measure_text(self, text, font_size=None):
+        """Measure a block of text using the font's metrics. If the text
+        contains characters the font does not define, the .notdef character's
+        width is used.
+
+        :param str text: The text to measure
+        :param int|None font_size: Font size (in em units) to scale
+            measurements. If missing, self._font_size is used.
+        :returns int: width of text
+        """
+        font_size = font_size if font_size is not None else self._font_size
+        if font_size is None:
+            raise ValueError('Font size must be specified')
+
+        total_width = 0
+        notdef_width = self._glyph_set['.notdef'].width
+        for character in text:
+            # If the cmap doesn't contain the character, this'll just return
+            # None for the glyph and use .notdef
+            glyph = self._glyph_set.get(self.metrics.cmap.get(ord(character)))
+            total_width += glyph.width if glyph is not None else notdef_width
+        # Scale total width by font size
+        return total_width * font_size / self.metrics.unitsPerEm
 
     @staticmethod
     def _calculate(font):

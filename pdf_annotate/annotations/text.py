@@ -9,12 +9,14 @@
 """
 import os.path
 
-from PIL import ImageFont
-from pdfrw import PdfDict, PdfArray, PdfString, IndirectPdfDict
+from pdfrw import IndirectPdfDict
+from pdfrw import PdfArray
+from pdfrw import PdfDict
 from pdfrw import PdfName
+from pdfrw import PdfString
 
-from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.annotations.base import _make_border_dict
+from pdf_annotate.annotations.base import Annotation
 from pdf_annotate.config.constants import DEFAULT_BASE_FONT
 from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
@@ -28,9 +30,9 @@ from pdf_annotate.graphics import Restore
 from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
-from pdf_annotate.util.true_type_font import TrueTypeFont
 from pdf_annotate.util.geometry import translate
 from pdf_annotate.util.text import get_wrapped_lines
+from pdf_annotate.util.true_type_font import TrueTypeFont
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -294,11 +296,17 @@ def get_text_commands(
     :param str baseline: 'top'|'middle'|'bottom'
     :param number line_spacing: multiplier to determine line spacing
     """
-    font = ImageFont.truetype(HELVETICA_PATH, size=int(round(font_size)))
+    font = TrueTypeFont(
+        path=HELVETICA_PATH,
+        font_name=DEFAULT_BASE_FONT,
+        font_size=font_size,
+    )
 
-    def measure(text): return font.getsize(text)[0]
-
-    lines = get_wrapped_lines(text, measure, x2 - x1) if wrap_text else [text]
+    lines = get_wrapped_lines(
+        text=text,
+        measure=font.measure_text,
+        max_length=x2 - x1,
+    ) if wrap_text else [text]
     # Line breaking cares about the whitespace in the string, but for the
     # purposes of laying out the broken lines, we want to measure the lines
     # without trailing/leading whitespace.
@@ -311,7 +319,7 @@ def get_text_commands(
         line_spacing,
         baseline,
     )
-    xs = _get_horizontal_coordinates(lines, x1, x2, measure, align)
+    xs = _get_horizontal_coordinates(lines, x1, x2, font.measure_text, align)
     commands = []
     for line, x, y in zip(lines, xs, y_coords):
         commands.extend([
