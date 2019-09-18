@@ -11,6 +11,27 @@ from fontTools.ttLib import TTFont
 from pdf_annotate.util.font_metrics import FontMetrics
 
 
+_FONT_CACHE = {}
+
+
+def get_true_type_font(path, font_name, font_size=None):
+    """Helper to avoid having to reload font from disk multiple times in a session
+
+    :param str path: path to .ttf font file
+    :param str font_name: name of the font to be included in the PDF file
+    :param int|None font_size:
+    :returns TrueTypeFont:
+    """
+    key = (path, font_name, font_size)
+    font = _FONT_CACHE.get(key)
+    if font is not None:
+        return font
+
+    font = TrueTypeFont(path, font_name, font_size)
+    _FONT_CACHE[key] = font
+    return font
+
+
 class TrueTypeFont:
     """
     Used to load a true type font and calculate font metrics from it that are

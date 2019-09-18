@@ -32,7 +32,8 @@ from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.util.geometry import translate
 from pdf_annotate.util.text import get_wrapped_lines
-from pdf_annotate.util.true_type_font import TrueTypeFont
+from pdf_annotate.util.true_type_font import get_true_type_font
+
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -208,7 +209,7 @@ class FreeText(Annotation):
             Resources 'Font' subdictionary.
         """
         # TODO: Get font name from font program itself
-        tt_font = TrueTypeFont(font_file_path, DEFAULT_BASE_FONT)
+        tt_font = get_true_type_font(font_file_path, DEFAULT_BASE_FONT)
 
         return IndirectPdfDict(
             Type=PdfName('Font'),
@@ -296,7 +297,7 @@ def get_text_commands(
     :param str baseline: 'top'|'middle'|'bottom'
     :param number line_spacing: multiplier to determine line spacing
     """
-    font = TrueTypeFont(
+    font = get_true_type_font(
         path=HELVETICA_PATH,
         font_name=DEFAULT_BASE_FONT,
         font_size=font_size,

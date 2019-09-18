@@ -1,7 +1,9 @@
+from unittest import mock
 from unittest import TestCase
 
 from pdf_annotate.annotations.text import HELVETICA_PATH
 from pdf_annotate.config.constants import DEFAULT_BASE_FONT
+from pdf_annotate.util.true_type_font import get_true_type_font
 from pdf_annotate.util.true_type_font import TrueTypeFont
 
 
@@ -45,3 +47,16 @@ class TestTrueTypeFont(TestCase):
         font = TrueTypeFont(HELVETICA_PATH, DEFAULT_BASE_FONT)
         with self.assertRaises(ValueError):
             font.measure_text('hi')
+
+    def test_font_cache(self):
+        get_true_type_font(HELVETICA_PATH, DEFAULT_BASE_FONT)
+        with mock.patch('pdf_annotate.util.true_type_font.TrueTypeFont') as mock_get:
+            get_true_type_font(HELVETICA_PATH, DEFAULT_BASE_FONT)
+
+        assert not mock_get.called
+
+        # Using different params means you skip the cache
+        with mock.patch('pdf_annotate.util.true_type_font.TrueTypeFont') as mock_get:
+            get_true_type_font(HELVETICA_PATH, DEFAULT_BASE_FONT, 16)
+
+        assert mock_get.called
