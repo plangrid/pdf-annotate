@@ -16,6 +16,7 @@ from pdf_annotate.config.constants import ALLOWED_LINE_JOINS
 from pdf_annotate.config.constants import BLACK
 from pdf_annotate.config.constants import DEFAULT_BORDER_STYLE
 from pdf_annotate.config.constants import DEFAULT_CONTENT
+from pdf_annotate.config.constants import DEFAULT_TEXT_ANNOT_NAME
 from pdf_annotate.config.constants import DEFAULT_FONT_SIZE
 from pdf_annotate.config.constants import DEFAULT_LINE_SPACING
 from pdf_annotate.config.constants import DEFAULT_STROKE_WIDTH
@@ -71,6 +72,7 @@ class Appearance(object):
     text_baseline = Enum(ALLOWED_BASELINES, default=TEXT_BASELINE_MIDDLE)
     line_spacing = Number(default=DEFAULT_LINE_SPACING, validator=positive)
     wrap_text = Boolean(default=True)
+    text_name = String(default=DEFAULT_TEXT_ANNOT_NAME)
 
     # Image attributes
     image = String(default=None)
