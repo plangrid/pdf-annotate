@@ -259,8 +259,8 @@ class PdfAnnotator(object):
 
         scale_matrix = scale(*_scale)
 
-        x_translate = 0 + bounding_box[0]
-        y_translate = 0 + bounding_box[1]
+        x_translate = 0 + min(bounding_box[0],bounding_box[2])
+        y_translate = 0 + min(bounding_box[1],bounding_box[3])
         mb_translate = translate(x_translate, y_translate)
 
         # Because of how rotation works the point isn't rotated around an axis,
