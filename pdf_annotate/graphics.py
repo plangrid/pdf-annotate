@@ -125,7 +125,7 @@ class TupleCommand(type):
 
         # don't put object at beginning of MRO
         if parents == (object,):
-                parents = ()
+            parents = ()
 
         new_parents = (*parents, BaseCommand, namedtuple_klass)
 

@@ -1,2 +1,0 @@
-pre-commit==1.10.5
-pytest==4.6.2

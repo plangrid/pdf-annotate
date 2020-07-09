@@ -17,6 +17,14 @@ setup(
         'pillow>=5.2.0',  # this could probably be lower, but it's not tested'
         'fonttools>=3.44.0'
     ],
+    extras_require={
+        'tests': [
+            'pre-commit',
+            'pytest',
+            'coverage',
+            'flake8',
+        ],
+    },
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',

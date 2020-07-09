@@ -11,10 +11,10 @@ from pdf_annotate.util.geometry import translate
 class TestMatrixMath(TestCase):
     def test_multiply_identity(self):
         matrix = [1, 2, 3, 4, 5, 6]
-        I = identity()
+        ident = identity()
 
-        assert matrix == matrix_multiply(matrix, I)
-        assert matrix == matrix_multiply(I, matrix)
+        assert matrix == matrix_multiply(matrix, ident)
+        assert matrix == matrix_multiply(ident, matrix)
 
     def test_translates_add(self):
         T1 = translate(3, 5)
@@ -72,6 +72,6 @@ class TestMatrixMath(TestCase):
         assert M1 == matrix_multiply(T, S, R)
 
     def test_invert_identity(self):
-        I = identity()
+        ident = identity()
 
-        assert I == matrix_inverse(I)
+        assert ident == matrix_inverse(ident)

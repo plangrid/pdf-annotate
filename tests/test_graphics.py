@@ -38,7 +38,7 @@ class TestCommandEquality(TestCase):
 
     def test_no_ordering(self):
         with self.assertRaises(TypeError):
-            assert StrokeColor(1, 2, 3) < StrokeColor(2, 3 , 4)
+            assert StrokeColor(1, 2, 3) < StrokeColor(2, 3, 4)
 
 
 class FakeTupleCommand(metaclass=TupleCommand):
