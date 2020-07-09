@@ -26,6 +26,12 @@ jobs:
       run: |
         pip install -U pip
         pip install -e .[tests]
+    - name: Syntax Checking
+      run: |
+        flake8
     - name: Run Tests
       run: |
-        python -m pytest
+        coverage run -m pytest
+    - name: Coverage
+      run: |
+        coverage report

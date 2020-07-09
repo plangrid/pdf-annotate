@@ -20,7 +20,9 @@ setup(
     extras_require={
         'tests': [
             'pre-commit',
-            'pytest'
+            'pytest',
+            'coverage',
+            'flake8',
         ],
     },
     classifiers=[
