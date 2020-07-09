@@ -1,0 +1,31 @@
+name: Pdf Annotate Pull Request Tests
+
+on:
+- pull_request
+
+jobs:
+  tests:
+    name: Testing on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        python:
+        - 3.5
+        - 3.6
+        - 3.7
+        - 3.8
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python:${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: "Test with ${{matrix.libraries}}"
+      run: |
+        pip install -U pip
+        pip install -e .[tests]
+    - name: Run Tests
+      run: |
+        python -m pytest
