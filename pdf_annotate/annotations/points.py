@@ -33,7 +33,7 @@ class PointsAnnotation(Annotation):
         L = self._location
         stroke_width = self._appearance.stroke_width
         p = L.points[0]
-        min_x, max_x, min_y, max_y = p[0], p[1], p[0], p[1]
+        min_x, max_x, min_y, max_y = p[0], p[0], p[1], p[1]
         for x, y in L.points:
             min_x = min(min_x, x)
             max_x = max(max_x, x)
