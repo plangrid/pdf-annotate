@@ -1,7 +1,6 @@
 from setuptools import find_packages
 from setuptools import setup
 
-
 setup(
     name='pdf-annotate',
     version='0.11.0',
