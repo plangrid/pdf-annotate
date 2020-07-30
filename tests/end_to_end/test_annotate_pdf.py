@@ -249,6 +249,13 @@ class EndToEndMixin(object):
                 Location(x1=x, y1=y1, x2=(x + 40), y2=y2, page=0),
                 appearance,
             )
+            # TODO: Proper way to enable?
+            # a.add_annotation(
+            #     'note',
+            #     Location(x1=(x + 10), y1=y1, x2=(x + 40), y2=y2, page=0),
+            #     appearance,
+            # )
+
 
     def _add_rounded_rectangles(self, a):
         """Add a few rounded rectangles with different border radii."""

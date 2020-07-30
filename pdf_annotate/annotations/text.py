@@ -14,6 +14,7 @@ from pdfrw import PdfArray
 from pdfrw import PdfDict
 from pdfrw import PdfName
 from pdfrw import PdfString
+from pdfrw import PdfObject
 
 from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
@@ -41,6 +42,31 @@ HELVETICA_PATH = os.path.join(
     'fonts',
     'Helvetica.ttf',
 )
+
+class NoteText(Annotation):
+    subtype = 'Text'
+
+    def make_rect(self):
+        L = self._location
+        return [L.x1, L.y1, L.x2, L.y2]
+
+    def add_additional_pdf_object_data(self, obj):
+        obj.Contents = self._appearance.content
+        obj.C = self._appearance.fill
+        # NOTE: See PDF "Text" Annot section in Ref Document for valid values.
+        obj.Name = PdfName(self._appearance.text_name)
+        obj.F = 0
+        # NOTE: We currently need to override what gets inserted by default.
+        obj.AP = ContentStream([]).resolve()
+        obj.Open = PdfObject('true')
+
+    def make_default_appearance(self):
+        obj.C = [0.5, 0.5, 0.5]
+        return ContentStream([])
+
+    def make_appearance_stream(self):
+        # Not needed. Necessary to satisfy Annotation interface
+        return ContentStream([])
 
 
 class FreeText(Annotation):

@@ -20,6 +20,7 @@ from pdf_annotate.annotations.points import Polyline
 from pdf_annotate.annotations.rect import Circle
 from pdf_annotate.annotations.rect import Square
 from pdf_annotate.annotations.text import FreeText
+from pdf_annotate.annotations.text import NoteText
 from pdf_annotate.config.metadata import Metadata
 from pdf_annotate.config.metadata import UNSET
 from pdf_annotate.graphics import ContentStream
@@ -40,6 +41,7 @@ NAME_TO_ANNOTATION = {
     'polyline': Polyline,
     'ink': Ink,
     'text': FreeText,
+    'note': NoteText,
     'image': Image,
 }
 
