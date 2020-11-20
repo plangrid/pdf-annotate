@@ -261,7 +261,8 @@ class Text(metaclass=TupleCommand):
     ARGS = ['text']
 
     def resolve(self):
-        return '({}) {}'.format(self.text, self.COMMAND)
+        # PDFs require backslashes to be escaped
+        return '({}) {}'.format(self.text.replace('\\', '\\\\'), self.COMMAND)
 
 
 class XObject(metaclass=TupleCommand):
