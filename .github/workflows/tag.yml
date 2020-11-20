@@ -2,7 +2,7 @@ name: Pdf Annotate Release Publish
 
 on:
   release:
-    types: [created]
+    types: [created, published]
 
 jobs:
   build-n-publish:
