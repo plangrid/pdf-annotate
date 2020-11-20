@@ -1,8 +1,8 @@
 .PHONY: setup test
 
-PY35 ?= '3.5.9'
-PY36 ?= '3.6.10'
-PY37 ?= '3.7.7'
+PY35 ?= '3.5.10'
+PY36 ?= '3.6.12'
+PY37 ?= '3.7.9'
 
 setup:
 	-pyenv virtualenv -p python3.5 $(PY35) py35-pdf-annotate
