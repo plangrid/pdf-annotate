@@ -132,9 +132,9 @@ class PdfAnnotator(object):
         rotation = self._pdf.get_rotation(page_number)
 
         if rotation in (0, 180):
-            return (x2 - x1, y2 - y1)
+            return (abs(x2 - x1), abs(y2 - y1))
 
-        return (y2 - y1, x2 - x1)
+        return (abs(y2 - y1), abs(x2 - x1))
 
     def add_annotation(
         self,
