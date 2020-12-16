@@ -2,10 +2,11 @@ from unittest import TestCase
 
 from pdf_annotate.annotations.text import FreeText, HELVETICA_PATH
 from pdf_annotate.config.appearance import Appearance
-from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
+from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT, DEFAULT_BASE_FONT
 from pdf_annotate.config.location import Location
 from pdf_annotate.util.geometry import identity
 from pdf_annotate.util.geometry import translate
+from pdf_annotate.util.true_type_font import get_true_type_font
 
 
 class TestText(TestCase):
@@ -49,7 +50,8 @@ class TestText(TestCase):
         ).format(PDF_ANNOTATOR_FONT)
 
     def test_make_composite_font(self):
-        font = FreeText.make_composite_font_object(HELVETICA_PATH)
+        tt_font = get_true_type_font(HELVETICA_PATH, DEFAULT_BASE_FONT)
+        font = FreeText.make_composite_font_object(tt_font)
         keys = font.keys()
         expected_keys = ['/Type', '/Subtype', '/BaseFont', '/Encoding', '/DescendantFonts', '/ToUnicode']
         assert all(key in keys for key in expected_keys)

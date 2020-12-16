@@ -9,9 +9,10 @@ from pdf_annotate import Location
 from pdf_annotate import PdfAnnotator
 from pdf_annotate.annotations.image import Image
 from pdf_annotate.annotations.rect import add_rounded_rectangle
-from pdf_annotate.annotations.text import FreeText
+from pdf_annotate.annotations.text import FreeText, HELVETICA_PATH
 from pdf_annotate.annotations.text import get_text_commands
 from pdf_annotate.config import constants
+from pdf_annotate.config.constants import DEFAULT_BASE_FONT
 from pdf_annotate.config.graphics_state import GraphicsState
 from pdf_annotate.graphics import BeginText
 from pdf_annotate.graphics import ContentStream
@@ -30,6 +31,7 @@ from pdf_annotate.graphics import StrokeAndFill
 from pdf_annotate.graphics import StrokeColor
 from pdf_annotate.graphics import StrokeWidth
 from pdf_annotate.graphics import XObject
+from pdf_annotate.util.true_type_font import get_true_type_font
 from tests.files import GIF_FILES
 from tests.files import JPEG_FILES
 from tests.files import PNG_FILES
@@ -378,6 +380,7 @@ class EndToEndMixin(object):
     def _add_explicit_text_annotation(self, a):
         x1, y1, x2, y2 = 110, 310, 200, 350
         font_size = 4
+        font = get_true_type_font(HELVETICA_PATH, DEFAULT_BASE_FONT)
 
         content_stream = ContentStream([
             Save(),
@@ -398,6 +401,7 @@ class EndToEndMixin(object):
             align=constants.TEXT_ALIGN_LEFT,
             baseline=constants.TEXT_BASELINE_TOP,
             line_spacing=1.2,
+            font=font,
         ))
         content_stream.extend([
             EndText(),

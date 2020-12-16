@@ -44,11 +44,12 @@ def unshift_token(text):
     return {'text': token, 'separator': '', 'remainder': ''}
 
 
-def unshift_line(text, measure, max_length):
+def unshift_line(text, measure, font_size, max_length):
     """Remove a line of text from a string.
 
     :param str text: text to be broken
     :param func measure: function that takes a string and returns its width
+    :param float font_size: the desired font size for this text
     :param int max_length: max width of each line
     :returns: {'text': str, 'remainder': str}
     """
@@ -63,7 +64,7 @@ def unshift_line(text, measure, max_length):
             if len(token_text) > 0:
                 # This allows us to add partial tokens for the first token
                 for char in token_text:
-                    if measure(line + char) > max_length:
+                    if measure(line + char, font_size) > max_length:
                         line = char if len(line) == 0 else line
                         return {
                             'text': line,
@@ -81,7 +82,7 @@ def unshift_line(text, measure, max_length):
                     'remainder': text[len(line) + len(separator):],
                 }
         else:
-            if measure(line + token_text) <= max_length:
+            if measure(line + token_text, font_size) <= max_length:
                 line += token_text
                 if separator == '\n' or remainder == '':
                     return {'text': line, 'remainder': remainder}
@@ -91,7 +92,7 @@ def unshift_line(text, measure, max_length):
                 return {'text': line, 'remainder': text[len(line):]}
 
 
-def get_wrapped_lines(text, measure, max_length):
+def get_wrapped_lines(text, measure, font_size, max_length):
     """Break a string of text into lines wrapped to max_length.
 
     The algorithm is the same one used in the PGBS TextElement in web-viewer,
@@ -99,12 +100,26 @@ def get_wrapped_lines(text, measure, max_length):
 
     :param str text: text to be broken
     :param func measure: function that takes a string and returns its width
+    :param float font_size: the desired font size for this text
     :param int max_length: max width of each line
     :returns: list of strings
     """
-    line = unshift_line(text, measure, max_length)
+    line = unshift_line(text, measure, font_size, max_length)
     lines = [line['text']]
     while (len(line['remainder']) > 0):
-        line = unshift_line(line['remainder'], measure, max_length)
+        line = unshift_line(line['remainder'], measure, font_size, max_length)
         lines.append(line['text'])
     return lines
+
+
+def is_unicode(text: str) -> bool:
+    """Determines if text contains characters that mandate the usage of a unicode font.
+
+    :param str text: text to be checked
+    :returns: True if text requires a unicode font, else False"""
+    try:
+        text.encode(encoding='utf-8').decode('ascii')
+    except UnicodeDecodeError:
+        return True
+    else:
+        return False

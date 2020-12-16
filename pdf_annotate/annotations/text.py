@@ -7,6 +7,7 @@
     :copyright: Copyright 2019 Autodesk, Inc.
     :license: MIT, see LICENSE for details.
 """
+import io
 import os.path
 
 from pdfrw import IndirectPdfDict
@@ -17,7 +18,7 @@ from pdfrw import PdfString
 
 from pdf_annotate.annotations.base import _make_border_dict
 from pdf_annotate.annotations.base import Annotation
-from pdf_annotate.config.constants import DEFAULT_BASE_FONT
+from pdf_annotate.config.constants import DEFAULT_BASE_FONT, CHINESE_BASE_FONT
 from pdf_annotate.config.constants import GRAPHICS_STATE_NAME
 from pdf_annotate.config.constants import PDF_ANNOTATOR_FONT
 from pdf_annotate.graphics import BeginText
@@ -31,15 +32,22 @@ from pdf_annotate.graphics import Save
 from pdf_annotate.graphics import Text
 from pdf_annotate.graphics import TextMatrix
 from pdf_annotate.util.geometry import translate
-from pdf_annotate.util.text import get_wrapped_lines
-from pdf_annotate.util.true_type_font import get_true_type_font
-
+from pdf_annotate.util.text import get_wrapped_lines, is_unicode
+from pdf_annotate.util.true_type_font import get_true_type_font, TrueTypeFont, SubsetTrueTypeFont, \
+    get_subset_true_type_font
 
 HELVETICA_PATH = os.path.join(
     os.path.dirname(__file__),
     '..',
     'fonts',
     'Helvetica.ttf',
+)
+
+SIMSUN_PATH = os.path.join(
+    os.path.dirname(__file__),
+    '..',
+    'fonts',
+    'SimSun.ttf',
 )
 
 
@@ -81,8 +89,9 @@ class FreeText(Annotation):
         from a true type font.
         :returns PdfDict: font file PdfDict object stream.
         """
-        # TODO: make subset font here
-        with open(tt_font.ttfPath, 'rb') as font_file:
+        with io.BytesIO() as font_file:
+            tt_font.ttf_font.save(font_file)
+            font_file.seek(0)
             data = font_file.read()
 
         # Let's let pdfrw handle compressing streams
@@ -155,7 +164,7 @@ class FreeText(Annotation):
         """
         return IndirectPdfDict(
             Type=PdfName('FontDescriptor'),
-            FontName=PdfName(tt_font.fontName),
+            FontName=PdfName(tt_font.font_name),
             Flags=tt_font.metrics.flags,
             FontBBox=tt_font.metrics.bbox,
             ItalicAngle=int(tt_font.metrics.italicAngle),
@@ -191,7 +200,7 @@ class FreeText(Annotation):
         return IndirectPdfDict(
             Type=PdfName('Font'),
             Subtype=PdfName('CIDFontType2'),
-            BaseFont=PdfName(tt_font.fontName),
+            BaseFont=PdfName(tt_font.font_name),
             CIDSystemInfo=FreeText.make_cid_system_info_object(),
             FontDescriptor=FreeText.make_font_descriptor_object(tt_font),
             DW=int(round(tt_font.metrics.defaultWidth, 0)),
@@ -200,24 +209,21 @@ class FreeText(Annotation):
         )
 
     @staticmethod
-    def make_composite_font_object(font_file_path):
+    def make_composite_font_object(font):
         """Make a PDF Type0 composite font object for embedding in the annotation's
         Resources dict.
 
-        :param str font_file_path: The path and filename to the true type font we want to embed.
+        :param TrueTypeFont font: The subsetted true type font we want to embed.
         :returns PdfDict: Resources PdfDict object, ready to be included in the
             Resources 'Font' subdictionary.
         """
-        # TODO: Get font name from font program itself
-        tt_font = get_true_type_font(font_file_path, DEFAULT_BASE_FONT)
-
         return IndirectPdfDict(
             Type=PdfName('Font'),
             Subtype=PdfName('Type0'),
-            BaseFont=PdfName(tt_font.fontName),
+            BaseFont=PdfName(font.font_name),
             Encoding=PdfName('Identity-H'),
             DescendantFonts=PdfArray([
-                FreeText.make_cid_font_object(tt_font)
+                FreeText.make_cid_font_object(font)
             ]),
             ToUnicode=FreeText.make_to_unicode_object()
         )
@@ -237,7 +243,29 @@ class FreeText(Annotation):
             Encoding=PdfName('WinAnsiEncoding'),
         )
 
+    @staticmethod
+    def get_font_as_pdf_object(font):
+        if isinstance(font, SubsetTrueTypeFont):
+            return FreeText.make_composite_font_object(font=font)
+        else:
+            return FreeText.make_font_object()
+
+    @staticmethod
+    def get_true_type_font(text):
+        if is_unicode(text):
+            return get_subset_true_type_font(
+                text=text,
+                path=SIMSUN_PATH,
+                font_name=CHINESE_BASE_FONT,
+            )
+        else:
+            return get_true_type_font(
+                path=HELVETICA_PATH,
+                font_name=DEFAULT_BASE_FONT,
+            )
+
     def add_additional_resources(self, resources):
+        # TODO: This only include the standard font for now
         font_dict = PdfDict()
         font_dict[PdfName(PDF_ANNOTATOR_FONT)] = self.make_font_object()
         resources[PdfName('Font')] = font_dict
@@ -245,6 +273,8 @@ class FreeText(Annotation):
     def make_appearance_stream(self):
         A = self._appearance
         L = self._location
+
+        font = FreeText.get_true_type_font(A.content)
 
         stream = ContentStream([
             Save(),
@@ -266,6 +296,7 @@ class FreeText(Annotation):
             align=A.text_align,
             baseline=A.text_baseline,
             line_spacing=A.line_spacing,
+            font=font,
         ))
         stream.extend([
             EndText(),
@@ -279,6 +310,7 @@ def get_text_commands(
     x1, y1, x2, y2,
     text, font_size, wrap_text,
     align, baseline, line_spacing,
+    font,
 ):
     """Return the graphics stream commands necessary to render a free text
     annotation, given the various parameters.
@@ -296,16 +328,12 @@ def get_text_commands(
     :param str align: 'left'|'center'|'right'
     :param str baseline: 'top'|'middle'|'bottom'
     :param number line_spacing: multiplier to determine line spacing
+    :param TrueTypeFont font: the font to use for this text, if not supplied the default is used
     """
-    font = get_true_type_font(
-        path=HELVETICA_PATH,
-        font_name=DEFAULT_BASE_FONT,
-        font_size=font_size,
-    )
-
     lines = get_wrapped_lines(
         text=text,
         measure=font.measure_text,
+        font_size=font_size,
         max_length=x2 - x1,
     ) if wrap_text else [text]
     # Line breaking cares about the whitespace in the string, but for the
@@ -320,7 +348,7 @@ def get_text_commands(
         line_spacing,
         baseline,
     )
-    xs = _get_horizontal_coordinates(lines, x1, x2, font.measure_text, align)
+    xs = _get_horizontal_coordinates(lines, x1, x2, font.measure_text, font_size, align)
     commands = []
     for line, x, y in zip(lines, xs, y_coords):
         commands.extend([
@@ -358,7 +386,7 @@ def _get_vertical_coordinates(
     return [first_y - (i * line_spacing) for i in range(len(lines))]
 
 
-def _get_horizontal_coordinates(lines, x1, x2, measure, align):
+def _get_horizontal_coordinates(lines, x1, x2, measure, font_size, align):
     # NOTE: this padding is to keep text annotations as they are from cutting
     # off text at the edges in certain conditions. The annotation rectangle
     # and how PDFs draw text needs to be revisited, as this padding shouldn't
@@ -367,10 +395,10 @@ def _get_horizontal_coordinates(lines, x1, x2, measure, align):
     if align == 'left':
         return [x1 + PADDING for _ in range(len(lines))]
     elif align == 'center':
-        widths = [measure(line) for line in lines]
+        widths = [measure(line, font_size) for line in lines]
         max_width = x2 - x1
         return [x1 + ((max_width - width) / 2.0) - PADDING for width in widths]
     else:  # right
-        widths = [measure(line) for line in lines]
+        widths = [measure(line, font_size) for line in lines]
         max_width = x2 - x1
         return [x1 + (max_width - width) - PADDING for width in widths]

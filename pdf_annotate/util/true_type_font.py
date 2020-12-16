@@ -6,30 +6,77 @@
     :copyright: Copyright 2019 Autodesk, Inc.
     :license: MIT, see LICENSE for details.
 """
+import copy
+
+from fontTools.subset import Subsetter
 from fontTools.ttLib import TTFont
 
 from pdf_annotate.util.font_metrics import FontMetrics
 
-
+# Subsetted fonts have 6 random letters prepended to their names
+# See section 9.6.4 - Font Subsets of the PDF 1.7 Spec
+_FONT_NAME_PREFIX = 'RXMLFT+'
 _FONT_CACHE = {}
 
 
-def get_true_type_font(path, font_name, font_size=None):
+def get_true_type_font(path, font_name):
     """Helper to avoid having to reload font from disk multiple times in a session
 
     :param str path: path to .ttf font file
     :param str font_name: name of the font to be included in the PDF file
-    :param int|None font_size:
     :returns TrueTypeFont:
     """
-    key = (path, font_name, font_size)
+    key = (path, font_name)
     font = _FONT_CACHE.get(key)
     if font is not None:
         return font
 
-    font = TrueTypeFont(path, font_name, font_size)
+    font = TrueTypeFont(path, font_name)
     _FONT_CACHE[key] = font
     return font
+
+
+def get_subset_true_type_font(text, path, font_name):
+    """Helper to avoid having to reload font from disk multiple times in a session
+
+    :param str text: the glyphs to include in the subsetted font
+    :param str path: path to .ttf font file
+    :param str font_name: name of the font to be included in the PDF file
+    :returns SubsetTrueTypeFont:
+    """
+    subset_font_name = _FONT_NAME_PREFIX + font_name
+    key = (path, subset_font_name)
+    font = _FONT_CACHE.get(key)
+    if font is not None:
+        # Ensure this font was created with the appropriate glyphs
+        if set(text).issubset(set(font.text)):
+            return font
+        # TODO: subclass
+        raise Exception('A suitable subset font was not found with these glyphs')
+
+    # TODO: subclass
+    raise Exception('A suitable subset font was not found with these glyphs')
+
+
+def create_and_cache_subset_font(text, path, font_name):
+    """
+    Helper to create a subsetted true type font including the glyphs for the passed in text.
+    :param str text: The glyphs to be included in the subset font.
+    :param str path: path to .ttf font file
+    :param str font_name: name of the font to be included in the PDF file
+    :return: SubsetTrueTypeFont:
+    """
+    subset_font_name = _FONT_NAME_PREFIX + font_name
+    key = (path, subset_font_name)
+
+    full_font = get_true_type_font(path, font_name)
+    font = SubsetTrueTypeFont(text, full_font)
+    _FONT_CACHE[key] = font
+    return font
+
+
+class MetricsParsingError(Exception):
+    pass
 
 
 class TrueTypeFont:
@@ -38,16 +85,27 @@ class TrueTypeFont:
     needed to embed the font program in a PDF.
     """
 
-    def __init__(self, path, font_name, font_size=None):
-        self.ttfPath = path
-        self._ttfFont = TTFont(self.ttfPath)
-        # Subsetted fonts have 6 random letters prepended to their names
-        # See section 9.6.4 - Font Subsets of the PDF 1.7 Spec
-        self.fontName = 'RXMLFT+' + font_name
+    def __init__(self, path, font_name):
+        self.font_name = font_name
+        self.ttf_font = TTFont(path)
 
-        self.metrics = self._calculate(self._ttfFont)
-        self._glyph_set = self._ttfFont.getGlyphSet()
-        self._font_size = font_size
+        self._metrics = None
+        self._font_glyph_set = None
+
+    @property
+    def _glyph_set(self):
+        if self._font_glyph_set is None:
+            self._font_glyph_set = self.ttf_font.getGlyphSet()
+
+        return self._font_glyph_set
+
+    @property
+    def metrics(self):
+        # Lazy load metrics as it can take a long time to calculate on a large font if we only need it for the subset
+        if self._metrics is None:
+            self._metrics = self._calculate(self.ttf_font)
+
+        return self._metrics
 
     def get_glyph_id(self, glyph_name):
         """
@@ -55,19 +113,18 @@ class TrueTypeFont:
         :param glyph_name: The name of the glyph we're retrieving.
         :return: The corresponding glyph ID.
         """
-        return self._ttfFont['glyf'].getGlyphID(glyph_name)
+        return self.ttf_font['glyf'].getGlyphID(glyph_name)
 
-    def measure_text(self, text, font_size=None):
+    def measure_text(self, text, font_size):
         """Measure a block of text using the font's metrics. If the text
         contains characters the font does not define, the .notdef character's
         width is used.
 
         :param str text: The text to measure
         :param int|None font_size: Font size (in em units) to scale
-            measurements. If missing, self._font_size is used.
+            measurements.
         :returns int: width of text
         """
-        font_size = font_size if font_size is not None else self._font_size
         if font_size is None:
             raise ValueError('Font size must be specified')
 
@@ -210,5 +267,22 @@ class TrueTypeFont:
         return widths
 
 
-class MetricsParsingError(Exception):
-    pass
+class SubsetTrueTypeFont(TrueTypeFont):
+    """
+    Used to load a true type font and calculate font metrics from it that are
+    needed to embed the font program in a PDF.
+    """
+
+    def __init__(self, text, font):
+        self.font_name = _FONT_NAME_PREFIX + font.font_name
+
+        # Create a subset of the true type font based on the characters we need
+        ttf_font = copy.deepcopy(font.ttf_font)
+        subsetter = Subsetter()
+        subsetter.populate(text=text)
+        subsetter.subset(ttf_font)
+        self.ttf_font = ttf_font
+
+        self._metrics = None
+        self._font_glyph_set = None
+        self.text = text

@@ -11,9 +11,12 @@ from __future__ import division
 from collections import namedtuple
 from functools import total_ordering
 
+from pdfrw import PdfString
+
 from pdf_annotate.util.geometry import matrix_multiply
 from pdf_annotate.util.geometry import transform_point
 from pdf_annotate.util.geometry import transform_vector
+from pdf_annotate.util.text import is_unicode
 
 ZERO_TOLERANCE = 0.00000000000001
 
@@ -261,8 +264,14 @@ class Text(metaclass=TupleCommand):
     ARGS = ['text']
 
     def resolve(self):
-        # PDFs require backslashes to be escaped
-        return '({}) {}'.format(self.text.replace('\\', '\\\\'), self.COMMAND)
+        if is_unicode(self.text):
+            # TODO: The glyph width/positioning must not be getting calculated correctly as the reader is
+            # drawing glyphs ontop of each other.
+            text = PdfString.from_unicode('   '.join(self.text), text_encoding='utf16')
+        else:
+            # PDF ascii strings require backslashes to be escaped
+            text = '({})'.format(self.text.replace('\\', '\\\\'))
+        return '{} {}'.format(text, self.COMMAND)
 
 
 class XObject(metaclass=TupleCommand):
