@@ -67,7 +67,10 @@ class Square(RectAnnotation):
 
         # TODO dash array
         return stream
-
+    
+    def add_additional_pdf_object_data(self, obj):
+        if self._appearance.content:
+            obj.Contents = self._appearance.content
 
 def add_rounded_rectangle(stream, x, y, width, height, rx, ry):
     """Creates a rounded rectangle and adds it to the content stream.
