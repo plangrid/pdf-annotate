@@ -132,9 +132,9 @@ class PdfAnnotator(object):
         rotation = self._pdf.get_rotation(page_number)
 
         if rotation in (0, 180):
-            return (x2 - x1, y2 - y1)
+            return (abs(x2 - x1), abs(y2 - y1))
 
-        return (y2 - y1, x2 - x1)
+        return (abs(y2 - y1), abs(x2 - x1))
 
     def add_annotation(
         self,
@@ -259,8 +259,8 @@ class PdfAnnotator(object):
 
         scale_matrix = scale(*_scale)
 
-        x_translate = 0 + bounding_box[0]
-        y_translate = 0 + bounding_box[1]
+        x_translate = 0 + min(bounding_box[0], bounding_box[2])
+        y_translate = 0 + min(bounding_box[1], bounding_box[3])
         mb_translate = translate(x_translate, y_translate)
 
         # Because of how rotation works the point isn't rotated around an axis,
